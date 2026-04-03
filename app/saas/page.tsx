@@ -136,7 +136,7 @@ export default function SaasPage() {
   const [invoiceForm, setInvoiceForm] = useState({
     amount: '199',
     dueAtUtc: nextMonthDateInput(),
-    description: 'Mensalidade CondoHome',
+    description: 'Mensalidade CondHub',
     currency: 'BRL',
     billingProvider: 'MANUAL' as SaasBillingProvider,
   });
@@ -474,13 +474,13 @@ export default function SaasPage() {
             <div className="space-y-5">
               <CondoHomeBrandImage className="h-14 w-auto object-contain" />
               <span className="inline-flex rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-800">
-                CondoHome SaaS
+                CondHub SaaS
               </span>
               <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 lg:text-6xl">
                 Venda, ative e administre novos condomínios sem depender do painel operacional.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-600 lg:text-lg">
-                Esta camada adiciona onboarding comercial, planos, assinaturas, cobrança, backoffice e portal do cliente sobre o núcleo multi-tenant do CondoHome.
+                Esta camada adiciona onboarding comercial, planos, assinaturas, cobrança, backoffice e portal do cliente sobre o núcleo multi-tenant do CondHub.
               </p>
               <div className="flex flex-wrap gap-3 text-sm text-slate-600">
                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
@@ -769,7 +769,7 @@ export default function SaasPage() {
         <header className="mb-8 flex flex-col gap-5 rounded-[30px] bg-slate-950 px-8 py-7 text-white lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.26em] text-cyan-300">Backoffice SaaS</p>
-            <h1 className="mt-2 text-3xl font-semibold">Operação comercial CondoHome</h1>
+            <h1 className="mt-2 text-3xl font-semibold">Operação comercial CondHub</h1>
             <p className="mt-2 text-sm text-slate-300">Onboarding, planos, cobrança, suporte e visão consolidada por empresa.</p>
           </div>
           <div className="flex flex-wrap gap-3">

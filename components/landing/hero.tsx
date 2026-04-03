@@ -19,32 +19,34 @@ export function LandingHero() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
             </span>
-            Gestao condominial moderna
+            Painel e app do morador
           </div>
 
           {/* Headline */}
           <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-            A plataforma completa para{" "}
-            <span className="text-primary">gestao de condominios</span>
+            Tudo que o condominio precisa para{" "}
+            <span className="text-primary">organizar a rotina diaria</span>
           </h1>
 
           {/* Subheadline */}
           <p className="mt-6 text-pretty text-lg leading-8 text-muted-foreground lg:text-xl">
-            Simplifique a administracao do seu condominio com ferramentas inteligentes para moradores, sindicos e administradoras. Tudo em um so lugar.
+            O sistema ja conta com painel administrativo, mapa de blocos e unidades, moradores, ocorrencias, agenda, boletos, reservas de espacos e app do morador.
           </p>
 
           {/* CTAs */}
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/login">
               <Button size="lg" className="group w-full bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto">
-                Comece Gratis
+                Entrar no painel
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="w-full border-border text-foreground hover:bg-accent sm:w-auto">
+            <Link href="#features">
+              <Button size="lg" variant="outline" className="w-full border-border text-foreground hover:bg-accent sm:w-auto">
               <Play className="mr-2 h-4 w-4" />
-              Ver Demonstracao
-            </Button>
+              Ver funcoes do sistema
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -65,7 +67,7 @@ export function LandingHero() {
                 </div>
                 <div className="flex-1">
                   <div className="mx-auto w-fit rounded-md bg-background px-4 py-1 text-xs text-muted-foreground">
-                    app.condohome.com.br
+                    painel administrativo
                   </div>
                 </div>
               </div>
@@ -74,24 +76,24 @@ export function LandingHero() {
               <div className="grid gap-4 p-6 lg:grid-cols-3">
                 {/* Stats cards */}
                 <div className="rounded-lg border border-border bg-background p-4">
-                  <p className="text-sm text-muted-foreground">Moradores Ativos</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">1,248</p>
-                  <p className="mt-1 text-xs text-primary">+12% este mes</p>
+                  <p className="text-sm text-muted-foreground">Moradores cadastrados</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">Moradores</p>
+                  <p className="mt-1 text-xs text-primary">Cadastro por unidade</p>
                 </div>
                 <div className="rounded-lg border border-border bg-background p-4">
-                  <p className="text-sm text-muted-foreground">Taxa de Adimplencia</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">97.3%</p>
-                  <p className="mt-1 text-xs text-primary">+2.1% vs. media</p>
+                  <p className="text-sm text-muted-foreground">Mapa do condominio</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">Blocos</p>
+                  <p className="mt-1 text-xs text-primary">Andares e unidades</p>
                 </div>
                 <div className="rounded-lg border border-border bg-background p-4">
-                  <p className="text-sm text-muted-foreground">Ocorrencias Resolvidas</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">156</p>
-                  <p className="mt-1 text-xs text-primary">98% no prazo</p>
+                  <p className="text-sm text-muted-foreground">Chamados</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">Ocorrencias</p>
+                  <p className="mt-1 text-xs text-primary">Abertas, em andamento e resolvidas</p>
                 </div>
                 
                 {/* Chart placeholder */}
                 <div className="col-span-full rounded-lg border border-border bg-background p-4 lg:col-span-2">
-                  <p className="mb-4 text-sm font-medium text-foreground">Receitas vs Despesas</p>
+                  <p className="mb-4 text-sm font-medium text-foreground">Resumo visual do painel</p>
                   <div className="flex h-32 items-end gap-2">
                     {[65, 45, 80, 55, 90, 70, 85, 60, 75, 95, 50, 88].map((height, i) => (
                       <div key={i} className="flex-1 rounded-t bg-primary/80" style={{ height: `${height}%` }} />
@@ -105,7 +107,7 @@ export function LandingHero() {
                   <div className="space-y-3">
                     {[
                       "Reserva confirmada",
-                      "Pagamento recebido",
+                      "Boleto anexado",
                       "Nova ocorrencia",
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs">

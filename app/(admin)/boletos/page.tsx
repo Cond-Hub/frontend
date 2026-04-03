@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Check, Eye, FilePlus2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { formatDateBR, type Boleto, type Unit } from '../../../../shared/src';
+import { BOLETO_STATUS_LABELS, formatDateBR, type Boleto, type Unit } from '../../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog';
@@ -17,6 +17,7 @@ import { showToast } from '../../../src/store/useToastStore';
 
 type BoletoFormState = {
   unitId: string;
+  amountInput: string;
   referenceMonthISO: string;
   dueDateISO: string;
   notes: string;
@@ -33,6 +34,7 @@ type ModalFrameProps = {
 
 const emptyForm: BoletoFormState = {
   unitId: '',
+  amountInput: '',
   referenceMonthISO: '',
   dueDateISO: '',
   notes: '',
@@ -46,23 +48,17 @@ const statusTone: Record<Boleto['status'], string> = {
   PAID: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/80 dark:bg-emerald-950/30 dark:text-emerald-300',
 };
 
-const statusLabel: Record<Boleto['status'], string> = {
-  OPEN: 'Aberto',
-  OVERDUE: 'Em atraso',
-  PAID: 'Pago',
-};
-
 function ModalFrame({ title, description, children, onClose }: ModalFrameProps) {
   return (
-    <div className="fixed inset-0 z-[90] min-h-screen min-h-dvh w-screen overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
-      <div className="flex min-h-screen min-h-dvh items-center justify-center p-4 py-6">
+    <div className="fixed inset-0 z-[90] h-dvh min-h-dvh w-screen overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
+      <div className="flex min-h-dvh w-full items-center justify-center p-4 py-6">
       <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-800">
           <div>
             <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">{title}</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
           </div>
-          <Button variant="ghost" size="sm" className="h-10 w-10 p-0" onClick={onClose} aria-label="Fechar modal">
+          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-50" onClick={onClose} aria-label="Fechar modal">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -120,6 +116,27 @@ function toMonthInputValue(referenceMonthISO: string) {
 
 function toReferenceMonthISO(monthValue: string) {
   return `${monthValue}-01`;
+}
+
+function formatCurrencyBRL(valueCents: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(valueCents / 100);
+}
+
+function formatCurrencyInput(raw: string) {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) {
+    return '';
+  }
+
+  return formatCurrencyBRL(Number(digits));
+}
+
+function currencyInputToCents(value: string) {
+  const digits = value.replace(/\D/g, '');
+  return digits ? Number(digits) : 0;
 }
 
 export default function BoletosPage() {
@@ -181,6 +198,7 @@ export default function BoletosPage() {
     setEditingBoleto(undefined);
     setForm((previous) => ({
       ...emptyForm,
+      amountInput: previous.amountInput,
       unitId: requestedUnitId,
       referenceMonthISO: previous.referenceMonthISO,
       dueDateISO: previous.dueDateISO,
@@ -193,6 +211,7 @@ export default function BoletosPage() {
     setForm({
       ...emptyForm,
       unitId: unitFilter || requestedUnitId || units[0]?.id || '',
+      amountInput: '',
     });
     setIsFormOpen(true);
   };
@@ -201,6 +220,7 @@ export default function BoletosPage() {
     setEditingBoleto(boleto);
     setForm({
       unitId: boleto.unitId,
+      amountInput: formatCurrencyBRL(boleto.amountCents),
       referenceMonthISO: toMonthInputValue(boleto.referenceMonthISO),
       dueDateISO: boleto.dueDateISO.slice(0, 10),
       notes: boleto.notes ?? '',
@@ -251,20 +271,13 @@ export default function BoletosPage() {
   }, [boletos]);
 
   const save = async () => {
-    if (!form.unitId || !form.referenceMonthISO || !form.dueDateISO) {
+    const amountCents = currencyInputToCents(form.amountInput);
+
+    if (!form.unitId || !form.referenceMonthISO || !form.dueDateISO || amountCents < 161) {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha unidade, competencia e vencimento.',
-      });
-      return;
-    }
-
-    if (!editingBoleto && form.files.length === 0) {
-      showToast({
-        tone: 'error',
-        title: 'Arquivo obrigatorio',
-        description: 'Adicione pelo menos um PDF para criar o boleto.',
+        description: 'Preencha unidade, valor maior que R$ 1,60, competencia e vencimento.',
       });
       return;
     }
@@ -277,6 +290,7 @@ export default function BoletosPage() {
       if (editingBoleto) {
         await dashboardApi.boletos.update(editingBoleto.id, {
           unitId: form.unitId,
+          amountCents,
           referenceMonthISO: toReferenceMonthISO(form.referenceMonthISO),
           dueDateISO: form.dueDateISO,
           notes: form.notes.trim() || undefined,
@@ -289,6 +303,7 @@ export default function BoletosPage() {
       } else {
         await dashboardApi.boletos.create({
           unitId: form.unitId,
+          amountCents,
           referenceMonthISO: toReferenceMonthISO(form.referenceMonthISO),
           dueDateISO: form.dueDateISO,
           notes: form.notes.trim() || undefined,
@@ -467,11 +482,12 @@ export default function BoletosPage() {
                 <div key={boleto.id} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
                   <p className="text-base font-semibold text-slate-950 dark:text-slate-50">{boleto.unitLabel}</p>
                   <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                    <p><strong>Valor:</strong> {formatCurrencyBRL(boleto.amountCents)}</p>
                     <p><strong>Competencia:</strong> {toMonthInputValue(boleto.referenceMonthISO)}</p>
                     <p>
                       <strong>Status:</strong>{' '}
                       <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusTone[boleto.status]}`}>
-                        {statusLabel[boleto.status]}
+                        {BOLETO_STATUS_LABELS[boleto.status]}
                       </span>
                     </p>
                   </div>
@@ -484,7 +500,7 @@ export default function BoletosPage() {
                       <Pencil className="h-4 w-4" />
                       Editar
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-rose-700 dark:text-rose-300" onClick={() => setBoletoToRemove(boleto)}>
+                    <Button variant="outline" size="sm" className="gap-2 border-rose-200 bg-rose-50/80 text-rose-600 hover:bg-rose-100 dark:border-rose-800 dark:bg-transparent dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={() => setBoletoToRemove(boleto)}>
                       <Trash2 className="h-4 w-4" />
                       Remover
                     </Button>
@@ -499,6 +515,7 @@ export default function BoletosPage() {
               <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50">
                 <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   <th className="px-6 py-4 font-medium">Unidade</th>
+                  <th className="px-6 py-4 font-medium">Valor</th>
                   <th className="px-6 py-4 font-medium">Competencia</th>
                   <th className="px-6 py-4 font-medium">Vencimento</th>
                   <th className="px-6 py-4 font-medium">Status</th>
@@ -514,7 +531,7 @@ export default function BoletosPage() {
                 <tbody>
                   {filteredBoletos.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                      <td colSpan={8} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
                         Nenhum boleto encontrado para os filtros atuais.
                       </td>
                     </tr>
@@ -527,11 +544,12 @@ export default function BoletosPage() {
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Enviado em {formatDateBR(boleto.uploadedAtISO)}</p>
                           </div>
                         </td>
+                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{formatCurrencyBRL(boleto.amountCents)}</td>
                         <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{toMonthInputValue(boleto.referenceMonthISO)}</td>
                         <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{formatDateBR(boleto.dueDateISO)}</td>
                         <td className="px-6 py-4">
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusTone[boleto.status]}`}>
-                            {statusLabel[boleto.status]}
+                            {BOLETO_STATUS_LABELS[boleto.status]}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -548,7 +566,7 @@ export default function BoletosPage() {
                                   {file.fileName ?? 'Visualizar PDF'}
                                 </Link>
                               ))
-                            ) : (
+                            ) : boleto.fileUrl ? (
                               <Link
                                 href={boleto.fileUrl}
                                 target="_blank"
@@ -557,6 +575,8 @@ export default function BoletosPage() {
                                 <Eye className="h-4 w-4" />
                                 Visualizar PDF
                               </Link>
+                            ) : (
+                              <p className="text-sm text-slate-500 dark:text-slate-400">Sem arquivo</p>
                             )}
                             {boleto.files.length > 2 ? (
                               <p className="text-xs text-slate-500 dark:text-slate-400">+{boleto.files.length - 2} arquivo(s)</p>
@@ -574,7 +594,7 @@ export default function BoletosPage() {
                               <Pencil className="h-4 w-4" />
                               Editar
                             </Button>
-                            <Button variant="outline" size="sm" className="gap-2 text-rose-700 dark:text-rose-300" onClick={() => setBoletoToRemove(boleto)}>
+                            <Button variant="outline" size="sm" className="gap-2 border-rose-200 bg-rose-50/80 text-rose-600 hover:bg-rose-100 dark:border-rose-800 dark:bg-transparent dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={() => setBoletoToRemove(boleto)}>
                               <Trash2 className="h-4 w-4" />
                               Remover
                             </Button>
@@ -610,7 +630,7 @@ export default function BoletosPage() {
           description={
             editingBoleto
               ? 'Atualize a unidade, vencimento, competencia e os anexos deste boleto.'
-              : 'Cadastre um novo boleto com unidade, competencia, vencimento e arquivo PDF.'
+              : 'Cadastre um novo boleto com unidade, competencia, vencimento e, se quiser, anexe um ou mais PDFs.'
           }
           onClose={closeForm}
         >
@@ -630,6 +650,20 @@ export default function BoletosPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="boleto-amount">Valor</Label>
+              <Input
+                id="boleto-amount"
+                inputMode="numeric"
+                placeholder="R$ 0,00"
+                value={form.amountInput}
+                onChange={(event) => setForm((previous) => ({ ...previous, amountInput: formatCurrencyInput(event.target.value) }))}
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Informe o valor total do boleto. Exemplo: R$ 149,90.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -662,7 +696,7 @@ export default function BoletosPage() {
                 onChange={(event) => setForm((previous) => ({ ...previous, files: Array.from(event.target.files ?? []) }))}
               />
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {editingBoleto ? 'Voce pode anexar novos PDFs mantendo os arquivos atuais.' : 'Envie um ou mais PDFs do boleto.'}
+                {editingBoleto ? 'Voce pode anexar novos PDFs mantendo os arquivos atuais.' : 'Opcional. Envie um ou mais PDFs do boleto se quiser.'}
               </p>
             </div>
 

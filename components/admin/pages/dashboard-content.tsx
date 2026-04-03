@@ -6,8 +6,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Skeleton } from '../../ui/skeleton';
-import { formatDateBR, OCCURRENCE_STATUS_LABELS, PRIORITY_LABELS } from '../../../../shared/src';
+import { BOLETO_STATUS_LABELS, formatDateBR, OCCURRENCE_STATUS_LABELS, PRIORITY_LABELS, UNIT_STATUS_LABELS } from '../../../../shared/src';
 import { dashboardApi } from '../../../src/store/useDashboardStore';
+import { useDashboardStore } from '../../../src/store/useDashboardStore';
 import { showToast } from '../../../src/store/useToastStore';
 
 type DashboardData = Awaited<ReturnType<typeof dashboardApi.home.getSummary>>;
@@ -15,13 +16,7 @@ type OccurrenceList = Awaited<ReturnType<typeof dashboardApi.occurrences.list>>;
 type DocumentList = Awaited<ReturnType<typeof dashboardApi.documents.list>>;
 type DateList = Awaited<ReturnType<typeof dashboardApi.dates.list>>;
 type BoletoList = Awaited<ReturnType<typeof dashboardApi.boletos.list>>;
-
-const boletoStatusLabel: Record<string, string> = {
-  PENDING: 'Pendente',
-  PAID: 'Pago',
-  OVERDUE: 'Em atraso',
-  CANCELED: 'Cancelado',
-};
+type UnitList = Awaited<ReturnType<typeof dashboardApi.map.getUnits>>;
 
 function DashboardSkeleton() {
   return (
@@ -94,11 +89,15 @@ function DashboardSkeleton() {
 }
 
 export function DashboardContent() {
+  const state = useDashboardStore();
+  const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
+  const canManageFinance = currentUser?.role === 'ADMIN_COMPANY' || currentUser?.role === 'SYSTEM_ADMIN';
   const [summary, setSummary] = useState<DashboardData>();
   const [occurrences, setOccurrences] = useState<OccurrenceList>([]);
   const [documents, setDocuments] = useState<DocumentList>([]);
   const [dates, setDates] = useState<DateList>([]);
   const [boletos, setBoletos] = useState<BoletoList>([]);
+  const [units, setUnits] = useState<UnitList>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -108,12 +107,13 @@ export function DashboardContent() {
       setLoading(true);
 
       try {
-        const [nextSummary, nextOccurrences, nextDocuments, nextDates, nextBoletos] = await Promise.all([
+        const [nextSummary, nextOccurrences, nextDocuments, nextDates, nextBoletos, nextUnits] = await Promise.all([
           dashboardApi.home.getSummary(),
-          dashboardApi.occurrences.list({ status: 'OPEN' }),
+          dashboardApi.occurrences.list(),
           dashboardApi.documents.list({ expiringSoonDays: 30 }),
           dashboardApi.dates.list({ upcoming: 7 }),
-          dashboardApi.boletos.list(),
+          canManageFinance ? dashboardApi.boletos.list() : Promise.resolve([] as BoletoList),
+          dashboardApi.map.getUnits(),
         ]);
 
         if (!active) {
@@ -121,10 +121,11 @@ export function DashboardContent() {
         }
 
         setSummary(nextSummary);
-        setOccurrences(nextOccurrences.slice(0, 5));
+        setOccurrences(nextOccurrences);
         setDocuments(nextDocuments.slice(0, 4));
         setDates(nextDates.slice(0, 4));
-        setBoletos(nextBoletos.slice(0, 4));
+        setBoletos(nextBoletos);
+        setUnits(nextUnits);
       } catch (loadError) {
         if (!active) {
           return;
@@ -147,7 +148,7 @@ export function DashboardContent() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [canManageFinance]);
 
   const stats = useMemo(
     () => [
@@ -180,22 +181,91 @@ export function DashboardContent() {
   );
 
   const chartData = useMemo(() => {
-    const occurrenceBars = [
-      { label: 'Ocorrencias', value: Math.min((summary?.openOccurrences.length ?? 0) * 12, 100) },
-      { label: 'Documentos', value: Math.min((summary?.expiringDocuments.length ?? documents.length) * 18, 100) },
-      { label: 'Agenda', value: Math.min((summary?.upcomingDates.length ?? dates.length) * 22, 100) },
+    const totalBoletos = boletos.length;
+    const openBoletos = boletos.filter((item) => item.status === 'OPEN').length;
+    const overdueBoletos = boletos.filter((item) => item.status === 'OVERDUE').length;
+    const paidBoletos = boletos.filter((item) => item.status === 'PAID').length;
+
+    const boletoStatusBars = [
+      {
+        label: 'Abertos',
+        value: openBoletos,
+        percentage: totalBoletos ? Math.round((openBoletos / totalBoletos) * 100) : 0,
+      },
+      {
+        label: 'Em atraso',
+        value: overdueBoletos,
+        percentage: totalBoletos ? Math.round((overdueBoletos / totalBoletos) * 100) : 0,
+      },
+      {
+        label: 'Pagos',
+        value: paidBoletos,
+        percentage: totalBoletos ? Math.round((paidBoletos / totalBoletos) * 100) : 0,
+      },
     ];
 
-    const recentLoad = [
-      { label: 'Seg', value: Math.min((summary?.openOccurrences.length ?? 0) * 8, 100) },
-      { label: 'Ter', value: Math.min((summary?.expiringDocuments.length ?? documents.length) * 14, 100) },
-      { label: 'Qua', value: Math.min((summary?.upcomingDates.length ?? dates.length) * 16, 100) },
-      { label: 'Qui', value: Math.min(((summary?.openOccurrences.length ?? 0) + (summary?.upcomingDates.length ?? 0)) * 7, 100) },
-      { label: 'Sex', value: Math.min(((documents.length ?? 0) + (summary?.openOccurrences.length ?? 0)) * 9, 100) },
-    ];
+    const occurrenceStatusOrder = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
+    const occurrenceStatusColors = ['#0f766e', '#0891b2', '#7c3aed'];
+    const occurrenceTotals = occurrenceStatusOrder
+      .map((status, index) => ({
+        status,
+        label: OCCURRENCE_STATUS_LABELS[status as keyof typeof OCCURRENCE_STATUS_LABELS] ?? status,
+        value: occurrences.filter((item) => item.status === status).length,
+        color: occurrenceStatusColors[index],
+      }))
+      .filter((item) => item.value > 0);
 
-    return { occurrenceBars, recentLoad };
-  }, [dates.length, documents.length, summary]);
+    const totalOccurrences = occurrenceTotals.reduce((sum, item) => sum + item.value, 0);
+
+    let currentOffset = 0;
+    const occurrenceStatusSlices = occurrenceTotals.map((item) => {
+      const percentage = totalOccurrences ? Number(((item.value / totalOccurrences) * 100).toFixed(1)) : 0;
+      const start = currentOffset;
+      currentOffset += percentage;
+      return {
+        ...item,
+        percentage,
+        start,
+        end: currentOffset,
+      };
+    });
+
+    const occurrenceStatusChart =
+      occurrenceStatusSlices.length > 0
+        ? `conic-gradient(${occurrenceStatusSlices
+            .map((item) => `${item.color} ${item.start}% ${item.end}%`)
+            .join(', ')})`
+        : 'conic-gradient(#e2e8f0 0% 100%)';
+
+    const unitStatusOrder = ['GREEN', 'YELLOW', 'RED'] as const;
+    const unitStatusColors = {
+      GREEN: 'bg-emerald-500',
+      YELLOW: 'bg-amber-500',
+      RED: 'bg-rose-500',
+    } as const;
+    const totalUnits = units.length;
+    const unitStatusBars = unitStatusOrder.map((status) => {
+      const value = units.filter((item) => item.status === status).length;
+      return {
+        status,
+        label: UNIT_STATUS_LABELS[status],
+        value,
+        percentage: totalUnits ? Math.round((value / totalUnits) * 100) : 0,
+        colorClass: unitStatusColors[status],
+      };
+    });
+
+    return {
+      boletoStatusBars,
+      occurrenceStatusChart,
+      occurrenceStatusSlices,
+      totalBoletos,
+      overdueBoletos,
+      totalOccurrences,
+      unitStatusBars,
+      totalUnits,
+    };
+  }, [boletos, occurrences, units]);
 
   const boletoLines = useMemo(() => {
     const groups = boletos.reduce<Record<string, number>>((accumulator, boleto) => {
@@ -204,11 +274,13 @@ export function DashboardContent() {
     }, {});
 
     return Object.entries(groups).map(([status, value]) => ({
-      label: boletoStatusLabel[status] ?? status,
+      label: BOLETO_STATUS_LABELS[status as keyof typeof BOLETO_STATUS_LABELS] ?? status,
       value,
       percentage: boletos.length ? Math.round((value / boletos.length) * 100) : 0,
     }));
   }, [boletos]);
+
+  const recentBoletos = useMemo(() => boletos.slice(0, 2), [boletos]);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -238,94 +310,108 @@ export function DashboardContent() {
         })}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[0.95fr,1.05fr]">
-        <Card className="border-slate-200/80 dark:border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Leitura por intensidade</CardTitle>
-            <CardDescription>Indicadores visuais de carga operacional atual.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {chartData.occurrenceBars.map((item) => (
-              <div key={item.label}>
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{item.value}%</span>
+      <div className={`grid gap-4 ${canManageFinance ? 'xl:grid-cols-3' : 'xl:grid-cols-2'}`}>
+        {canManageFinance ? (
+          <Card className="border-slate-200/80 dark:border-slate-800 flex flex-col">
+            <CardHeader>
+              <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Boletos por status</CardTitle>
+              <CardDescription>Leitura financeira rápida do que já entrou e do que ainda pede atenção.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {chartData.boletoStatusBars.map((item) => (
+                <div key={item.label}>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                      {item.value} • {item.percentage}%
+                    </span>
+                  </div>
+                  <div className="dashboard-bar h-3" style={{ ['--bar-value' as string]: item.percentage }} />
                 </div>
-                <div className="dashboard-bar h-3" style={{ ['--bar-value' as string]: item.value }} />
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
+        <Card className="border-slate-200/80 dark:border-slate-800 flex flex-col">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Ocorrências por status</CardTitle>
+                <CardDescription>Distribuição do volume de ocorrências pelo estágio atual de atendimento.</CardDescription>
               </div>
-            ))}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 lg:grid-cols-[0.85fr,1.15fr] lg:items-center">
+              <div className="flex justify-center">
+                <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+                  <div
+                    className="h-40 w-40 rounded-full"
+                    style={{ background: chartData.occurrenceStatusChart }}
+                  />
+                  <div className="absolute flex h-20 w-20 flex-col items-center justify-center rounded-full bg-white text-center dark:bg-slate-950">
+                    <p className="text-2xl font-semibold text-slate-950 dark:text-slate-50">{chartData.totalOccurrences}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Total</p>
+                  </div>
+                </div>
+              </div>
 
-            <div className="grid grid-cols-3 gap-3 pt-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-800 dark:bg-slate-900/50">
-                <p className="text-2xl font-semibold text-slate-950 dark:text-slate-50">{summary?.openOccurrences.length ?? 0}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Abertas</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-800 dark:bg-slate-900/50">
-                <p className="text-2xl font-semibold text-slate-950 dark:text-slate-50">{summary?.expiringDocuments.length ?? 0}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Alertas</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-800 dark:bg-slate-900/50">
-                <p className="text-2xl font-semibold text-slate-950 dark:text-slate-50">{summary?.upcomingDates.length ?? 0}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Agenda</p>
+              <div className="space-y-3">
+                {chartData.occurrenceStatusSlices.map((item) => (
+                  <div key={item.status} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
+                      </div>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {item.value} • {item.percentage}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {chartData.occurrenceStatusSlices.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
+                    Nenhuma ocorrência registrada ainda.
+                  </div>
+                ) : null}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 dark:border-slate-800">
+        <Card className="border-slate-200/80 dark:border-slate-800 flex flex-col">
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Ritmo da semana</CardTitle>
-                <CardDescription>Leitura visual de carga operacional ao longo dos dias.</CardDescription>
-              </div>
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                Atualizar
-              </Button>
-            </div>
+            <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Unidades por status</CardTitle>
+            <CardDescription>Distribuição atual das unidades entre normal, atenção e urgente.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid h-[260px] grid-cols-5 items-end gap-3">
-              {chartData.recentLoad.map((item) => (
-                <div key={item.label} className="flex h-full flex-col justify-end gap-3">
-                  <div className="relative flex-1 overflow-hidden rounded-t-2xl rounded-b-md bg-slate-100 dark:bg-slate-900">
-                    <div
-                      className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-gradient-to-t from-slate-900 via-teal-700 to-emerald-400 dark:from-slate-100 dark:via-emerald-300 dark:to-cyan-300"
-                      style={{ height: `${Math.max(item.value, 10)}%` }}
-                    />
-                  </div>
-                  <div className="text-center">
+          <CardContent className="space-y-5">
+            {chartData.unitStatusBars.map((item) => (
+              <div key={item.status}>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className={`h-3 w-3 rounded-full ${item.colorClass}`} />
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.value}%</p>
                   </div>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {item.value} • {item.percentage}%
+                  </span>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Unidades</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">{summary?.myUnits.length ?? 0}</p>
+                <div className="dashboard-bar h-3" style={{ ['--bar-value' as string]: item.percentage }} />
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Itens ativos</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">
-                  {(summary?.openOccurrences.length ?? 0) + (summary?.upcomingDates.length ?? 0)}
-                </p>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
+      <div className={`grid gap-4 ${canManageFinance ? 'xl:grid-cols-[1.1fr,0.9fr]' : 'xl:grid-cols-[1.2fr,0.8fr]'}`}>
         <Card className="border-slate-200/80 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Painel de ocorrencias</CardTitle>
             <CardDescription>Itens mais recentes para acompanhamento imediato.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {occurrences.map((occurrence) => (
+            {occurrences.slice(0, 5).map((occurrence) => (
               <div key={occurrence.id} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -367,45 +453,47 @@ export function DashboardContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200/80 dark:border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Boletos em acompanhamento</CardTitle>
-              <CardDescription>Leitura financeira rapida por status, logo abaixo da agenda.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {boletoLines.map((item) => (
-                <div key={item.label}>
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                      {item.value} • {item.percentage}%
-                    </span>
-                  </div>
-                  <div className="dashboard-bar h-3" style={{ ['--bar-value' as string]: item.percentage }} />
-                </div>
-              ))}
-              {boletos.slice(0, 2).map((item) => (
-                <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-slate-950 dark:text-slate-50">{item.unitLabel}</p>
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Referencia {item.referenceMonthISO.slice(0, 7)} • vence em {formatDateBR(item.dueDateISO)}
-                      </p>
+          {canManageFinance ? (
+            <Card className="border-slate-200/80 dark:border-slate-800">
+              <CardHeader>
+                <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Boletos em acompanhamento</CardTitle>
+                <CardDescription>Leitura financeira rapida por status, logo abaixo da agenda.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {boletoLines.map((item) => (
+                  <div key={item.label}>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {item.value} • {item.percentage}%
+                      </span>
                     </div>
-                    <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">
-                      {boletoStatusLabel[item.status] ?? item.status}
-                    </span>
+                    <div className="dashboard-bar h-3" style={{ ['--bar-value' as string]: item.percentage }} />
                   </div>
-                </div>
-              ))}
-              {boletos.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                  Nenhum boleto carregado recentemente.
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
+                ))}
+                {recentBoletos.map((item) => (
+                  <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-slate-950 dark:text-slate-50">{item.unitLabel}</p>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                          Referencia {item.referenceMonthISO.slice(0, 7)} • vence em {formatDateBR(item.dueDateISO)}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                        {BOLETO_STATUS_LABELS[item.status]}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {boletos.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
+                    Nenhum boleto carregado recentemente.
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card className="border-slate-200/80 dark:border-slate-800">
             <CardHeader>

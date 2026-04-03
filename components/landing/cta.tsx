@@ -13,26 +13,26 @@ export function LandingCta() {
 
       <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
         <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-          Pronto para transformar a gestao do seu condominio?
+          Veja o que o sistema ja faz hoje
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-          Junte-se a mais de 500 condominios que ja confiam no CondoHome. Comece seu teste gratuito de 14 dias hoje.
+          Painel administrativo, mapa de unidades, moradores, agenda, boletos, reservas e app do morador em um mesmo produto.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link href="/login">
             <Button size="lg" className="group w-full bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto">
-              Comece Gratis Agora
+              Entrar no sistema
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
-          <Link href="/login">
+          <Link href="#pricing">
             <Button size="lg" variant="outline" className="w-full border-border text-foreground hover:bg-accent sm:w-auto">
-              Agendar Demonstracao
+              Ver planos
             </Button>
           </Link>
         </div>
         <p className="mt-6 text-sm text-muted-foreground">
-          Sem cartao de credito. Cancele quando quiser.
+          Sem promessas extras: somente o que ja esta no produto.
         </p>
       </div>
     </section>

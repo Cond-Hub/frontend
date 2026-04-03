@@ -50,15 +50,20 @@ export function ToastViewport() {
             key={toast.id}
             className={`pointer-events-auto rounded-2xl border p-4 shadow-xl transition ${toneStyles[toast.tone]}`}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900">
                 <Icon className="h-4 w-4" />
               </span>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 self-center">
                 <p className="text-sm font-semibold">{toast.title}</p>
                 {toast.description ? <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{toast.description}</p> : null}
               </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => removeToast(toast.id)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-50"
+                onClick={() => removeToast(toast.id)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>

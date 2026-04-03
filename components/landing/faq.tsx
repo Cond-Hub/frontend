@@ -5,28 +5,28 @@ import { ChevronDown } from "lucide-react"
 
 const faqs = [
   {
-    question: "Quanto tempo leva para implementar o CondoHome?",
-    answer: "A implementacao basica pode ser feita em menos de 1 hora. Para migracoes completas com historico de dados, nossa equipe de sucesso do cliente acompanha todo o processo, que geralmente leva de 3 a 5 dias uteis.",
+    question: "Quanto tempo leva para implementar o CondHub?",
+    answer: "Isso depende do volume de cadastro inicial. O produto atual ja permite montar blocos, andares, unidades, moradores, espacos, agenda e boletos diretamente no painel.",
   },
   {
     question: "Posso migrar meus dados de outro sistema?",
-    answer: "Sim! Oferecemos migracao gratuita de dados dos principais sistemas do mercado. Nossa equipe cuida de todo o processo para garantir que nenhuma informacao seja perdida.",
+    answer: "Hoje a pagina mostra o que o sistema ja permite fazer no cadastro e na operacao do dia a dia. Ela nao promete um processo especifico de migracao.",
   },
   {
     question: "O sistema funciona em dispositivos moveis?",
-    answer: "Sim, o CondoHome e totalmente responsivo e funciona em qualquer dispositivo. Alem disso, oferecemos aplicativos nativos para iOS e Android nos planos Profissional e Enterprise.",
+    answer: "Sim. O sistema inclui painel no computador e app do morador com login, mapa, boletos, documentos, datas importantes, notificacoes e ocorrencias.",
   },
   {
     question: "Como funciona o suporte tecnico?",
-    answer: "Oferecemos suporte por email no plano Starter, suporte prioritario por chat e telefone no plano Profissional, e gerente de conta dedicado no plano Enterprise. Nosso tempo medio de resposta e de menos de 2 horas.",
+    answer: "A landing foi ajustada para falar do conteudo do sistema. Por isso, ela nao faz promessas detalhadas sobre formatos de atendimento ou prazos de suporte.",
   },
   {
-    question: "Posso cancelar a qualquer momento?",
-    answer: "Sim, nao temos fidelidade. Voce pode cancelar sua assinatura a qualquer momento sem multas. Seus dados ficam disponiveis para exportacao por 30 dias apos o cancelamento.",
+    question: "Quais areas do sistema ja existem?",
+    answer: "Hoje o sistema ja cobre resumo geral, mapa de blocos e unidades, ocorrencias, agenda, boletos, espacos comuns, reservas e moradores.",
   },
   {
-    question: "O CondoHome atende a LGPD?",
-    answer: "Absolutamente. O CondoHome foi desenvolvido em conformidade com a LGPD. Todos os dados sao criptografados, armazenados em servidores no Brasil e voce tem controle total sobre as informacoes dos moradores.",
+    question: "O CondHub atende a LGPD?",
+    answer: "Existem materiais de seguranca no projeto, mas a landing evita transformar isso em promessa juridica absoluta. Aqui o foco fica no que o sistema oferece na pratica.",
   },
 ]
 
@@ -43,7 +43,7 @@ export function LandingFaq() {
             Perguntas Frequentes
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Tudo que voce precisa saber sobre o CondoHome.
+            Respostas alinhadas ao que o produto realmente entrega hoje.
           </p>
         </div>
 

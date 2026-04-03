@@ -14,15 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CondoHome | Plataforma Completa para Gestao de Condominios',
+  title: 'CondHub | Plataforma Completa para Gestao de Condominios',
   description: 'Simplifique a administracao do seu condominio com ferramentas inteligentes para moradores, sindicos e administradoras. Gestao financeira, reservas, comunicacao e muito mais.',
   keywords: ['gestao condominial', 'condominio', 'administradora', 'sindico', 'moradores', 'SaaS'],
-  authors: [{ name: 'CondoHome' }],
+  authors: [{ name: 'CondHub' }],
   icons: {
     icon: '/brand/condohome-mark.png',
   },
   openGraph: {
-    title: 'CondoHome | Plataforma Completa para Gestao de Condominios',
+    title: 'CondHub | Plataforma Completa para Gestao de Condominios',
     description: 'Simplifique a administracao do seu condominio com ferramentas inteligentes.',
     type: 'website',
   },

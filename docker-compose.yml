@@ -1,21 +1,20 @@
-services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - path: .env
-        required: false
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000}
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - ../shared:/shared
-      - frontend_node_modules:/app/node_modules
-    command: >
-      /bin/sh -c "${FRONTEND_COMMAND:-npm run dev -- --hostname 0.0.0.0 --port 3000}"
+name: condhub-frontend
 
-volumes:
-  frontend_node_modules:
+services:
+    frontend:
+      container_name: condhub-frontend
+      image: condhub-frontend
+      build:
+        context: ..
+        dockerfile: frontend/Dockerfile
+        args:
+          NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-/api}
+      env_file:
+        - .env
+      environment:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3002}
+      ports:
+        - "3002:3002"
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+      restart: unless-stopped

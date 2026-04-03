@@ -2,56 +2,39 @@ import Link from "next/link"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+const whatsappNumber = "5547992611819"
+
 const plans = [
   {
-    name: "Starter",
-    description: "Ideal para condominios pequenos",
+    name: "Essencial",
+    description: "Ideal para centralizar a operacao do condominio",
+    price: "149",
+    period: "/mes",
+    features: [
+      "Visao geral e analytics",
+      "Gestao de unidades e blocos",
+      "Gestao de ocorrencias e chamados",
+      "Calendario e agendamentos",
+      "Boletos",
+      "Sistema de reserva de amenidades",
+      "Gestao de moradores",
+    ],
+    cta: "Escolher plano",
+    highlighted: false,
+  },
+  {
+    name: "Completo",
+    description: "Para condominios que tambem querem receber pelo app",
     price: "199",
     period: "/mes",
     features: [
-      "Ate 50 unidades",
-      "Gestao financeira basica",
-      "Portal do morador",
-      "Reservas de areas comuns",
-      "Suporte por email",
+      "Tudo do primeiro plano",
+      "Pagamentos com PIX imediatos",
+      "Taxa de R$ 0,80 por transacao recebida + R$ 0,80 por saque",
     ],
-    cta: "Comece Gratis",
-    highlighted: false,
-  },
-  {
-    name: "Profissional",
-    description: "Para condominios em crescimento",
-    price: "399",
-    period: "/mes",
-    features: [
-      "Ate 200 unidades",
-      "Gestao financeira completa",
-      "Portal do morador + App",
-      "Reservas + Controle de acesso",
-      "Relatorios avancados",
-      "Suporte prioritario",
-      "Integracao bancaria",
-    ],
-    cta: "Escolher Plano",
+    cta: "Escolher plano",
     highlighted: true,
-    badge: "Mais Popular",
-  },
-  {
-    name: "Enterprise",
-    description: "Para administradoras",
-    price: "Custom",
-    period: "",
-    features: [
-      "Unidades ilimitadas",
-      "Multi-condominio",
-      "API completa",
-      "White-label disponivel",
-      "Gerente de conta dedicado",
-      "SLA garantido",
-      "Integracao personalizada",
-    ],
-    cta: "Falar com Vendas",
-    highlighted: false,
+    badge: "Mais escolhido",
   },
 ]
 
@@ -66,12 +49,12 @@ export function LandingPricing() {
             Escolha o plano ideal para seu condominio
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Comece gratis por 14 dias. Sem necessidade de cartao de credito.
+            Dois planos objetivos para operar o condominio e, se quiser, receber com PIX.
           </p>
         </div>
 
         {/* Pricing cards */}
-        <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-3">
+        <div className="mx-auto mt-16 grid max-w-4xl gap-8 lg:grid-cols-2">
           {plans.map((plan, index) => (
             <div
               key={index}
@@ -116,7 +99,13 @@ export function LandingPricing() {
               </ul>
 
               {/* CTA */}
-              <Link href="/login">
+              <Link
+                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                  `Olá, tenho interesse no plano ${plan.name} da ContHub`,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+              >
                 <Button
                   className={`w-full ${
                     plan.highlighted

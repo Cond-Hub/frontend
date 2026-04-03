@@ -3,40 +3,40 @@ import {
   CreditCard, 
   CalendarDays, 
   MessageSquare, 
-  Shield, 
+  Users, 
   BarChart3 
 } from "lucide-react"
 
 const features = [
   {
     icon: Building2,
-    title: "Gestao Multi-Condominio",
-    description: "Administre varios condominios em uma unica plataforma. Visao consolidada para administradoras com dashboards personalizados.",
+    title: "Mapa de blocos e unidades",
+    description: "Cadastre blocos, andares e unidades e acompanhe a situacao de cada unidade em um unico lugar.",
   },
   {
     icon: CreditCard,
-    title: "Cobranca Automatizada",
-    description: "Gere boletos, envie lembretes e acompanhe pagamentos automaticamente. Integracao com os principais bancos do Brasil.",
+    title: "Boletos por unidade",
+    description: "Cadastre boletos, envie anexos, acompanhe vencimento e filtre por status e unidade.",
   },
   {
     icon: CalendarDays,
-    title: "Reservas de Areas Comuns",
-    description: "Sistema completo para reservas de salao de festas, churrasqueira, academia e outras areas. Aprovacao automatica ou manual.",
+    title: "Agenda do condominio",
+    description: "Organize datas importantes, documentos com vencimento e reservas em uma agenda unica por semana.",
   },
   {
     icon: MessageSquare,
-    title: "Comunicacao Integrada",
-    description: "Envie comunicados, gerencie ocorrencias e mantenha todos informados. Notificacoes por app, email e SMS.",
+    title: "Ocorrencias e chamados",
+    description: "Organize os chamados por etapa, veja prioridades e encontre rapidamente o que precisa de atencao.",
   },
   {
-    icon: Shield,
-    title: "Controle de Acesso",
-    description: "Gerencie visitantes, prestadores e entregas. Integracao com portarias virtuais e sistemas de CFTV.",
+    icon: Users,
+    title: "Moradores e unidades",
+    description: "Gerencie moradores e associe cada cadastro as unidades correspondentes dentro do condominio.",
   },
   {
     icon: BarChart3,
-    title: "Relatorios e Analytics",
-    description: "Dashboards em tempo real com metricas financeiras, operacionais e de engajamento. Tome decisoes baseadas em dados.",
+    title: "Dashboard geral",
+    description: "Tenha uma visao resumida do condominio para acompanhar o que esta acontecendo no painel.",
   },
 ]
 
@@ -48,10 +48,10 @@ export function LandingFeatures() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Funcionalidades</p>
           <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Tudo que voce precisa para gerenciar seu condominio
+            O que o produto entrega hoje
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Ferramentas poderosas e intuitivas para sindicos, administradoras e moradores.
+            Cada bloco abaixo corresponde a telas e funcoes que ja existem hoje no sistema.
           </p>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Moon, ShieldCheck, Sun } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { CondoHomeBrandImage } from '../../components/brand/condohome-brand-image';
@@ -62,6 +62,14 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
+    if (state.themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [state.themeMode]);
+
+  useEffect(() => {
     if (currentUser && state.bootstrapped) {
       router.replace('/dashboard');
     }
@@ -109,6 +117,19 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f7f3] dark:bg-slate-950">
+      <div className="fixed right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-10 w-10 p-0"
+          onClick={() => state.setThemeMode(state.themeMode === 'dark' ? 'light' : 'dark')}
+          aria-label={state.themeMode === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+          title={state.themeMode === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+        >
+          {state.themeMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+      </div>
+
       <div className="grid min-h-screen lg:grid-cols-[1.02fr,0.98fr]">
         <section className="relative hidden overflow-hidden bg-[#0b1310] text-white lg:block">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_85%_18%,_rgba(234,179,8,0.12),transparent_24%)]" />
@@ -186,7 +207,7 @@ export default function LoginPage() {
 
               {!tenantPrefix ? (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
-                  Para entrar, use o link oficial do seu condominio. Exemplo: <span className="font-mono">aurora.localhost:3000/login</span>
+                  Para entrar, use o link oficial do seu condominio. Exemplo: <span className="font-mono">aurora.condhub.com/login</span>
                 </div>
               ) : null}
 

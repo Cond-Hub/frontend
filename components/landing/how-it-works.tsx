@@ -4,20 +4,20 @@ const steps = [
   {
     icon: UserPlus,
     step: "01",
-    title: "Crie sua conta",
-    description: "Cadastre seu condominio em menos de 2 minutos. Sem burocracia, sem contratos longos. Comece com nosso plano gratuito.",
+    title: "Acesse o painel",
+    description: "Entre no painel ou no app do morador e veja as areas que o sistema ja disponibiliza hoje.",
   },
   {
     icon: Settings,
     step: "02",
-    title: "Configure seu condominio",
-    description: "Importe seus dados ou comece do zero. Nossa equipe de sucesso do cliente ajuda na migracao completa dos seus dados.",
+    title: "Cadastre a operacao",
+    description: "Estruture blocos, andares, unidades, moradores, espacos comuns, boletos, documentos e datas importantes.",
   },
   {
     icon: Rocket,
     step: "03",
-    title: "Comece a usar",
-    description: "Convide moradores, ative recursos e transforme a gestao do seu condominio. Suporte 24/7 sempre disponivel.",
+    title: "Use no dia a dia",
+    description: "Acompanhe chamados, reservas, agenda, boletos e consultas do morador em uma rotina mais organizada.",
   },
 ]
 
@@ -29,10 +29,10 @@ export function LandingHowItWorks() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Como Funciona</p>
           <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Comece em 3 passos simples
+            Como o produto se organiza hoje
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Do cadastro ate a gestao completa em minutos, nao em semanas.
+            A ideia aqui e mostrar de forma simples como o sistema se encaixa na rotina do condominio.
           </p>
         </div>
 

@@ -1,18 +1,19 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, FileText, Plus, Users, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { type CommonSpace, type CommonSpaceReservation, type Document, type ImportantDate, type Resident } from '../../../../shared/src';
+import { type CommonSpace, type CommonSpaceReservation, type ImportantDate, type Resident } from '../../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import { ConfirmDialog } from '../../../components/ui/confirm-dialog';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { dashboardApi } from '../../../src/store/useDashboardStore';
 import { showToast } from '../../../src/store/useToastStore';
 
-type CreationKind = 'reservation' | 'document' | 'other';
+type CreationKind = 'reservation' | 'other';
 
 type OtherFormState = {
   title: string;
@@ -28,14 +29,7 @@ type ReservationFormState = {
   notes: string;
   startAtISO: string;
   endAtISO: string;
-};
-
-type DocumentFormState = {
-  title: string;
-  category: string;
-  description: string;
-  expiresAtISO: string;
-  file: File | null;
+  isAllDay: boolean;
 };
 
 type CalendarItem =
@@ -56,16 +50,13 @@ type CalendarItem =
       subtitle: string;
       colorClass: string;
       source: CommonSpaceReservation;
-    }
-  | {
-      id: string;
-      kind: 'document';
-      title: string;
-      startsAtISO: string;
-      subtitle: string;
-      colorClass: string;
-      source: Document;
     };
+
+type DragPayload = {
+  itemId: string;
+  targetDayKey: string;
+  targetHour: number;
+};
 
 type ModalFrameProps = {
   title: string;
@@ -88,14 +79,7 @@ const emptyReservationForm: ReservationFormState = {
   notes: '',
   startAtISO: '',
   endAtISO: '',
-};
-
-const emptyDocumentForm: DocumentFormState = {
-  title: '',
-  category: 'Documento geral',
-  description: '',
-  expiresAtISO: '',
-  file: null,
+  isAllDay: false,
 };
 
 const creationOptions = [
@@ -104,12 +88,6 @@ const creationOptions = [
     title: 'Reserva de espaco',
     description: 'Agende um espaco comum e vincule um morador.',
     icon: Users,
-  },
-  {
-    kind: 'document' as const,
-    title: 'Novo documento',
-    description: 'Cadastre um documento com vencimento ou data de referencia.',
-    icon: FileText,
   },
   {
     kind: 'other' as const,
@@ -124,15 +102,15 @@ const DATE_TIME_LIKE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{
 
 function ModalFrame({ title, description, children, onClose }: ModalFrameProps) {
   return (
-    <div className="fixed inset-0 z-[90] min-h-screen min-h-dvh w-screen overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
-      <div className="flex min-h-screen min-h-dvh items-center justify-center p-4 py-6">
+    <div className="fixed inset-0 z-[90] h-dvh min-h-dvh w-screen overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
+      <div className="flex min-h-dvh w-full items-center justify-center p-4 py-6">
       <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-800">
           <div>
             <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">{title}</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
           </div>
-          <Button variant="ghost" size="sm" className="h-10 w-10 p-0" onClick={onClose} aria-label="Fechar modal">
+          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-50" onClick={onClose} aria-label="Fechar modal">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -176,6 +154,15 @@ function formatWeekLabel(date: Date) {
   return `${new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(weekStart)} - ${new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(weekEnd)}`;
 }
 
+function toDateTimeLocalValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 function toLocalDateTimeInput(iso: string) {
   const match = DATE_TIME_LIKE_PATTERN.exec(iso);
   if (match) {
@@ -207,6 +194,12 @@ function parseDateTimeLike(value: string) {
   return new Date(value);
 }
 
+function createDateAtHour(day: Date, hour: number) {
+  const next = new Date(day);
+  next.setHours(hour, 0, 0, 0);
+  return next;
+}
+
 function formatDateTimeBR(value: string) {
   const match = DATE_TIME_LIKE_PATTERN.exec(value);
   if (match) {
@@ -219,31 +212,21 @@ function formatDateTimeBR(value: string) {
   }).format(new Date(value));
 }
 
-async function uploadDocumentFile(file: File) {
-  const upload = await dashboardApi.documents.createUploadUrl({
-    fileName: file.name,
-    contentType: file.type || 'application/pdf',
-  });
+function minutesToTime(minutes: number) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
 
-  const response = await fetch(upload.uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': file.type || 'application/pdf',
-    },
-    body: file,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao enviar o arquivo ${file.name}.`);
+function applyTimeToLocalDateTime(value: string, timeHHMM: string) {
+  if (!value) {
+    return '';
   }
-
-  return upload.storageRef;
+  const datePart = value.slice(0, 10);
+  return `${datePart}T${timeHHMM}`;
 }
 
 export default function AgendaPage() {
   const [dates, setDates] = useState<ImportantDate[]>([]);
   const [reservations, setReservations] = useState<CommonSpaceReservation[]>([]);
-  const [documents, setDocuments] = useState<Document[]>([]);
   const [commonSpaces, setCommonSpaces] = useState<CommonSpace[]>([]);
   const [residents, setResidents] = useState<Resident[]>([]);
   const [loading, setLoading] = useState(true);
@@ -253,10 +236,12 @@ export default function AgendaPage() {
   const [creationPromptDate, setCreationPromptDate] = useState<Date | undefined>();
   const [activeCreateKind, setActiveCreateKind] = useState<CreationKind | undefined>();
   const [selectedItem, setSelectedItem] = useState<CalendarItem | undefined>();
+  const [itemToRemove, setItemToRemove] = useState<CalendarItem | undefined>();
   const [editingDate, setEditingDate] = useState<ImportantDate | undefined>();
   const [otherForm, setOtherForm] = useState<OtherFormState>(emptyOtherForm);
   const [reservationForm, setReservationForm] = useState<ReservationFormState>(emptyReservationForm);
-  const [documentForm, setDocumentForm] = useState<DocumentFormState>(emptyDocumentForm);
+  const [draggingItemId, setDraggingItemId] = useState<string>();
+  const [dragOverCell, setDragOverCell] = useState<string>();
 
   const load = async () => {
     setLoading(true);
@@ -264,20 +249,18 @@ export default function AgendaPage() {
     try {
       const weekStart = startOfWeek(weekAnchor);
       const weekEnd = addDays(weekStart, 7);
-      const [nextDates, nextReservations, nextDocuments, nextCommonSpaces, nextResidents] = await Promise.all([
+      const [nextDates, nextReservations, nextCommonSpaces, nextResidents] = await Promise.all([
         dashboardApi.dates.list(),
         dashboardApi.commonSpaceReservations.list({
           startISO: weekStart.toISOString(),
           endISO: weekEnd.toISOString(),
         }),
-        dashboardApi.documents.list(),
         dashboardApi.commonSpaces.list(),
         dashboardApi.residents.list(),
       ]);
 
       setDates(nextDates);
       setReservations(nextReservations);
-      setDocuments(nextDocuments);
       setCommonSpaces(nextCommonSpaces);
       setResidents(nextResidents);
     } catch (loadError) {
@@ -308,6 +291,10 @@ export default function AgendaPage() {
 
   const commonSpaceNameById = useMemo(() => new Map(commonSpaces.map((space) => [space.id, space.name])), [commonSpaces]);
   const residentNameById = useMemo(() => new Map(groupedResidents.map((resident) => [resident.id, resident.name])), [groupedResidents]);
+  const selectedReservationSpace = useMemo(
+    () => commonSpaces.find((space) => space.id === reservationForm.commonSpaceId),
+    [commonSpaces, reservationForm.commonSpaceId],
+  );
 
   const weekStart = useMemo(() => startOfWeek(weekAnchor), [weekAnchor]);
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart]);
@@ -339,20 +326,8 @@ export default function AgendaPage() {
         source: item,
       }));
 
-    const documentItems: CalendarItem[] = documents
-      .filter((item) => item.expiresAtISO && weekKeys.has(toDateKey(parseDateTimeLike(item.expiresAtISO))))
-      .map((item) => ({
-        id: `document-${item.id}`,
-        kind: 'document',
-        title: item.title,
-        startsAtISO: item.expiresAtISO!,
-        subtitle: item.category,
-        colorClass: 'bg-cyan-500',
-        source: item,
-      }));
-
-    return [...otherItems, ...reservationItems, ...documentItems];
-  }, [commonSpaceNameById, dates, documents, reservations, weekDays]);
+    return [...otherItems, ...reservationItems];
+  }, [commonSpaceNameById, dates, reservations, weekDays]);
 
   const openCreationChooser = (date?: Date) => {
     setCreationChooserOpen(true);
@@ -366,13 +341,81 @@ export default function AgendaPage() {
     setActiveCreateKind(undefined);
     setEditingDate(undefined);
     setSelectedItem(undefined);
+    setItemToRemove(undefined);
     setOtherForm(emptyOtherForm);
     setReservationForm(emptyReservationForm);
-    setDocumentForm(emptyDocumentForm);
+  };
+
+  const removeItem = async (item: CalendarItem) => {
+    setSaving(true);
+    try {
+      if (item.kind === 'other') {
+        await dashboardApi.dates.remove(item.source.id);
+        showToast({ tone: 'success', title: 'Item removido' });
+      } else {
+        await dashboardApi.commonSpaceReservations.remove(item.source.id);
+        showToast({ tone: 'success', title: 'Reserva removida' });
+      }
+
+      setItemToRemove(undefined);
+      setSelectedItem(undefined);
+      await load();
+    } catch (removeError) {
+      showToast({
+        tone: 'error',
+        title: 'Falha ao remover item',
+        description: removeError instanceof Error ? removeError.message : 'Tente novamente.',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const moveItem = async ({ itemId, targetDayKey, targetHour }: DragPayload) => {
+    const item = calendarItems.find((entry) => entry.id === itemId);
+    const targetDay = weekDays.find((day) => toDateKey(day) === targetDayKey);
+
+    if (!item || !targetDay) {
+      return;
+    }
+
+    const targetStart = createDateAtHour(targetDay, targetHour);
+
+    try {
+      if (item.kind === 'other') {
+        await dashboardApi.dates.update(item.source.id, {
+          title: item.source.title,
+          dateISO: toDateTimeLocalValue(targetStart),
+          type: item.source.type,
+          notes: item.source.notes ?? undefined,
+        });
+      } else {
+        const currentStart = parseDateTimeLike(item.source.startAtISO);
+        const currentEnd = parseDateTimeLike(item.source.endAtISO);
+        const durationMs = currentEnd.getTime() - currentStart.getTime();
+        const targetEnd = new Date(targetStart.getTime() + durationMs);
+
+        await dashboardApi.commonSpaceReservations.update(item.source.id, {
+          commonSpaceId: item.source.commonSpaceId,
+          title: item.source.title,
+          notes: item.source.notes ?? undefined,
+          startAtISO: toDateTimeLocalValue(targetStart),
+          endAtISO: toDateTimeLocalValue(targetEnd),
+        });
+      }
+
+      await load();
+    } catch (moveError) {
+      showToast({
+        tone: 'error',
+        title: 'Falha ao mover item',
+        description: moveError instanceof Error ? moveError.message : 'Tente novamente.',
+      });
+    }
   };
 
   const beginCreateFlow = (kind: CreationKind) => {
-    const baseDateISO = creationPromptDate ? toLocalDateTimeInput(creationPromptDate.toISOString()) : '';
+    const baseDateISO = creationPromptDate ? toDateTimeLocalValue(creationPromptDate) : '';
 
     setCreationChooserOpen(false);
 
@@ -388,14 +431,8 @@ export default function AgendaPage() {
         title: '',
         notes: '',
         startAtISO: baseDateISO,
-        endAtISO: endDate ? toLocalDateTimeInput(endDate.toISOString()) : '',
-      });
-    }
-
-    if (kind === 'document') {
-      setDocumentForm({
-        ...emptyDocumentForm,
-        expiresAtISO: baseDateISO,
+        endAtISO: endDate ? toDateTimeLocalValue(endDate) : '',
+        isAllDay: false,
       });
     }
 
@@ -437,7 +474,7 @@ export default function AgendaPage() {
       if (editingDate) {
         await dashboardApi.dates.update(editingDate.id, {
           title: otherForm.title.trim(),
-          dateISO: new Date(otherForm.dateISO).toISOString(),
+          dateISO: otherForm.dateISO,
           type: otherForm.type.trim(),
           notes: otherForm.notes.trim() || undefined,
         });
@@ -445,7 +482,7 @@ export default function AgendaPage() {
       } else {
         await dashboardApi.dates.create({
           title: otherForm.title.trim(),
-          dateISO: new Date(otherForm.dateISO).toISOString(),
+          dateISO: otherForm.dateISO,
           type: otherForm.type.trim(),
           notes: otherForm.notes.trim() || undefined,
         });
@@ -499,39 +536,32 @@ export default function AgendaPage() {
     }
   };
 
-  const saveDocument = async () => {
-    if (!documentForm.title.trim() || !documentForm.category.trim() || !documentForm.expiresAtISO) {
-      showToast({
-        tone: 'error',
-        title: 'Campos obrigatorios',
-        description: 'Preencha titulo, categoria e data.',
-      });
+  useEffect(() => {
+    if (!reservationForm.isAllDay || !selectedReservationSpace) {
       return;
     }
 
-    setSaving(true);
-    try {
-      const fileUrl = documentForm.file ? await uploadDocumentFile(documentForm.file) : undefined;
-      await dashboardApi.documents.upload({
-        title: documentForm.title.trim(),
-        category: documentForm.category.trim(),
-        description: documentForm.description.trim() || undefined,
-        expiresAtISO: new Date(documentForm.expiresAtISO).toISOString(),
-        fileUrl,
-      });
-      showToast({ tone: 'success', title: 'Documento criado' });
-      closeAllModals();
-      await load();
-    } catch (saveError) {
-      showToast({
-        tone: 'error',
-        title: 'Falha ao criar documento',
-        description: saveError instanceof Error ? saveError.message : 'Tente novamente.',
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+    setReservationForm((prev) => {
+      const baseStart = prev.startAtISO || prev.endAtISO;
+      const baseEnd = prev.endAtISO || prev.startAtISO;
+      if (!baseStart && !baseEnd) {
+        return prev;
+      }
+
+      const nextStart = applyTimeToLocalDateTime(baseStart || baseEnd, minutesToTime(selectedReservationSpace.openMinutes));
+      const nextEnd = applyTimeToLocalDateTime(baseEnd || baseStart, minutesToTime(selectedReservationSpace.closeMinutes));
+
+      if (nextStart === prev.startAtISO && nextEnd === prev.endAtISO) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        startAtISO: nextStart,
+        endAtISO: nextEnd,
+      };
+    });
+  }, [reservationForm.isAllDay, selectedReservationSpace]);
 
   return (
     <div className="space-y-6">
@@ -563,7 +593,7 @@ export default function AgendaPage() {
       <Card className="border-slate-200/80 dark:border-slate-800">
         <CardHeader className="border-b border-slate-200/80 dark:border-slate-800">
           <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Agenda semanal</CardTitle>
-          <CardDescription>Calendario da semana com reservas, documentos e outros compromissos.</CardDescription>
+          <CardDescription>Calendario da semana com reservas e outros compromissos.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -598,7 +628,25 @@ export default function AgendaPage() {
                       return (
                         <div
                           key={`${dayKey}-${hour}`}
-                          className="relative min-h-20 border-b border-r border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900"
+                          className={`relative min-h-20 border-b border-r border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900 ${dragOverCell === `${dayKey}-${hour}` ? 'ring-2 ring-emerald-400 ring-inset' : ''}`}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setDragOverCell(`${dayKey}-${hour}`);
+                          }}
+                          onDragLeave={() => {
+                            if (dragOverCell === `${dayKey}-${hour}`) {
+                              setDragOverCell(undefined);
+                            }
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const itemId = event.dataTransfer.getData('text/plain');
+                            setDragOverCell(undefined);
+                            if (!itemId) {
+                              return;
+                            }
+                            void moveItem({ itemId, targetDayKey: dayKey, targetHour: hour });
+                          }}
                         >
                           <button
                             type="button"
@@ -612,27 +660,53 @@ export default function AgendaPage() {
                           />
                           <div className="space-y-2">
                             {items.map((item) => (
-                              <button
+                              <div
                                 key={item.id}
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  if (item.kind === 'other') {
-                                    openEditOther(item.source);
-                                    return;
-                                  }
-                                  setSelectedItem(item);
+                                draggable
+                                onDragStart={(event) => {
+                                  event.dataTransfer.setData('text/plain', item.id);
+                                  event.dataTransfer.effectAllowed = 'move';
+                                  setDraggingItemId(item.id);
                                 }}
-                                className="relative z-10 block w-full rounded-xl border border-slate-200 bg-slate-50 p-2 text-left shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+                                onDragEnd={() => {
+                                  setDraggingItemId(undefined);
+                                  setDragOverCell(undefined);
+                                }}
+                                className={`relative z-10 block w-full rounded-xl border border-slate-200 bg-slate-50 p-2 pr-8 text-left shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 ${draggingItemId === item.id ? 'opacity-60' : ''}`}
                               >
-                                <div className="flex items-start gap-2">
-                                  <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.colorClass}`} />
-                                  <div className="min-w-0">
-                                    <p className="truncate text-sm font-medium text-slate-950 dark:text-slate-50">{item.title}</p>
-                                    <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{item.subtitle}</p>
+                                <button
+                                  type="button"
+                                  aria-label="Remover item"
+                                  className="absolute right-2 top-2 rounded-md p-1 text-slate-400 transition hover:bg-slate-200 hover:text-rose-600 dark:hover:bg-slate-800"
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    setItemToRemove(item);
+                                  }}
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (item.kind === 'other') {
+                                      openEditOther(item.source);
+                                      return;
+                                    }
+                                    setSelectedItem(item);
+                                  }}
+                                  className="block w-full text-left"
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.colorClass}`} />
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-medium text-slate-950 dark:text-slate-50">{item.title}</p>
+                                      <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{item.subtitle}</p>
+                                    </div>
                                   </div>
-                                </div>
-                              </button>
+                                </button>
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -700,6 +774,11 @@ export default function AgendaPage() {
                   </option>
                 ))}
               </select>
+              {selectedReservationSpace ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Janela permitida: {minutesToTime(selectedReservationSpace.openMinutes)} ate {minutesToTime(selectedReservationSpace.closeMinutes)}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
@@ -728,6 +807,33 @@ export default function AgendaPage() {
               />
             </div>
 
+            <div className="space-y-2 md:col-span-2">
+              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={reservationForm.isAllDay}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setReservationForm((prev) => {
+                      if (!checked || !selectedReservationSpace) {
+                        return { ...prev, isAllDay: checked };
+                      }
+
+                      const baseStart = prev.startAtISO || prev.endAtISO;
+                      const baseEnd = prev.endAtISO || prev.startAtISO;
+                      return {
+                        ...prev,
+                        isAllDay: true,
+                        startAtISO: applyTimeToLocalDateTime(baseStart, minutesToTime(selectedReservationSpace.openMinutes)),
+                        endAtISO: applyTimeToLocalDateTime(baseEnd, minutesToTime(selectedReservationSpace.closeMinutes)),
+                      };
+                    });
+                  }}
+                />
+                Dia todo
+              </label>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="reservation-start">Inicio</Label>
               <Input
@@ -735,6 +841,7 @@ export default function AgendaPage() {
                 type="datetime-local"
                 value={reservationForm.startAtISO}
                 onChange={(event) => setReservationForm((prev) => ({ ...prev, startAtISO: event.target.value }))}
+                disabled={reservationForm.isAllDay}
               />
             </div>
 
@@ -745,6 +852,7 @@ export default function AgendaPage() {
                 type="datetime-local"
                 value={reservationForm.endAtISO}
                 onChange={(event) => setReservationForm((prev) => ({ ...prev, endAtISO: event.target.value }))}
+                disabled={reservationForm.isAllDay}
               />
             </div>
 
@@ -764,73 +872,6 @@ export default function AgendaPage() {
               </Button>
               <Button onClick={() => void saveReservation()} disabled={saving}>
                 {saving ? 'Salvando...' : 'Criar reserva'}
-              </Button>
-            </div>
-          </div>
-        </ModalFrame>
-      ) : null}
-
-      {activeCreateKind === 'document' ? (
-        <ModalFrame
-          title="Novo documento"
-          description="Cadastre um documento com data e, se quiser, anexe o arquivo."
-          onClose={closeAllModals}
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="document-title">Titulo</Label>
-              <Input
-                id="document-title"
-                value={documentForm.title}
-                onChange={(event) => setDocumentForm((prev) => ({ ...prev, title: event.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="document-category">Categoria</Label>
-              <Input
-                id="document-category"
-                value={documentForm.category}
-                onChange={(event) => setDocumentForm((prev) => ({ ...prev, category: event.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="document-date">Data de referencia</Label>
-              <Input
-                id="document-date"
-                type="datetime-local"
-                value={documentForm.expiresAtISO}
-                onChange={(event) => setDocumentForm((prev) => ({ ...prev, expiresAtISO: event.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="document-file">Arquivo</Label>
-              <Input
-                id="document-file"
-                type="file"
-                accept="application/pdf"
-                onChange={(event) => setDocumentForm((prev) => ({ ...prev, file: event.target.files?.[0] ?? null }))}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="document-description">Descricao</Label>
-              <textarea
-                id="document-description"
-                className="input min-h-28 resize-y py-3"
-                value={documentForm.description}
-                onChange={(event) => setDocumentForm((prev) => ({ ...prev, description: event.target.value }))}
-              />
-            </div>
-
-            <div className="md:col-span-2 flex justify-end gap-3">
-              <Button variant="outline" onClick={closeAllModals} disabled={saving}>
-                Cancelar
-              </Button>
-              <Button onClick={() => void saveDocument()} disabled={saving}>
-                {saving ? 'Salvando...' : 'Criar documento'}
               </Button>
             </div>
           </div>
@@ -889,7 +930,11 @@ export default function AgendaPage() {
       {selectedItem ? (
         <ModalFrame
           title={selectedItem.title}
-          description={selectedItem.kind === 'reservation' ? 'Detalhes da reserva.' : 'Detalhes do documento.'}
+          description={
+            selectedItem.kind === 'reservation'
+              ? 'Detalhes da reserva.'
+              : 'Detalhes do item.'
+          }
           onClose={closeAllModals}
         >
           {selectedItem.kind === 'reservation' ? (
@@ -902,13 +947,33 @@ export default function AgendaPage() {
             </div>
           ) : (
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
-              <p><strong>Categoria:</strong> {selectedItem.source.category}</p>
-              <p><strong>Data:</strong> {selectedItem.source.expiresAtISO ? formatDateTimeBR(selectedItem.source.expiresAtISO) : 'Sem data definida'}</p>
-              <p><strong>Descricao:</strong> {selectedItem.source.description?.trim() || 'Sem descricao.'}</p>
+              <p><strong>Tipo:</strong> {selectedItem.source.type}</p>
+              <p><strong>Data:</strong> {formatDateTimeBR(selectedItem.source.dateISO)}</p>
+              <p><strong>Observacoes:</strong> {selectedItem.source.notes?.trim() || 'Sem observacoes.'}</p>
             </div>
           )}
         </ModalFrame>
       ) : null}
+
+      <ConfirmDialog
+        open={!!itemToRemove}
+        title={itemToRemove?.kind === 'reservation' ? 'Remover reserva' : 'Remover item'}
+        description={
+          itemToRemove
+            ? itemToRemove.kind === 'reservation'
+              ? `Deseja remover a reserva "${itemToRemove.title}" da agenda?`
+              : `Deseja remover o item "${itemToRemove.title}" da agenda?`
+            : ''
+        }
+        confirmLabel={saving ? 'Removendo...' : 'Remover'}
+        destructive
+        onCancel={() => setItemToRemove(undefined)}
+        onConfirm={() => {
+          if (itemToRemove && !saving) {
+            void removeItem(itemToRemove);
+          }
+        }}
+      />
     </div>
   );
 }

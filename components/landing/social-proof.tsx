@@ -1,9 +1,9 @@
 export function LandingSocialProof() {
   const stats = [
-    { value: "500+", label: "Condominios ativos", company: "Brasil inteiro" },
-    { value: "98%", label: "Satisfacao dos usuarios", company: "NPS Score" },
-    { value: "50M+", label: "Em transacoes gerenciadas", company: "Por ano" },
-    { value: "24/7", label: "Suporte disponivel", company: "Sempre online" },
+    { value: "Painel", label: "Administracao", company: "Dashboard, moradores e chamados" },
+    { value: "Mapa", label: "Blocos e unidades", company: "Estrutura do condominio" },
+    { value: "Agenda", label: "Datas e reservas", company: "Compromissos do dia a dia" },
+    { value: "App", label: "Morador", company: "Boletos, documentos e ocorrencias" },
   ]
 
   return (
@@ -20,14 +20,14 @@ export function LandingSocialProof() {
           ))}
         </div>
 
-        {/* Testimonial */}
+        {/* Scope statement */}
         <div className="mt-12 flex flex-col items-center text-center">
           <blockquote className="max-w-2xl text-lg italic text-muted-foreground">
-            {'"'}O CondoHome transformou a forma como gerenciamos nosso condominio. A plataforma e intuitiva e nos economiza horas de trabalho toda semana.{'"'}
+            {'"'}A proposta desta pagina e mostrar somente o que o sistema ja tem hoje para uso no dia a dia do condominio.{'"'}
           </blockquote>
           <div className="mt-4">
-            <p className="font-medium text-foreground">Carlos Mendes</p>
-            <p className="text-sm text-muted-foreground">Sindico - Residencial Jardins</p>
+            <p className="font-medium text-foreground">Conteudo atual do sistema</p>
+            <p className="text-sm text-muted-foreground">Sem promessas fora do que ja esta implementado</p>
           </div>
         </div>
       </div>

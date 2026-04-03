@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Pencil, Plus, ReceiptText, Trash2, X } from 'lucide-react';
+import { FileText, Pencil, Plus, ReceiptText, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { Button } from '../../../components/ui/button';
@@ -11,6 +11,7 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { dashboardApi } from '../../../src/store/useDashboardStore';
+import { useDashboardStore } from '../../../src/store/useDashboardStore';
 import { showToast } from '../../../src/store/useToastStore';
 import type { Building, Floor, Resident, Unit } from '../../../../shared/src';
 
@@ -46,15 +47,15 @@ type ModalFrameProps = {
 
 function ModalFrame({ title, description, children, onClose }: ModalFrameProps) {
   return (
-    <div className="fixed inset-0 z-[90] min-h-screen min-h-dvh w-screen overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
-      <div className="flex min-h-screen min-h-dvh items-center justify-center p-4 py-6">
+    <div className="fixed inset-0 z-[90] h-dvh min-h-dvh w-screen overflow-y-auto bg-slate-950/60 backdrop-blur-sm">
+      <div className="flex min-h-dvh w-full items-center justify-center p-4 py-6">
       <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-slate-800">
           <div>
             <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">{title}</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
           </div>
-          <Button variant="ghost" size="sm" className="h-10 w-10 p-0" onClick={onClose} aria-label="Fechar modal">
+          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-50" onClick={onClose} aria-label="Fechar modal">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -67,6 +68,9 @@ function ModalFrame({ title, description, children, onClose }: ModalFrameProps) 
 
 export default function ResidentsPage() {
   const router = useRouter();
+  const state = useDashboardStore();
+  const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
+  const canManageFinance = currentUser?.role === 'ADMIN_COMPANY' || currentUser?.role === 'SYSTEM_ADMIN';
   const [residents, setResidents] = useState<Resident[]>([]);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
@@ -76,8 +80,10 @@ export default function ResidentsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | undefined>();
   const [residentForBoleto, setResidentForBoleto] = useState<GroupedResident | undefined>();
+  const [residentForDocument, setResidentForDocument] = useState<GroupedResident | undefined>();
   const [residentToRemove, setResidentToRemove] = useState<Resident | undefined>();
   const [selectedBoletoUnitId, setSelectedBoletoUnitId] = useState('');
+  const [selectedDocumentUnitId, setSelectedDocumentUnitId] = useState('');
   const [form, setForm] = useState<ResidentFormState>(emptyForm);
   const [search, setSearch] = useState('');
 
@@ -205,6 +211,10 @@ export default function ResidentsPage() {
   };
 
   const openBoletoFlow = (resident: GroupedResident) => {
+    if (!canManageFinance) {
+      return;
+    }
+
     if (resident.units.length <= 1) {
       const unitId = resident.units[0]?.id ?? resident.source.unitId;
       router.push(`/boletos?unitId=${unitId}`);
@@ -213,6 +223,17 @@ export default function ResidentsPage() {
 
     setResidentForBoleto(resident);
     setSelectedBoletoUnitId(resident.units[0]?.id ?? resident.source.unitId);
+  };
+
+  const openDocumentFlow = (resident: GroupedResident) => {
+    if (resident.units.length <= 1) {
+      const unitId = resident.units[0]?.id ?? resident.source.unitId;
+      router.push(`/documents?unitId=${unitId}`);
+      return;
+    }
+
+    setResidentForDocument(resident);
+    setSelectedDocumentUnitId(resident.units[0]?.id ?? resident.source.unitId);
   };
 
   const save = async () => {
@@ -257,34 +278,28 @@ export default function ResidentsPage() {
             .map((record) => dashboardApi.residents.remove(record.id)),
         );
 
-        await Promise.all(
-          addedUnitIds.map((unitId) =>
-            dashboardApi.residents.create({
-              unitId,
-              name: normalizedPayload.name,
-              email: normalizedPayload.email,
-              phone: normalizedPayload.phone,
-              isOwner: normalizedPayload.isOwner,
-            }),
-          ),
-        );
+        if (addedUnitIds.length > 0) {
+          await dashboardApi.residents.create({
+            unitIds: addedUnitIds,
+            name: normalizedPayload.name,
+            email: normalizedPayload.email,
+            phone: normalizedPayload.phone,
+            isOwner: normalizedPayload.isOwner,
+          });
+        }
 
         showToast({
           tone: 'success',
           title: 'Morador atualizado',
         });
       } else {
-        await Promise.all(
-          form.unitIds.map((unitId) =>
-            dashboardApi.residents.create({
-              unitId,
-              name: form.name.trim(),
-              email: form.email.trim(),
-              phone: form.phone.trim() || undefined,
-              isOwner: form.isOwner,
-            }),
-          ),
-        );
+        await dashboardApi.residents.create({
+          unitIds: form.unitIds,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim() || undefined,
+          isOwner: form.isOwner,
+        });
         showToast({
           tone: 'success',
           title: 'Morador criado',
@@ -466,6 +481,56 @@ export default function ResidentsPage() {
         </ModalFrame>
       ) : null}
 
+      {residentForDocument ? (
+        <ModalFrame
+          title="Selecionar unidade"
+          description={`Escolha a unidade de ${residentForDocument.source.name} para anexar o documento.`}
+          onClose={() => {
+            setResidentForDocument(undefined);
+            setSelectedDocumentUnitId('');
+          }}
+        >
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="document-unit">Unidade</Label>
+              <select
+                id="document-unit"
+                className="input"
+                value={selectedDocumentUnitId}
+                onChange={(event) => setSelectedDocumentUnitId(event.target.value)}
+              >
+                {residentForDocument.units.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setResidentForDocument(undefined);
+                  setSelectedDocumentUnitId('');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  router.push(`/documents?unitId=${selectedDocumentUnitId}`);
+                  setResidentForDocument(undefined);
+                  setSelectedDocumentUnitId('');
+                }}
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        </ModalFrame>
+      ) : null}
+
       <Card className="border-slate-200/80 dark:border-slate-800">
         <CardHeader className="flex flex-col gap-4 border-b border-slate-200/80 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -508,15 +573,21 @@ export default function ResidentsPage() {
                     <p><strong>Telefone:</strong> {resident.source.phone ?? 'Sem telefone'}</p>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => openBoletoFlow(resident)}>
-                      <ReceiptText className="h-4 w-4" />
-                      Anexar boleto
+                    <Button variant="outline" size="sm" className="gap-2 whitespace-nowrap" onClick={() => openDocumentFlow(resident)}>
+                      <FileText className="h-4 w-4" />
+                      Anexar documento
                     </Button>
+                    {canManageFinance ? (
+                      <Button variant="outline" size="sm" className="gap-2 whitespace-nowrap" onClick={() => openBoletoFlow(resident)}>
+                        <ReceiptText className="h-4 w-4" />
+                        Anexar boleto
+                      </Button>
+                    ) : null}
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => openEdit(resident)}>
                       <Pencil className="h-4 w-4" />
                       Editar
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-rose-700 dark:text-rose-300" onClick={() => setResidentToRemove(resident.source)}>
+                    <Button variant="outline" size="sm" className="gap-2 border-rose-200 bg-rose-50/80 text-rose-600 hover:bg-rose-100 dark:border-rose-800 dark:bg-transparent dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={() => setResidentToRemove(resident.source)}>
                       <Trash2 className="h-4 w-4" />
                       Remover
                     </Button>
@@ -535,7 +606,7 @@ export default function ResidentsPage() {
                   <th className="px-6 py-4 font-medium">E-mail</th>
                   <th className="px-6 py-4 font-medium">Telefone</th>
                   <th className="px-6 py-4 font-medium">Perfil</th>
-                  <th className="px-6 py-4 font-medium">Financeiro</th>
+                  {canManageFinance ? <th className="px-6 py-4 font-medium">Financeiro</th> : null}
                   <th className="px-6 py-4 font-medium text-right">Acoes</th>
                 </tr>
               </thead>
@@ -543,14 +614,14 @@ export default function ResidentsPage() {
                 {loading ? (
                   Array.from({ length: 6 }).map((_, index) => (
                     <tr key={index} className="border-b border-slate-200 dark:border-slate-800">
-                      <td className="px-6 py-4" colSpan={7}>
-                        <div className="grid gap-3 md:grid-cols-[1.1fr,0.8fr,1fr,0.9fr,0.7fr,0.8fr,1.1fr]">
+                      <td className="px-6 py-4" colSpan={canManageFinance ? 7 : 6}>
+                        <div className={`grid gap-3 ${canManageFinance ? 'md:grid-cols-[1.1fr,0.8fr,1fr,0.9fr,0.7fr,0.8fr,1.1fr]' : 'md:grid-cols-[1.2fr,0.9fr,1fr,0.9fr,0.8fr,1.1fr]'}`}>
                           <Skeleton className="h-10 w-full" />
                           <Skeleton className="h-10 w-full" />
                           <Skeleton className="h-10 w-full" />
                           <Skeleton className="h-10 w-full" />
                           <Skeleton className="h-10 w-full" />
-                          <Skeleton className="h-10 w-full" />
+                          {canManageFinance ? <Skeleton className="h-10 w-full" /> : null}
                           <Skeleton className="h-10 w-full" />
                         </div>
                       </td>
@@ -558,7 +629,7 @@ export default function ResidentsPage() {
                   ))
                 ) : filteredResidents.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <td colSpan={canManageFinance ? 7 : 6} className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
                       Nenhum morador encontrado para o filtro atual.
                     </td>
                   </tr>
@@ -586,23 +657,31 @@ export default function ResidentsPage() {
                           {resident.source.isOwner ? 'Proprietario(a)' : 'Morador(a)'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-2 text-slate-900 hover:text-slate-700 dark:text-slate-100 dark:hover:text-slate-300"
-                          onClick={() => openBoletoFlow(resident)}
-                        >
-                          <ReceiptText className="h-4 w-4" />
-                          Anexar boleto
-                        </button>
-                      </td>
+                      {canManageFinance ? (
+                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 whitespace-nowrap"
+                            onClick={() => openBoletoFlow(resident)}
+                          >
+                            <ReceiptText className="h-4 w-4" />
+                            Anexar boleto
+                          </Button>
+                        </td>
+                      ) : null}
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" className="gap-2 whitespace-nowrap" onClick={() => openDocumentFlow(resident)}>
+                            <FileText className="h-4 w-4" />
+                            Anexar documento
+                          </Button>
                           <Button variant="outline" size="sm" className="gap-2" onClick={() => openEdit(resident)}>
                             <Pencil className="h-4 w-4" />
                             Editar
                           </Button>
-                          <Button variant="outline" size="sm" className="gap-2 text-rose-700 dark:text-rose-300" onClick={() => setResidentToRemove(resident.source)}>
+                          <Button variant="outline" size="sm" className="gap-2 border-rose-200 bg-rose-50/80 text-rose-600 hover:bg-rose-100 dark:border-rose-800 dark:bg-transparent dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={() => setResidentToRemove(resident.source)}>
                             <Trash2 className="h-4 w-4" />
                             Remover
                           </Button>

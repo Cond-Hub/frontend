@@ -16,8 +16,8 @@
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
-    --accent: 43 96% 56%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 193 88% 56%;
+    --accent-foreground: 222 47% 5%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 90%;
@@ -39,8 +39,8 @@
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 12%;
     --muted-foreground: 215 20% 65%;
-    --accent: 43 96% 56%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 193 88% 56%;
+    --accent-foreground: 222 47% 5%;
     --destructive: 0 63% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 217 33% 15%;
@@ -82,8 +82,8 @@
   --secondary-foreground: 210 40% 98%;
   --muted: 217 33% 12%;
   --muted-foreground: 215 20% 65%;
-  --accent: 43 96% 56%;
-  --accent-foreground: 0 0% 9%;
+  --accent: 193 88% 56%;
+  --accent-foreground: 222 47% 5%;
   --destructive: 0 63% 50%;
   --destructive-foreground: 0 0% 100%;
   --border: 217 33% 15%;
@@ -141,7 +141,7 @@ a {
 }
 
 .btn-danger {
-  @apply rounded-xl border border-rose-300 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/30;
+  @apply rounded-xl border border-rose-200 bg-rose-50/80 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-transparent dark:text-rose-300 dark:hover:bg-rose-950/30;
 }
 
 /* Dashboard styles */

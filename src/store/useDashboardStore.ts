@@ -9,6 +9,7 @@ import {
   type CommonSpaceReservation,
   type Condo,
   type Boleto,
+  type BoletoPixCharge,
   type Document,
   type Floor,
   type ImportantDate,
@@ -21,6 +22,9 @@ import {
   type UnitStatus,
   type User,
   type UserRole,
+  type WalletPayment,
+  type WalletSummary,
+  type WalletWithdrawal,
 } from '../../../shared/src';
 
 export const STORE_KEY = 'condohome-web-v3';
@@ -63,6 +67,7 @@ type BackendCondo = {
   prefix: string;
   name: string;
   address: string;
+  type: 'ESSENTIAL' | 'COMPLETE';
 };
 
 type BackendUser = {
@@ -116,7 +121,7 @@ type BackendCommonSpaceReservation = {
   createdAt: string;
 };
 type BackendCreateResidentResponse = {
-  resident: BackendResident;
+  residents: BackendResident[];
   user: BackendUser;
   message: string;
 };
@@ -154,6 +159,8 @@ type BackendOccurrenceAttachment = {
 type BackendDocument = {
   id: string;
   condoId: string;
+  unitId?: string;
+  unitLabel?: string;
   title: string;
   category: string;
   description?: string;
@@ -172,6 +179,7 @@ type BackendBoleto = {
   condoId: string;
   unitId: string;
   unitLabel: string;
+  amountCents: number;
   referenceMonth: string;
   dueDate: string;
   status: 'OPEN' | 'OVERDUE' | 'PAID';
@@ -188,11 +196,59 @@ type BackendBoleto = {
     uploadedAt: string;
   }>;
 };
+type BackendBoletoPixCharge = {
+  id: string;
+  boletoId: string;
+  amountCents: number;
+  platformFeeCents: number;
+  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED' | 'REFUNDED';
+  brCode: string;
+  brCodeBase64: string;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  expiresAtUtc: string;
+  paidAtUtc?: string;
+  receiptUrl?: string;
+};
 type BackendBoletoUploadUrl = {
   storageRef: string;
   uploadUrl: string;
   expiresAtUtc: string;
   contentType?: string;
+};
+type BackendWalletPayment = {
+  id: string;
+  boletoId: string;
+  unitLabel: string;
+  referenceMonth: string;
+  amountCents: number;
+  platformFeeCents: number;
+  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED' | 'REFUNDED';
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  paidAtUtc?: string;
+  receiptUrl?: string;
+};
+type BackendWalletWithdrawal = {
+  id: string;
+  amountCents: number;
+  platformFeeCents: number;
+  pixKeyType: 'CPF' | 'CNPJ' | 'PHONE' | 'EMAIL' | 'RANDOM';
+  pixKey: string;
+  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED' | 'REFUNDED';
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  completedAtUtc?: string;
+  receiptUrl?: string;
+};
+type BackendWalletSummary = {
+  totalReceivedCents: number;
+  totalFeesCents: number;
+  availableToWithdrawCents: number;
+  pendingIncomingCents: number;
+  pendingWithdrawalCents: number;
+  recentPayments: BackendWalletPayment[];
+  recentWithdrawals: BackendWalletWithdrawal[];
 };
 type BackendImportantDate = { id: string; condoId: string; title: string; date: string; type: string; notes?: string };
 type BackendNotification = {
@@ -547,6 +603,7 @@ const mapCondo = (value: BackendCondo): Condo => ({
   prefix: value.prefix,
   name: value.name,
   address: value.address,
+  type: value.type,
 });
 
 const mapUser = (value: BackendUser, accessibleCondos: Condo[]): User => ({
@@ -606,17 +663,21 @@ const mapOccurrence = (value: BackendOccurrence): Occurrence => ({
 const mapDocument = (value: BackendDocument): Document => ({
   id: value.id,
   condoId: value.condoId,
+  unitId: value.unitId,
+  unitLabel: value.unitLabel,
   title: value.title,
   category: value.category,
   description: value.description,
   uploadedAtISO: value.uploadedAt,
   expiresAtISO: value.expiresAt,
+  fileUrl: value.fileUrl,
 });
 const mapBoleto = (value: BackendBoleto): Boleto => ({
   id: value.id,
   condoId: value.condoId,
   unitId: value.unitId,
   unitLabel: value.unitLabel,
+  amountCents: value.amountCents,
   referenceMonthISO: value.referenceMonth,
   dueDateISO: value.dueDate,
   status: value.status,
@@ -643,6 +704,54 @@ const mapBoleto = (value: BackendBoleto): Boleto => ({
         uploadedAtISO: value.uploadedAt,
       },
     ],
+});
+const mapBoletoPixCharge = (value: BackendBoletoPixCharge): BoletoPixCharge => ({
+  id: value.id,
+  boletoId: value.boletoId,
+  amountCents: value.amountCents,
+  platformFeeCents: value.platformFeeCents,
+  status: value.status,
+  brCode: value.brCode,
+  brCodeBase64: value.brCodeBase64,
+  createdAtUtc: value.createdAtUtc,
+  updatedAtUtc: value.updatedAtUtc,
+  expiresAtUtc: value.expiresAtUtc,
+  paidAtUtc: value.paidAtUtc,
+  receiptUrl: value.receiptUrl,
+});
+const mapWalletPayment = (value: BackendWalletPayment): WalletPayment => ({
+  id: value.id,
+  boletoId: value.boletoId,
+  unitLabel: value.unitLabel,
+  referenceMonthISO: value.referenceMonth,
+  amountCents: value.amountCents,
+  platformFeeCents: value.platformFeeCents,
+  status: value.status,
+  createdAtUtc: value.createdAtUtc,
+  updatedAtUtc: value.updatedAtUtc,
+  paidAtUtc: value.paidAtUtc,
+  receiptUrl: value.receiptUrl,
+});
+const mapWalletWithdrawal = (value: BackendWalletWithdrawal): WalletWithdrawal => ({
+  id: value.id,
+  amountCents: value.amountCents,
+  platformFeeCents: value.platformFeeCents,
+  pixKeyType: value.pixKeyType,
+  pixKey: value.pixKey,
+  status: value.status,
+  createdAtUtc: value.createdAtUtc,
+  updatedAtUtc: value.updatedAtUtc,
+  completedAtUtc: value.completedAtUtc,
+  receiptUrl: value.receiptUrl,
+});
+const mapWalletSummary = (value: BackendWalletSummary): WalletSummary => ({
+  totalReceivedCents: value.totalReceivedCents,
+  totalFeesCents: value.totalFeesCents,
+  availableToWithdrawCents: value.availableToWithdrawCents,
+  pendingIncomingCents: value.pendingIncomingCents,
+  pendingWithdrawalCents: value.pendingWithdrawalCents,
+  recentPayments: value.recentPayments.map(mapWalletPayment),
+  recentWithdrawals: value.recentWithdrawals.map(mapWalletWithdrawal),
 });
 const mapImportantDate = (value: BackendImportantDate): ImportantDate => ({
   id: value.id,
@@ -961,6 +1070,7 @@ interface DocumentFilters {
   query?: string;
   category?: string;
   expiringSoonDays?: number;
+  unitId?: string;
 }
 
 export const dashboardApi = {
@@ -1283,6 +1393,14 @@ export const dashboardApi = {
         return undefined;
       }
     },
+    update: async (unitId: string, label: string) => {
+      const data = await requestJson<BackendUnit>(`/units/${unitId}`, {
+        method: 'PATCH',
+        requireTenant: true,
+        body: { label },
+      });
+      return mapUnit(data);
+    },
     setStatus: async (unitId: string, status: UnitStatus) => {
       const data = await requestJson<BackendUnit>(`/units/${unitId}/status`, {
         method: 'PATCH',
@@ -1304,7 +1422,7 @@ export const dashboardApi = {
       return dashboardApi.residents.list(unitId);
     },
     create: async (payload: {
-      unitId: string;
+      unitIds: string[];
       name: string;
       email: string;
       phone?: string;
@@ -1314,7 +1432,7 @@ export const dashboardApi = {
         method: 'POST',
         requireTenant: true,
         body: {
-          unitId: payload.unitId,
+          unitIds: payload.unitIds,
           name: payload.name,
           email: payload.email,
           phone: payload.phone,
@@ -1323,7 +1441,7 @@ export const dashboardApi = {
       });
 
         return {
-          resident: mapResident(data.resident),
+          residents: data.residents.map(mapResident),
           message: data.message,
         };
       },
@@ -1485,6 +1603,28 @@ export const dashboardApi = {
       });
       return mapCommonSpaceReservation(data);
     },
+    update: async (id: string, payload: {
+      commonSpaceId: string;
+      title: string;
+      notes?: string;
+      startAtISO: string;
+      endAtISO: string;
+      residentId?: string;
+    }) => {
+      const data = await requestJson<BackendCommonSpaceReservation>(`/common-space-reservations/${id}`, {
+        method: 'PUT',
+        requireTenant: true,
+        body: {
+          commonSpaceId: payload.commonSpaceId,
+          title: payload.title,
+          notes: payload.notes,
+          startAt: payload.startAtISO,
+          endAt: payload.endAtISO,
+          residentId: payload.residentId,
+        },
+      });
+      return mapCommonSpaceReservation(data);
+    },
     remove: async (id: string) => {
       await requestJson<void>(`/common-space-reservations/${id}`, {
         method: 'DELETE',
@@ -1499,6 +1639,7 @@ export const dashboardApi = {
         `/documents${toQueryString({
           category: filters.category,
           expiringSoon: filters.expiringSoonDays,
+          unitId: filters.unitId,
         })}`,
         { requireTenant: true }
       );
@@ -1522,6 +1663,7 @@ export const dashboardApi = {
       });
     },
     upload: async (payload: {
+      unitId: string;
       title: string;
       category: string;
       description?: string;
@@ -1532,6 +1674,29 @@ export const dashboardApi = {
         method: 'POST',
         requireTenant: true,
         body: {
+          unitId: payload.unitId,
+          title: payload.title,
+          category: payload.category,
+          description: payload.description,
+          expiresAt: payload.expiresAtISO,
+          fileUrl: payload.fileUrl,
+        },
+      });
+      return mapDocument(data);
+    },
+    update: async (documentId: string, payload: {
+      unitId: string;
+      title: string;
+      category: string;
+      description?: string;
+      expiresAtISO?: string;
+      fileUrl?: string;
+    }) => {
+      const data = await requestJson<BackendDocument>(`/documents/${documentId}`, {
+        method: 'PUT',
+        requireTenant: true,
+        body: {
+          unitId: payload.unitId,
           title: payload.title,
           category: payload.category,
           description: payload.description,
@@ -1550,6 +1715,12 @@ export const dashboardApi = {
         },
       });
       return mapDocument(data);
+    },
+    remove: async (documentId: string) => {
+      await requestJson<void>(`/documents/${documentId}`, {
+        method: 'DELETE',
+        requireTenant: true,
+      });
     },
   },
 
@@ -1576,6 +1747,7 @@ export const dashboardApi = {
     },
     create: async (payload: {
       unitId: string;
+      amountCents: number;
       referenceMonthISO: string;
       dueDateISO: string;
       notes?: string;
@@ -1587,6 +1759,7 @@ export const dashboardApi = {
         requireTenant: true,
         body: {
           unitId: payload.unitId,
+          amountCents: payload.amountCents,
           referenceMonth: payload.referenceMonthISO,
           dueDate: payload.dueDateISO,
           notes: payload.notes,
@@ -1601,6 +1774,7 @@ export const dashboardApi = {
       boletoId: string,
       payload: {
         unitId: string;
+        amountCents: number;
         referenceMonthISO: string;
         dueDateISO: string;
         notes?: string;
@@ -1612,6 +1786,7 @@ export const dashboardApi = {
         requireTenant: true,
         body: {
           unitId: payload.unitId,
+          amountCents: payload.amountCents,
           referenceMonth: payload.referenceMonthISO,
           dueDate: payload.dueDateISO,
           notes: payload.notes,
@@ -1634,6 +1809,53 @@ export const dashboardApi = {
         body: { status },
       });
       return mapBoleto(data);
+    },
+    getPixCharge: async (boletoId: string) => {
+      const data = await requestJson<BackendBoletoPixCharge>(`/boletos/${boletoId}/pix`, {
+        requireTenant: true,
+      });
+      return mapBoletoPixCharge(data);
+    },
+    createOrGetPixCharge: async (boletoId: string) => {
+      const data = await requestJson<BackendBoletoPixCharge>(`/boletos/${boletoId}/pix`, {
+        method: 'POST',
+        requireTenant: true,
+      });
+      return mapBoletoPixCharge(data);
+    },
+  },
+
+  wallet: {
+    getSummary: async () => {
+      const data = await requestJson<BackendWalletSummary>('/wallet/summary', {
+        requireTenant: true,
+      });
+      return mapWalletSummary(data);
+    },
+    listPayments: async () => {
+      const data = await requestJson<BackendWalletPayment[]>('/wallet/payments', {
+        requireTenant: true,
+      });
+      return data.map(mapWalletPayment);
+    },
+    listWithdrawals: async () => {
+      const data = await requestJson<BackendWalletWithdrawal[]>('/wallet/withdrawals', {
+        requireTenant: true,
+      });
+      return data.map(mapWalletWithdrawal);
+    },
+    createWithdrawal: async (payload: {
+      amountCents: number;
+      pixKeyType: WalletWithdrawal['pixKeyType'];
+      pixKey: string;
+      description?: string;
+    }) => {
+      const data = await requestJson<BackendWalletWithdrawal>('/wallet/withdrawals', {
+        method: 'POST',
+        requireTenant: true,
+        body: payload,
+      });
+      return mapWalletWithdrawal(data);
     },
   },
 
@@ -1670,6 +1892,12 @@ export const dashboardApi = {
         },
       });
       return mapImportantDate(data);
+    },
+    remove: async (id: string) => {
+      await requestJson<void>(`/dates/${id}`, {
+        method: 'DELETE',
+        requireTenant: true,
+      });
     },
   },
 };

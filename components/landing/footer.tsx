@@ -1,23 +1,22 @@
 import Link from "next/link"
+import { CondoHomeBrandImage } from "@/components/brand/condohome-brand-image"
 
 const footerLinks = {
   produto: [
     { label: "Funcionalidades", href: "#features" },
     { label: "Planos", href: "#pricing" },
-    { label: "Integracoes", href: "#" },
-    { label: "Atualizacoes", href: "#" },
+    { label: "Perguntas frequentes", href: "#faq" },
+    { label: "Entrar", href: "/login" },
   ],
   empresa: [
-    { label: "Sobre", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Carreiras", href: "#" },
-    { label: "Contato", href: "#" },
+    { label: "Painel", href: "/login" },
+    { label: "Planos e cobranca", href: "/saas" },
   ],
   recursos: [
-    { label: "Documentacao", href: "#" },
-    { label: "Central de Ajuda", href: "#" },
-    { label: "Status", href: "#" },
-    { label: "API", href: "#" },
+    { label: "Mapa", href: "#features" },
+    { label: "Boletos", href: "#features" },
+    { label: "Agenda", href: "#features" },
+    { label: "Moradores", href: "#features" },
   ],
   legal: [
     { label: "Privacidade", href: "#" },
@@ -63,14 +62,11 @@ export function LandingFooter() {
         <div className="grid gap-8 lg:grid-cols-6">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">C</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">CondoHome</span>
+            <Link href="/" className="flex items-center">
+              <CondoHomeBrandImage className="h-10 w-auto text-foreground" />
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              A plataforma completa para gestao de condominios. Simplifique a administracao e conecte moradores.
+              Sistema para organizar moradores, unidades, chamados, agenda, boletos e reservas no dia a dia do condominio.
             </p>
             {/* Social links */}
             <div className="mt-6 flex gap-4">
@@ -144,7 +140,7 @@ export function LandingFooter() {
         {/* Bottom */}
         <div className="mt-12 border-t border-border pt-8">
           <p className="text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} CondoHome. Todos os direitos reservados.
+            &copy; {new Date().getFullYear()} CondHub. Todos os direitos reservados.
           </p>
         </div>
       </div>

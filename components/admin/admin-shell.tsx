@@ -35,7 +35,18 @@ export function AdminShell({ children }: AdminShellProps) {
   const currentUser = state.currentUserId
     ? state.users[state.currentUserId]
     : undefined;
-  const currentSection = getAdminSectionByPathname(pathname ?? "/dashboard");
+  const activeCondo = state.activeCondoId
+    ? state.condos[state.activeCondoId]
+    : undefined;
+  const canManageFinance =
+    currentUser?.role === "ADMIN_COMPANY" || currentUser?.role === "SYSTEM_ADMIN";
+  const visibleSections = adminSections.filter(
+    (section) =>
+      ((section.id !== "boletos" && section.id !== "payments") || canManageFinance) &&
+      (section.id !== "payments" || activeCondo?.type === "COMPLETE"),
+  );
+  const requestedSection = getAdminSectionByPathname(pathname ?? "/dashboard");
+  const currentSection = visibleSections.find((section) => section.id === requestedSection.id) ?? visibleSections[0];
   const collapsedNav = desktopCollapsed && !mobileOpen;
 
   useEffect(() => {
@@ -71,8 +82,13 @@ export function AdminShell({ children }: AdminShellProps) {
 
     if (!currentUser) {
       router.replace("/login");
+      return;
     }
-  }, [currentUser, router, state.bootstrapped, state.hydrationComplete]);
+
+    if (pathname && !visibleSections.some((section) => section.href === pathname)) {
+      router.replace(visibleSections[0]?.href ?? "/dashboard");
+    }
+  }, [currentUser, pathname, router, state.bootstrapped, state.hydrationComplete, visibleSections]);
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -81,14 +97,14 @@ export function AdminShell({ children }: AdminShellProps) {
       >
         <div className="flex w-full items-center justify-center">
           <CondoHomeBrandImage
-            variant="mark"
-            className="h-16 w-16 object-contain"
+            variant={collapsedNav ? "mark" : "logo"}
+            className={collapsedNav ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain"}
           />
         </div>
       </div>
 
       <nav className="space-y-1">
-        {adminSections.map((section) => {
+        {visibleSections.map((section) => {
           const Icon = section.icon;
           const active = currentSection.id === section.id;
 
@@ -152,7 +168,7 @@ export function AdminShell({ children }: AdminShellProps) {
           variant="ghost"
           className={`hidden text-zinc-200 hover:bg-white/10 hover:text-white lg:inline-flex ${
             collapsedNav
-              ? "mx-auto h-10 w-10 justify-center rounded-xl border border-white/10 bg-white/5 p-0"
+              ? "mx-auto h-10 w-10 justify-center rounded-xl border border-white/10 bg-white/5 p-0 px-0 py-0"
               : "w-full justify-start gap-2"
           }`}
           onClick={() => setDesktopCollapsed((prev) => !prev)}
@@ -194,7 +210,7 @@ export function AdminShell({ children }: AdminShellProps) {
     <main className="min-h-screen bg-slate-100 dark:bg-slate-950">
       <div className="flex min-h-screen">
         <aside
-          className={`hidden shrink-0 bg-zinc-950 transition-[width] duration-300 ease-out lg:block ${
+          className={`hidden shrink-0 border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block ${
             desktopCollapsed ? "w-24" : "w-[300px]"
           }`}
         >

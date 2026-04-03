@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   CalendarDays,
+  CreditCard,
   DoorOpen,
   FileText,
   LayoutDashboard,
@@ -14,7 +15,9 @@ export type AdminSectionId =
   | 'map'
   | 'occurrences'
   | 'agenda'
+  | 'documents'
   | 'boletos'
+  | 'payments'
   | 'common-spaces'
   | 'residents';
 
@@ -66,6 +69,15 @@ export const adminSections: AdminSection[] = [
     icon: CalendarDays,
   },
   {
+    id: 'documents',
+    href: '/documents',
+    label: 'Documentos',
+    description: 'Arquivos por unidade',
+    pageTitle: 'Documentos',
+    pageDescription: 'Documentos vinculados a unidades em uma pagina dedicada.',
+    icon: FileText,
+  },
+  {
     id: 'boletos',
     href: '/boletos',
     label: 'Boletos',
@@ -73,6 +85,15 @@ export const adminSections: AdminSection[] = [
     pageTitle: 'Boletos',
     pageDescription: 'Controle financeiro por unidade dentro do novo shell administrativo.',
     icon: FileText,
+  },
+  {
+    id: 'payments',
+    href: '/payments',
+    label: 'Carteira',
+    description: 'PIX e recebimentos',
+    pageTitle: 'Carteira',
+    pageDescription: 'Acompanhamento de recebimentos, PIX e fluxo financeiro do condominio.',
+    icon: CreditCard,
   },
   {
     id: 'common-spaces',

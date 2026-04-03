@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
+import { CondoHomeBrandImage } from "@/components/brand/condohome-brand-image"
 import { Button } from "@/components/ui/button"
 
 export function LandingNavbar() {
@@ -12,11 +13,8 @@ export function LandingNavbar() {
     <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
         <div className="flex items-center gap-x-12">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">C</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">CondoHome</span>
+          <Link href="/" className="flex items-center">
+            <CondoHomeBrandImage className="h-10 w-auto text-foreground" />
           </Link>
           <div className="hidden lg:flex lg:gap-x-8">
             <Link href="#features" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
@@ -36,7 +34,7 @@ export function LandingNavbar() {
               Entrar
             </Button>
           </Link>
-          <Link href="/login">
+          <Link href="#pricing">
             <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
               Comece Gratis
             </Button>
@@ -85,7 +83,7 @@ export function LandingNavbar() {
                   Entrar
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link href="#pricing">
                 <Button className="w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90">
                   Comece Gratis
                 </Button>
