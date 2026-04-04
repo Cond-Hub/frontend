@@ -3,7 +3,7 @@
 import { Building2, Check, Pencil, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { Building, Floor, Unit, UnitStatus } from "../../../../shared/src";
+import type { Building, Floor, Unit, UnitStatus } from "../../../shared/src";
 import { Button } from "../../../components/ui/button";
 import {
   Card,

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Skeleton } from '../../ui/skeleton';
-import { BOLETO_STATUS_LABELS, formatDateBR, OCCURRENCE_STATUS_LABELS, PRIORITY_LABELS, UNIT_STATUS_LABELS } from '../../../../shared/src';
+import { BOLETO_STATUS_LABELS, formatDateBR, OCCURRENCE_STATUS_LABELS, PRIORITY_LABELS, UNIT_STATUS_LABELS } from '../../../shared/src';
 import { dashboardApi } from '../../../src/store/useDashboardStore';
 import { useDashboardStore } from '../../../src/store/useDashboardStore';
 import { showToast } from '../../../src/store/useToastStore';

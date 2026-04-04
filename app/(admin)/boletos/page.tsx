@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Check, Eye, FilePlus2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { BOLETO_STATUS_LABELS, formatDateBR, type Boleto, type Unit } from '../../../../shared/src';
+import { BOLETO_STATUS_LABELS, formatDateBR, type Boleto, type Unit } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog';

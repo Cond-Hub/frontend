@@ -32,7 +32,7 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "../shared/src/**/*.ts",
+    "shared/src/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
     "/tmp/condohome-next/types/**/*.ts"

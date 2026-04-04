@@ -3,7 +3,7 @@ FROM node:20-alpine AS deps
 WORKDIR /workspace/frontend
 
 # Install frontend deps first for better layer caching.
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
 FROM node:20-alpine AS builder
@@ -11,11 +11,7 @@ WORKDIR /workspace/frontend
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=deps /workspace/frontend/node_modules ./node_modules
-COPY frontend/. .
-COPY shared /workspace/shared
-
-# Build app. The frontend imports from ../shared/src, so the Docker
-# build context must include both directories.
+COPY . .
 RUN npm run build
 
 FROM node:20-alpine AS runner

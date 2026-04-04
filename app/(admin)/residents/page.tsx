@@ -13,7 +13,7 @@ import { Skeleton } from '../../../components/ui/skeleton';
 import { dashboardApi } from '../../../src/store/useDashboardStore';
 import { useDashboardStore } from '../../../src/store/useDashboardStore';
 import { showToast } from '../../../src/store/useToastStore';
-import type { Building, Floor, Resident, Unit } from '../../../../shared/src';
+import type { Building, Floor, Resident, Unit } from '../../../shared/src';
 
 type ResidentFormState = {
   unitIds: string[];

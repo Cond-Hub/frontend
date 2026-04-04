@@ -25,7 +25,7 @@ import {
   type WalletPayment,
   type WalletSummary,
   type WalletWithdrawal,
-} from '../../../shared/src';
+} from '../../shared/src';
 
 export const STORE_KEY = 'condohome-web-v3';
 type ThemeMode = 'light' | 'dark';

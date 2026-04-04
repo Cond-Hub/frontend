@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight, Plus, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { type CommonSpace, type CommonSpaceReservation, type ImportantDate, type Resident } from '../../../../shared/src';
+import { type CommonSpace, type CommonSpaceReservation, type ImportantDate, type Resident } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog';

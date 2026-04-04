@@ -5,8 +5,8 @@ services:
       container_name: condhub-frontend
       image: condhub-frontend
       build:
-        context: ..
-        dockerfile: frontend/Dockerfile
+        context: .
+        dockerfile: Dockerfile
         args:
           NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-/api}
       env_file:

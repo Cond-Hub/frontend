@@ -3,7 +3,7 @@
 import { CalendarDays, Clock3, DoorOpen, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { formatDateBR, type CommonSpace, type CommonSpaceReservation } from '../../../../shared/src';
+import { formatDateBR, type CommonSpace, type CommonSpaceReservation } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog';

@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Building2, CreditCard, LifeBuoy, Search, ShieldCheck, Users } from 'lucide-react';
-import { ROLE_LABELS, type User } from '../../../shared/src';
+import { ROLE_LABELS, type User } from '../../shared/src';
 import { CondoHomeBrandImage } from '../../components/brand/condohome-brand-image';
 import {
   dashboardApi,

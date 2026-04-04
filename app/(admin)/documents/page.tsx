@@ -4,8 +4,8 @@ import { Eye, FileText, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import type { Document, Resident, Unit } from '../../../../shared/src';
-import { formatDateBR } from '../../../../shared/src';
+import type { Document, Resident, Unit } from '../../../shared/src';
+import { formatDateBR } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog';

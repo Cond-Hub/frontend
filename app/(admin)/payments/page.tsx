@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { ArrowRight, Landmark, Receipt, WalletCards, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import type { WalletPayment, WalletSummary, WalletWithdrawal } from '../../../../shared/src';
-import { formatDateBR, formatMonthYearBR, WALLET_PAYMENT_STATUS_LABELS, WALLET_WITHDRAWAL_STATUS_LABELS } from '../../../../shared/src';
+import type { WalletPayment, WalletSummary, WalletWithdrawal } from '../../../shared/src';
+import { formatDateBR, formatMonthYearBR, WALLET_PAYMENT_STATUS_LABELS, WALLET_WITHDRAWAL_STATUS_LABELS } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
