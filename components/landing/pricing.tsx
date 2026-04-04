@@ -30,7 +30,9 @@ const plans = [
     features: [
       "Tudo do primeiro plano",
       "Pagamentos com PIX imediatos",
-      "Taxa de R$ 0,80 por transacao recebida + R$ 0,80 por saque",
+      "Notificacoes automaticas para moradores pelo app",
+      "Taxa operacional de R$ 1,99 por recebimento via PIX",
+      "Saques gratis e ilimitados",
     ],
     cta: "Escolher plano",
     highlighted: true,

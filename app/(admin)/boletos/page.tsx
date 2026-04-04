@@ -273,11 +273,11 @@ export default function BoletosPage() {
   const save = async () => {
     const amountCents = currencyInputToCents(form.amountInput);
 
-    if (!form.unitId || !form.referenceMonthISO || !form.dueDateISO || amountCents < 161) {
+    if (!form.unitId || !form.referenceMonthISO || !form.dueDateISO || amountCents < 199) {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha unidade, valor maior que R$ 1,60, competencia e vencimento.',
+        description: 'Preencha unidade, valor maior ou igual a R$ 1,99, competencia e vencimento.',
       });
       return;
     }

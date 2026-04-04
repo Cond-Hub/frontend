@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Landmark, WalletCards, X } from 'lucide-react';
+import { ArrowRight, Landmark, Receipt, WalletCards, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { WalletPayment, WalletSummary, WalletWithdrawal } from '../../../../shared/src';
@@ -204,17 +204,22 @@ export default function PaymentsPage() {
         value: formatCurrencyBRL(summary?.availableToWithdrawCents ?? 0),
         icon: Landmark,
       },
+      {
+        label: 'Taxas operacionais',
+        value: formatCurrencyBRL(summary?.totalFeesCents ?? 0),
+        icon: Receipt,
+      },
     ],
     [summary],
   );
 
   const handleCreateWithdrawal = async () => {
     const amountCents = currencyInputToCents(withdrawForm.amountInput);
-    if (amountCents < 81 || !withdrawForm.pixKey.trim()) {
+    if (amountCents <= 0 || !withdrawForm.pixKey.trim()) {
       showToast({
         tone: 'error',
         title: 'Dados incompletos',
-        description: 'Preencha um valor maior que R$ 0,80 e a chave PIX para continuar.',
+        description: 'Preencha um valor maior que R$ 0,00 e a chave PIX para continuar.',
       });
       return;
     }
@@ -253,7 +258,7 @@ export default function PaymentsPage() {
           <div>
             <CardTitle className="text-2xl text-slate-950 dark:text-slate-50">Carteira</CardTitle>
             <CardDescription className="max-w-2xl text-sm leading-6">
-              Aqui voce acompanha o que entrou via PIX em tempo real e o valor disponivel para saque, considerando R$ 0,80 por transacao recebida e R$ 0,80 por saque.
+              Aqui voce acompanha o que entrou via PIX em tempo real e o valor disponivel para saque, considerando R$ 1,99 por recebimento e saques gratis e ilimitados.
             </CardDescription>
           </div>
 
@@ -264,7 +269,7 @@ export default function PaymentsPage() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Button onClick={() => setWithdrawOpen(true)} disabled={(summary?.availableToWithdrawCents ?? 0) < 81}>
+            <Button onClick={() => setWithdrawOpen(true)} disabled={(summary?.availableToWithdrawCents ?? 0) <= 0}>
               Sacar
             </Button>
           </div>
@@ -292,7 +297,7 @@ export default function PaymentsPage() {
       </div>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Taxas consideradas no saldo disponível: {formatCurrencyBRL(summary?.totalFeesCents ?? 0)}.
+        O saldo disponível já desconta apenas as taxas operacionais dos recebimentos. O saque exibido ao condomínio é sempre sem taxa.
       </p>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
@@ -335,7 +340,7 @@ export default function PaymentsPage() {
         <Card className="border-slate-200/80 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Saques</CardTitle>
-            <CardDescription>Saidas da carteira para a chave PIX informada.</CardDescription>
+            <CardDescription>Saidas da carteira para a chave PIX informada, sem taxa visível para o condomínio.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (
