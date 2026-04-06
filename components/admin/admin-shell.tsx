@@ -38,12 +38,16 @@ export function AdminShell({ children }: AdminShellProps) {
   const activeCondo = state.activeCondoId
     ? state.condos[state.activeCondoId]
     : undefined;
-  const canManageFinance =
+  const canManageWallet =
     currentUser?.role === "ADMIN_COMPANY" || currentUser?.role === "SYSTEM_ADMIN";
+  const canManageBoletos =
+    currentUser?.role === "ADMIN_COMPANY" ||
+    currentUser?.role === "SYSTEM_ADMIN" ||
+    currentUser?.role === "SYNDIC";
   const visibleSections = adminSections.filter(
     (section) =>
-      ((section.id !== "boletos" && section.id !== "payments") || canManageFinance) &&
-      (section.id !== "payments" || activeCondo?.type === "COMPLETE"),
+      (section.id !== "boletos" || canManageBoletos) &&
+      (section.id !== "payments" || (canManageWallet && activeCondo?.type === "COMPLETE")),
   );
   const requestedSection = getAdminSectionByPathname(pathname ?? "/dashboard");
   const currentSection = visibleSections.find((section) => section.id === requestedSection.id) ?? visibleSections[0];
