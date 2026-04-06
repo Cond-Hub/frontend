@@ -1015,7 +1015,7 @@ const requestJson = async <T>(
   }
 
   if (!response.ok) {
-    if (token && (response.status === 401 || response.status === 403)) {
+    if (token && response.status === 401) {
       useDashboardStore.setState({
         ...initialState,
         hydrationComplete: state.hydrationComplete,
