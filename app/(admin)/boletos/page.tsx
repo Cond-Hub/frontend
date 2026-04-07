@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check, Eye, FilePlus2, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, Copy, Eye, FilePlus2, Pencil, Plus, QrCode, RefreshCw, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { BOLETO_STATUS_LABELS, formatDateBR, type Boleto, type Unit } from '../../../shared/src';
+import { BOLETO_STATUS_LABELS, PIX_CHARGE_STATUS_LABELS, formatDateBR, type Boleto, type BoletoPixCharge, type Unit } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog';
@@ -46,6 +46,14 @@ const statusTone: Record<Boleto['status'], string> = {
   OPEN: 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/80 dark:bg-sky-950/30 dark:text-sky-300',
   OVERDUE: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/80 dark:bg-rose-950/30 dark:text-rose-300',
   PAID: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/80 dark:bg-emerald-950/30 dark:text-emerald-300',
+};
+
+const pixStatusTone: Record<BoletoPixCharge['status'], string> = {
+  PENDING: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/80 dark:bg-amber-950/30 dark:text-amber-300',
+  PAID: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/80 dark:bg-emerald-950/30 dark:text-emerald-300',
+  EXPIRED: 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300',
+  CANCELLED: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/80 dark:bg-rose-950/30 dark:text-rose-300',
+  REFUNDED: 'border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-900/80 dark:bg-violet-950/30 dark:text-violet-300',
 };
 
 function ModalFrame({ title, description, children, onClose }: ModalFrameProps) {
@@ -125,6 +133,13 @@ function formatCurrencyBRL(valueCents: number) {
   }).format(valueCents / 100);
 }
 
+function formatDateTimeBR(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
 function formatCurrencyInput(raw: string) {
   const digits = raw.replace(/\D/g, '');
   if (!digits) {
@@ -155,6 +170,10 @@ export default function BoletosPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBoleto, setEditingBoleto] = useState<Boleto | undefined>();
   const [boletoToRemove, setBoletoToRemove] = useState<Boleto | undefined>();
+  const [pixBoleto, setPixBoleto] = useState<Boleto | undefined>();
+  const [pixCharge, setPixCharge] = useState<BoletoPixCharge | undefined>();
+  const [pixLoading, setPixLoading] = useState(false);
+  const [pixRefreshing, setPixRefreshing] = useState(false);
   const [form, setForm] = useState<BoletoFormState>(emptyForm);
 
   const load = async () => {
@@ -366,6 +385,66 @@ export default function BoletosPage() {
     }
   };
 
+  const openPixModal = async (boleto: Boleto) => {
+    setPixBoleto(boleto);
+    setPixCharge(undefined);
+    setPixLoading(true);
+
+    try {
+      const charge = await dashboardApi.boletos.createOrGetPixCharge(boleto.id);
+      setPixCharge(charge);
+    } catch (pixError) {
+      showToast({
+        tone: 'error',
+        title: 'Falha ao gerar PIX',
+        description: pixError instanceof Error ? pixError.message : 'Tente novamente.',
+      });
+      setPixBoleto(undefined);
+    } finally {
+      setPixLoading(false);
+    }
+  };
+
+  const refreshPixCharge = async () => {
+    if (!pixBoleto) {
+      return;
+    }
+
+    setPixRefreshing(true);
+
+    try {
+      const charge = await dashboardApi.boletos.getPixCharge(pixBoleto.id);
+      setPixCharge(charge);
+    } catch (pixError) {
+      showToast({
+        tone: 'error',
+        title: 'Falha ao atualizar PIX',
+        description: pixError instanceof Error ? pixError.message : 'Tente novamente.',
+      });
+    } finally {
+      setPixRefreshing(false);
+    }
+  };
+
+  const copyPixCode = async () => {
+    if (!pixCharge?.brCode) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(pixCharge.brCode);
+      showToast({
+        tone: 'success',
+        title: 'Codigo PIX copiado',
+      });
+    } catch {
+      showToast({
+        tone: 'error',
+        title: 'Falha ao copiar codigo PIX',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -492,6 +571,10 @@ export default function BoletosPage() {
                     </p>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => void openPixModal(boleto)}>
+                      <QrCode className="h-4 w-4" />
+                      Gerar PIX
+                    </Button>
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => void toggleStatus(boleto)}>
                       <Check className="h-4 w-4" />
                       {boleto.status === 'PAID' ? 'Reabrir' : 'Marcar pago'}
@@ -586,6 +669,10 @@ export default function BoletosPage() {
                         <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{boleto.notes?.trim() || 'Sem observacoes'}</td>
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" className="gap-2" onClick={() => void openPixModal(boleto)}>
+                              <QrCode className="h-4 w-4" />
+                              Gerar PIX
+                            </Button>
                             <Button variant="outline" size="sm" className="gap-2" onClick={() => void toggleStatus(boleto)}>
                               <Check className="h-4 w-4" />
                               {boleto.status === 'PAID' ? 'Reabrir' : 'Marcar pago'}
@@ -753,6 +840,114 @@ export default function BoletosPage() {
               </Button>
             </div>
           </div>
+        </ModalFrame>
+      ) : null}
+
+      {pixBoleto ? (
+        <ModalFrame
+          title="Pagamento com PIX"
+          description={`Gere o QR Code e o codigo copia e cola do boleto ${pixBoleto.unitLabel} • Ref. ${toMonthInputValue(pixBoleto.referenceMonthISO)}`}
+          onClose={() => {
+            setPixBoleto(undefined);
+            setPixCharge(undefined);
+            setPixLoading(false);
+            setPixRefreshing(false);
+          }}
+        >
+          {pixLoading ? (
+            <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
+              <Skeleton className="h-[320px] w-full rounded-3xl" />
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full rounded-2xl" />
+                <Skeleton className="h-32 w-full rounded-2xl" />
+                <Skeleton className="h-40 w-full rounded-2xl" />
+              </div>
+            </div>
+          ) : pixCharge ? (
+            <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+              <div className="rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.15),_transparent_55%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(241,245,249,0.98))] p-5 shadow-sm dark:border-slate-800 dark:bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.2),_transparent_55%),linear-gradient(180deg,_rgba(2,6,23,0.96),_rgba(15,23,42,0.98))]">
+                <div className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-lg shadow-emerald-950/5 dark:border-slate-700 dark:bg-slate-950">
+                  <img
+                    src={`data:image/png;base64,${pixCharge.brCodeBase64}`}
+                    alt={`QR Code PIX do boleto ${pixBoleto.unitLabel}`}
+                    className="h-full w-full rounded-2xl bg-white object-contain"
+                  />
+                </div>
+                <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-300">
+                  Escaneie o QR Code ou use o codigo copia e cola ao lado.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Status da cobranca PIX</p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${pixStatusTone[pixCharge.status]}`}>
+                        {PIX_CHARGE_STATUS_LABELS[pixCharge.status]}
+                      </span>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        Expira em {formatDateTimeBR(pixCharge.expiresAtUtc)}
+                      </span>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="gap-2" onClick={() => void refreshPixCharge()} disabled={pixRefreshing}>
+                    <RefreshCw className={`h-4 w-4 ${pixRefreshing ? 'animate-spin' : ''}`} />
+                    {pixRefreshing ? 'Atualizando...' : 'Atualizar'}
+                  </Button>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-950 dark:text-slate-50">PIX copia e cola</p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Compartilhe este codigo ou use-o para pagar fora do app do banco.
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => void copyPixCode()}>
+                      <Copy className="h-4 w-4" />
+                      Copiar
+                    </Button>
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                    <p className="break-all font-mono text-xs leading-6 text-slate-700 dark:text-slate-300">
+                      {pixCharge.brCode}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Valor</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">
+                      {formatCurrencyBRL(pixCharge.amountCents)}
+                    </p>
+                  </div>
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Taxa da plataforma</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">
+                      {formatCurrencyBRL(pixCharge.platformFeeCents)}
+                    </p>
+                  </div>
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Vencimento do boleto</p>
+                    <p className="mt-2 text-base font-medium text-slate-950 dark:text-slate-50">
+                      {formatDateBR(pixBoleto.dueDateISO)}
+                    </p>
+                  </div>
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Unidade</p>
+                    <p className="mt-2 text-base font-medium text-slate-950 dark:text-slate-50">{pixBoleto.unitLabel}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
+              Nao foi possivel carregar a cobranca PIX deste boleto.
+            </div>
+          )}
         </ModalFrame>
       ) : null}
     </div>
