@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Check, Copy, Eye, FilePlus2, Pencil, Plus, QrCode, RefreshCw, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { BOLETO_STATUS_LABELS, PIX_CHARGE_STATUS_LABELS, formatDateBR, type Boleto, type BoletoPixCharge, type Unit } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
@@ -138,6 +139,18 @@ function formatDateTimeBR(value: string) {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function toPixQrImageSrc(value: string) {
+  if (!value) {
+    return '';
+  }
+
+  if (value.startsWith('data:image/')) {
+    return value;
+  }
+
+  return `data:image/png;base64,${value}`;
 }
 
 function formatCurrencyInput(raw: string) {
@@ -867,11 +880,27 @@ export default function BoletosPage() {
             <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
               <div className="rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.15),_transparent_55%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(241,245,249,0.98))] p-5 shadow-sm dark:border-slate-800 dark:bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.2),_transparent_55%),linear-gradient(180deg,_rgba(2,6,23,0.96),_rgba(15,23,42,0.98))]">
                 <div className="rounded-[1.75rem] border border-white/80 bg-white p-5 shadow-lg shadow-emerald-950/5 dark:border-slate-700 dark:bg-slate-950">
-                  <img
-                    src={`data:image/png;base64,${pixCharge.brCodeBase64}`}
-                    alt={`QR Code PIX do boleto ${pixBoleto.unitLabel}`}
-                    className="h-full w-full rounded-2xl bg-white object-contain"
-                  />
+                  {pixCharge.brCode ? (
+                    <div className="flex items-center justify-center rounded-2xl bg-white p-3">
+                      <QRCodeSVG
+                        value={pixCharge.brCode}
+                        size={240}
+                        bgColor="#ffffff"
+                        fgColor="#0f172a"
+                        includeMargin
+                      />
+                    </div>
+                  ) : pixCharge.brCodeBase64 ? (
+                    <img
+                      src={toPixQrImageSrc(pixCharge.brCodeBase64)}
+                      alt={`QR Code PIX do boleto ${pixBoleto.unitLabel}`}
+                      className="h-full w-full rounded-2xl bg-white object-contain"
+                    />
+                  ) : (
+                    <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+                      QR Code indisponivel para esta cobranca.
+                    </div>
+                  )}
                 </div>
                 <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-300">
                   Escaneie o QR Code ou use o codigo copia e cola ao lado.
