@@ -41,9 +41,7 @@ export function AdminShell({ children }: AdminShellProps) {
   const canManageWallet =
     currentUser?.role === "ADMIN_COMPANY" || currentUser?.role === "SYSTEM_ADMIN";
   const canManageBoletos =
-    currentUser?.role === "ADMIN_COMPANY" ||
-    currentUser?.role === "SYSTEM_ADMIN" ||
-    currentUser?.role === "SYNDIC";
+    currentUser?.role === "ADMIN_COMPANY" || currentUser?.role === "SYSTEM_ADMIN";
   const visibleSections = adminSections.filter(
     (section) =>
       (section.id !== "boletos" || canManageBoletos) &&

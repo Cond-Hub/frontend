@@ -603,9 +603,9 @@ export default function AgendaPage() {
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="max-h-[72vh] overflow-auto">
               <div className="grid min-w-[1120px] grid-cols-[88px_repeat(7,minmax(140px,1fr))]">
-                <div className="sticky top-0 z-20 border-b border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950" />
+                <div className="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950" />
                 {weekDays.map((day) => (
                   <div key={toDateKey(day)} className="sticky top-0 z-20 border-b border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{formatDayLabel(day)}</p>
@@ -614,7 +614,7 @@ export default function AgendaPage() {
 
                 {hourLabels.map((hour) => (
                   <div key={hour} className="contents">
-                    <div className="border-b border-r border-slate-200 px-4 py-3 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                    <div className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
                       {String(hour).padStart(2, '0')}:00
                     </div>
 

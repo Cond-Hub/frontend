@@ -1,22 +1,37 @@
 'use client';
 
-import { AlertTriangle, CalendarDays, DoorOpen, FileText } from 'lucide-react';
+import { AlertTriangle, CreditCard, DoorOpen, FileText } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-import { Button } from '../../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Skeleton } from '../../ui/skeleton';
-import { BOLETO_STATUS_LABELS, formatDateBR, OCCURRENCE_STATUS_LABELS, PRIORITY_LABELS, UNIT_STATUS_LABELS } from '../../../shared/src';
-import { dashboardApi } from '../../../src/store/useDashboardStore';
-import { useDashboardStore } from '../../../src/store/useDashboardStore';
+import { OCCURRENCE_STATUS_LABELS, UNIT_STATUS_LABELS, type WalletPayment } from '../../../shared/src';
+import { dashboardApi, useDashboardStore } from '../../../src/store/useDashboardStore';
 import { showToast } from '../../../src/store/useToastStore';
 
 type DashboardData = Awaited<ReturnType<typeof dashboardApi.home.getSummary>>;
 type OccurrenceList = Awaited<ReturnType<typeof dashboardApi.occurrences.list>>;
-type DocumentList = Awaited<ReturnType<typeof dashboardApi.documents.list>>;
-type DateList = Awaited<ReturnType<typeof dashboardApi.dates.list>>;
-type BoletoList = Awaited<ReturnType<typeof dashboardApi.boletos.list>>;
 type UnitList = Awaited<ReturnType<typeof dashboardApi.map.getUnits>>;
+type WalletPaymentList = Awaited<ReturnType<typeof dashboardApi.wallet.listPayments>>;
+
+type PixChartPeriod = '7D' | '30D' | '90D' | '12M';
+
+type PixBucket = {
+  key: string;
+  label: string;
+  currentValue: number;
+  previousValue: number;
+};
+
+const PERIOD_OPTIONS: Array<{ id: PixChartPeriod; label: string }> = [
+  { id: '7D', label: '7 dias' },
+  { id: '30D', label: '30 dias' },
+  { id: '90D', label: '90 dias' },
+  { id: '12M', label: '12 meses' },
+];
+
+const MIN_BAR_SIZE = 4;
 
 function DashboardSkeleton() {
   return (
@@ -35,69 +50,329 @@ function DashboardSkeleton() {
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[0.95fr,1.05fr]">
-        <Card className="border-slate-200/80 dark:border-slate-800">
-          <CardHeader>
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-72" />
-          </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-full rounded-full" />
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-center rounded-2xl border border-slate-200 p-6 dark:border-slate-800">
-              <Skeleton className="h-32 w-32 rounded-full" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/80 dark:border-slate-800">
-          <CardHeader>
-            <Skeleton className="h-7 w-44" />
-            <Skeleton className="h-4 w-64" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-28 w-full rounded-xl" />
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
       <div className="grid gap-4 xl:grid-cols-2">
         {Array.from({ length: 2 }).map((_, index) => (
           <Card key={index} className="border-slate-200/80 dark:border-slate-800">
             <CardHeader>
               <Skeleton className="h-7 w-44" />
-              <Skeleton className="h-4 w-56" />
+              <Skeleton className="h-4 w-64" />
             </CardHeader>
             <CardContent className="space-y-3">
-              {Array.from({ length: 3 }).map((__, itemIndex) => (
+              {Array.from({ length: 4 }).map((__, itemIndex) => (
                 <Skeleton key={itemIndex} className="h-20 w-full rounded-xl" />
               ))}
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <Card className="border-slate-200/80 dark:border-slate-800">
+        <CardHeader>
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-4 w-80" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[420px] w-full rounded-3xl" />
+        </CardContent>
+      </Card>
     </div>
+  );
+}
+
+function formatCurrencyBRL(valueCents: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(valueCents / 100);
+}
+
+function startOfDay(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+}
+
+function addDays(value: Date, days: number) {
+  const next = new Date(value);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function addMonths(value: Date, months: number) {
+  return new Date(value.getFullYear(), value.getMonth() + months, 1);
+}
+
+function formatShortDay(value: Date) {
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(value);
+}
+
+function formatMonthLabel(value: Date) {
+  return new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(value).replace('.', '');
+}
+
+function getPaymentMoment(payment: WalletPayment) {
+  const source = payment.paidAtUtc ?? payment.updatedAtUtc ?? payment.createdAtUtc;
+  return new Date(source);
+}
+
+function buildPixBuckets(payments: WalletPaymentList, period: PixChartPeriod): {
+  buckets: PixBucket[];
+  currentTotal: number;
+  previousTotal: number;
+} {
+  const paidPayments = payments.filter((payment) => payment.status === 'PAID');
+  const now = new Date();
+  const today = startOfDay(now);
+  const currentEntries: Array<{ start: Date; end: Date; label: string; key: string }> = [];
+  const previousEntries: Array<{ start: Date; end: Date; label: string; key: string }> = [];
+
+  if (period === '12M') {
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    for (let index = 11; index >= 0; index -= 1) {
+      const start = addMonths(currentMonth, -index);
+      const end = addMonths(start, 1);
+      currentEntries.push({
+        start,
+        end,
+        key: `${start.getFullYear()}-${start.getMonth() + 1}`,
+        label: formatMonthLabel(start),
+      });
+    }
+
+    for (let index = 11; index >= 0; index -= 1) {
+      const start = addMonths(currentMonth, -12 - index);
+      const end = addMonths(start, 1);
+      previousEntries.push({
+        start,
+        end,
+        key: `${start.getFullYear()}-${start.getMonth() + 1}`,
+        label: formatMonthLabel(start),
+      });
+    }
+  } else {
+    const days = period === '7D' ? 7 : period === '30D' ? 30 : 90;
+    const bucketSize = period === '90D' ? 7 : 1;
+    const bucketCount = Math.ceil(days / bucketSize);
+    const currentStart = addDays(today, -(days - 1));
+    const previousStart = addDays(currentStart, -days);
+
+    for (let index = 0; index < bucketCount; index += 1) {
+      const start = addDays(currentStart, index * bucketSize);
+      const end = addDays(start, bucketSize);
+      currentEntries.push({
+        start,
+        end,
+        key: start.toISOString(),
+        label: bucketSize === 1 ? formatShortDay(start) : `${formatShortDay(start)}-${formatShortDay(addDays(end, -1))}`,
+      });
+    }
+
+    for (let index = 0; index < bucketCount; index += 1) {
+      const start = addDays(previousStart, index * bucketSize);
+      const end = addDays(start, bucketSize);
+      previousEntries.push({
+        start,
+        end,
+        key: start.toISOString(),
+        label: bucketSize === 1 ? formatShortDay(start) : `${formatShortDay(start)}-${formatShortDay(addDays(end, -1))}`,
+      });
+    }
+  }
+
+  const countPayments = (entries: Array<{ start: Date; end: Date; key: string; label: string }>) =>
+    entries.map((entry) => {
+      const value = paidPayments.reduce((sum, payment) => {
+        const moment = getPaymentMoment(payment);
+        return moment >= entry.start && moment < entry.end ? sum + payment.amountCents : sum;
+      }, 0);
+
+      return {
+        key: entry.key,
+        label: entry.label,
+        value,
+      };
+    });
+
+  const currentSeries = countPayments(currentEntries);
+  const previousSeries = countPayments(previousEntries);
+  const buckets = currentSeries.map((entry, index) => ({
+    key: entry.key,
+    label: entry.label,
+    currentValue: entry.value,
+    previousValue: previousSeries[index]?.value ?? 0,
+  }));
+
+  return {
+    buckets,
+    currentTotal: currentSeries.reduce((sum, item) => sum + item.value, 0),
+    previousTotal: previousSeries.reduce((sum, item) => sum + item.value, 0),
+  };
+}
+
+function PixPaymentsChart({
+  payments,
+  period,
+  onPeriodChange,
+}: {
+  payments: WalletPaymentList;
+  period: PixChartPeriod;
+  onPeriodChange: (value: PixChartPeriod) => void;
+}) {
+  const chart = useMemo(() => buildPixBuckets(payments, period), [payments, period]);
+  const variation = chart.previousTotal === 0
+    ? (chart.currentTotal > 0 ? 100 : 0)
+    : ((chart.currentTotal - chart.previousTotal) / chart.previousTotal) * 100;
+  const variationLabel = `${variation > 0 ? '+' : ''}${variation.toFixed(1)}%`;
+
+  return (
+    <Card className="border-slate-200/80 dark:border-slate-800">
+      <CardHeader className="gap-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-2">
+            <CardTitle className="text-xl text-slate-950 dark:text-slate-50">PIX recebidos por período</CardTitle>
+            <CardDescription>
+              Comparativo entre o período selecionado e o imediatamente anterior, usando apenas pagamentos PIX liquidados.
+            </CardDescription>
+          </div>
+
+          <div className="inline-flex w-full flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/60 xl:w-auto">
+            {PERIOD_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => onPeriodChange(option.id)}
+                className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
+                  option.id === period
+                    ? 'bg-slate-950 text-white dark:bg-slate-100 dark:text-slate-950'
+                    : 'text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Período atual</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">{formatCurrencyBRL(chart.currentTotal)}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Período anterior</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">{formatCurrencyBRL(chart.previousTotal)}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Variação</p>
+            <p className={`mt-2 text-2xl font-semibold ${variation >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              {variationLabel}
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        {chart.buckets.some((bucket) => bucket.currentValue > 0 || bucket.previousValue > 0) ? (
+          <div className="rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.12),_transparent_38%),linear-gradient(180deg,_rgba(248,250,252,0.95),_rgba(241,245,249,0.95))] p-5 dark:border-slate-800 dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.12),_transparent_38%),linear-gradient(180deg,_rgba(2,6,23,0.92),_rgba(15,23,42,0.94))]">
+            <div className="h-[420px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chart.buckets}
+                  margin={{ top: 12, right: 8, left: 8, bottom: 8 }}
+                  barGap={8}
+                  barCategoryGap="28%"
+                >
+                  <defs>
+                    <linearGradient id="pixCurrentGradient" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="#0ea5e9" />
+                      <stop offset="55%" stopColor="#06b6d4" />
+                      <stop offset="100%" stopColor="#34d399" />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.18)" />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    width={88}
+                    tickMargin={10}
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    tickFormatter={(value: number) => formatCurrencyBRL(value)}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(148,163,184,0.10)' }}
+                    contentStyle={{
+                      borderRadius: '18px',
+                      border: '1px solid rgba(148,163,184,0.22)',
+                      background: 'rgba(15,23,42,0.96)',
+                      color: '#f8fafc',
+                      boxShadow: '0 18px 45px rgba(15,23,42,0.28)',
+                    }}
+                    formatter={(value, name) => [
+                      formatCurrencyBRL(Number(value ?? 0)),
+                      name === 'currentValue' ? 'Período atual' : 'Período anterior',
+                    ]}
+                    labelFormatter={(label) => `Faixa ${String(label ?? '')}`}
+                  />
+                  <Bar
+                    dataKey="previousValue"
+                    name="previousValue"
+                    fill="rgba(148,163,184,0.72)"
+                    radius={[12, 12, 0, 0]}
+                    maxBarSize={26}
+                    minPointSize={MIN_BAR_SIZE}
+                  />
+                  <Bar
+                    dataKey="currentValue"
+                    name="currentValue"
+                    fill="url(#pixCurrentGradient)"
+                    radius={[12, 12, 0, 0]}
+                    maxBarSize={26}
+                    minPointSize={MIN_BAR_SIZE}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-[linear-gradient(180deg,#34d399_0%,#06b6d4_50%,#0ea5e9_100%)]" />
+                <span>Período atual</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-slate-400 dark:bg-slate-600" />
+                <span>Período anterior</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
+            Nenhum pagamento PIX liquidado no período selecionado.
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 export function DashboardContent() {
   const state = useDashboardStore();
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
+  const activeCondo = state.activeCondoId ? state.condos[state.activeCondoId] : undefined;
   const canManageFinance = currentUser?.role === 'ADMIN_COMPANY' || currentUser?.role === 'SYSTEM_ADMIN';
+  const canViewWalletChart = canManageFinance && activeCondo?.type === 'COMPLETE';
+
   const [summary, setSummary] = useState<DashboardData>();
   const [occurrences, setOccurrences] = useState<OccurrenceList>([]);
-  const [documents, setDocuments] = useState<DocumentList>([]);
-  const [dates, setDates] = useState<DateList>([]);
-  const [boletos, setBoletos] = useState<BoletoList>([]);
   const [units, setUnits] = useState<UnitList>([]);
+  const [walletPayments, setWalletPayments] = useState<WalletPaymentList>([]);
+  const [period, setPeriod] = useState<PixChartPeriod>('30D');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -107,13 +382,11 @@ export function DashboardContent() {
       setLoading(true);
 
       try {
-        const [nextSummary, nextOccurrences, nextDocuments, nextDates, nextBoletos, nextUnits] = await Promise.all([
+        const [nextSummary, nextOccurrences, nextUnits, nextWalletPayments] = await Promise.all([
           dashboardApi.home.getSummary(),
           dashboardApi.occurrences.list(),
-          dashboardApi.documents.list({ expiringSoonDays: 30 }),
-          dashboardApi.dates.list({ upcoming: 7 }),
-          canManageFinance ? dashboardApi.boletos.list() : Promise.resolve([] as BoletoList),
           dashboardApi.map.getUnits(),
+          canViewWalletChart ? dashboardApi.wallet.listPayments() : Promise.resolve([] as WalletPaymentList),
         ]);
 
         if (!active) {
@@ -122,10 +395,8 @@ export function DashboardContent() {
 
         setSummary(nextSummary);
         setOccurrences(nextOccurrences);
-        setDocuments(nextDocuments.slice(0, 4));
-        setDates(nextDates.slice(0, 4));
-        setBoletos(nextBoletos);
         setUnits(nextUnits);
+        setWalletPayments(nextWalletPayments);
       } catch (loadError) {
         if (!active) {
           return;
@@ -148,62 +419,39 @@ export function DashboardContent() {
     return () => {
       active = false;
     };
-  }, [canManageFinance]);
+  }, [canViewWalletChart]);
 
   const stats = useMemo(
     () => [
       {
-        label: 'Ocorrencias abertas',
+        label: 'Ocorrências abertas',
         value: summary?.openOccurrences.length ?? 0,
-        detail: 'Itens que ainda pedem acao da administracao.',
+        detail: 'Itens que ainda pedem ação da administração.',
         icon: AlertTriangle,
       },
       {
         label: 'Documentos vencendo',
-        value: summary?.expiringDocuments.length ?? documents.length,
-        detail: 'Arquivos com prazo proximo de vencimento.',
+        value: summary?.expiringDocuments.length ?? 0,
+        detail: 'Arquivos com prazo próximo de vencimento.',
         icon: FileText,
       },
       {
-        label: 'Datas na semana',
-        value: summary?.upcomingDates.length ?? dates.length,
-        detail: 'Compromissos e eventos previstos.',
-        icon: CalendarDays,
+        label: 'PIX recebidos',
+        value: canViewWalletChart ? walletPayments.filter((item) => item.status === 'PAID').length : 0,
+        detail: canViewWalletChart ? 'Pagamentos liquidados no condomínio atual.' : 'Disponível em condomínios COMPLETE.',
+        icon: CreditCard,
       },
       {
         label: 'Minhas unidades',
         value: summary?.myUnits.length ?? 0,
-        detail: 'Unidades vinculadas ao usuario atual.',
+        detail: 'Unidades vinculadas ao usuário atual.',
         icon: DoorOpen,
       },
     ],
-    [dates.length, documents.length, summary],
+    [canViewWalletChart, summary, walletPayments],
   );
 
   const chartData = useMemo(() => {
-    const totalBoletos = boletos.length;
-    const openBoletos = boletos.filter((item) => item.status === 'OPEN').length;
-    const overdueBoletos = boletos.filter((item) => item.status === 'OVERDUE').length;
-    const paidBoletos = boletos.filter((item) => item.status === 'PAID').length;
-
-    const boletoStatusBars = [
-      {
-        label: 'Abertos',
-        value: openBoletos,
-        percentage: totalBoletos ? Math.round((openBoletos / totalBoletos) * 100) : 0,
-      },
-      {
-        label: 'Em atraso',
-        value: overdueBoletos,
-        percentage: totalBoletos ? Math.round((overdueBoletos / totalBoletos) * 100) : 0,
-      },
-      {
-        label: 'Pagos',
-        value: paidBoletos,
-        percentage: totalBoletos ? Math.round((paidBoletos / totalBoletos) * 100) : 0,
-      },
-    ];
-
     const occurrenceStatusOrder = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
     const occurrenceStatusColors = ['#0f766e', '#0891b2', '#7c3aed'];
     const occurrenceTotals = occurrenceStatusOrder
@@ -256,31 +504,12 @@ export function DashboardContent() {
     });
 
     return {
-      boletoStatusBars,
       occurrenceStatusChart,
       occurrenceStatusSlices,
-      totalBoletos,
-      overdueBoletos,
       totalOccurrences,
       unitStatusBars,
-      totalUnits,
     };
-  }, [boletos, occurrences, units]);
-
-  const boletoLines = useMemo(() => {
-    const groups = boletos.reduce<Record<string, number>>((accumulator, boleto) => {
-      accumulator[boleto.status] = (accumulator[boleto.status] ?? 0) + 1;
-      return accumulator;
-    }, {});
-
-    return Object.entries(groups).map(([status, value]) => ({
-      label: BOLETO_STATUS_LABELS[status as keyof typeof BOLETO_STATUS_LABELS] ?? status,
-      value,
-      percentage: boletos.length ? Math.round((value / boletos.length) * 100) : 0,
-    }));
-  }, [boletos]);
-
-  const recentBoletos = useMemo(() => boletos.slice(0, 2), [boletos]);
+  }, [occurrences, units]);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -310,28 +539,7 @@ export function DashboardContent() {
         })}
       </div>
 
-      <div className={`grid gap-4 ${canManageFinance ? 'xl:grid-cols-3' : 'xl:grid-cols-2'}`}>
-        {canManageFinance ? (
-          <Card className="border-slate-200/80 dark:border-slate-800 flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Boletos por status</CardTitle>
-              <CardDescription>Leitura financeira rápida do que já entrou e do que ainda pede atenção.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {chartData.boletoStatusBars.map((item) => (
-                <div key={item.label}>
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                      {item.value} • {item.percentage}%
-                    </span>
-                  </div>
-                  <div className="dashboard-bar h-3" style={{ ['--bar-value' as string]: item.percentage }} />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ) : null}
+      <div className="grid gap-4 xl:grid-cols-2">
         <Card className="border-slate-200/80 dark:border-slate-800 flex flex-col">
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
@@ -345,10 +553,7 @@ export function DashboardContent() {
             <div className="grid gap-6 lg:grid-cols-[0.85fr,1.15fr] lg:items-center">
               <div className="flex justify-center">
                 <div className="relative flex h-52 w-52 items-center justify-center rounded-full border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                  <div
-                    className="h-40 w-40 rounded-full"
-                    style={{ background: chartData.occurrenceStatusChart }}
-                  />
+                  <div className="h-40 w-40 rounded-full" style={{ background: chartData.occurrenceStatusChart }} />
                   <div className="absolute flex h-20 w-20 flex-col items-center justify-center rounded-full bg-white text-center dark:bg-slate-950">
                     <p className="text-2xl font-semibold text-slate-950 dark:text-slate-50">{chartData.totalOccurrences}</p>
                     <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Total</p>
@@ -404,120 +609,9 @@ export function DashboardContent() {
         </Card>
       </div>
 
-      <div className={`grid gap-4 ${canManageFinance ? 'xl:grid-cols-[1.1fr,0.9fr]' : 'xl:grid-cols-[1.2fr,0.8fr]'}`}>
-        <Card className="border-slate-200/80 dark:border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Painel de ocorrencias</CardTitle>
-            <CardDescription>Itens mais recentes para acompanhamento imediato.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {occurrences.slice(0, 5).map((occurrence) => (
-              <div key={occurrence.id} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="font-semibold text-slate-950 dark:text-slate-50">{occurrence.title}</p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      {OCCURRENCE_STATUS_LABELS[occurrence.status]} • {PRIORITY_LABELS[occurrence.priority]}
-                    </p>
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{formatDateBR(occurrence.updatedAtISO)}</p>
-                </div>
-              </div>
-            ))}
-            {occurrences.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                Nenhuma ocorrencia aberta neste momento.
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <div className="space-y-4">
-          <Card className="border-slate-200/80 dark:border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Agenda da semana</CardTitle>
-              <CardDescription>Compromissos e datas mais proximas.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {dates.map((item) => (
-                <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                  <p className="font-medium text-slate-950 dark:text-slate-50">{item.title}</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{formatDateBR(item.dateISO)}</p>
-                </div>
-              ))}
-              {dates.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                  Nenhuma data relevante cadastrada.
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          {canManageFinance ? (
-            <Card className="border-slate-200/80 dark:border-slate-800">
-              <CardHeader>
-                <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Boletos em acompanhamento</CardTitle>
-                <CardDescription>Leitura financeira rapida por status, logo abaixo da agenda.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                {boletoLines.map((item) => (
-                  <div key={item.label}>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.label}</p>
-                      <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {item.value} • {item.percentage}%
-                      </span>
-                    </div>
-                    <div className="dashboard-bar h-3" style={{ ['--bar-value' as string]: item.percentage }} />
-                  </div>
-                ))}
-                {recentBoletos.map((item) => (
-                  <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-slate-950 dark:text-slate-50">{item.unitLabel}</p>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                          Referencia {item.referenceMonthISO.slice(0, 7)} • vence em {formatDateBR(item.dueDateISO)}
-                        </p>
-                      </div>
-                      <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">
-                        {BOLETO_STATUS_LABELS[item.status]}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {boletos.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                    Nenhum boleto carregado recentemente.
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          ) : null}
-
-          <Card className="border-slate-200/80 dark:border-slate-800">
-            <CardHeader>
-              <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Documentos para acompanhar</CardTitle>
-              <CardDescription>Arquivos com vencimento ou revisao proxima.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {documents.map((item) => (
-                <div key={item.id} className="rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/80 dark:bg-amber-950/20">
-                  <p className="font-medium text-amber-950 dark:text-amber-100">{item.title}</p>
-                  <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-                    {item.expiresAtISO ? `Vence em ${formatDateBR(item.expiresAtISO)}` : item.category}
-                  </p>
-                </div>
-              ))}
-              {documents.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                  Nenhum documento com alerta imediato.
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {canViewWalletChart ? (
+        <PixPaymentsChart payments={walletPayments} period={period} onPeriodChange={setPeriod} />
+      ) : null}
     </div>
   );
 }
