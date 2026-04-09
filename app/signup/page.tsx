@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Building2, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
-import { Suspense, useMemo, useState } from 'react';
+import { ArrowLeft, Building2, CheckCircle2, Loader2, Moon, Sparkles, Sun } from 'lucide-react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
 import { CondoHomeBrandImage } from '../../components/brand/condohome-brand-image';
 import { Button } from '../../components/ui/button';
@@ -53,6 +53,7 @@ export default function SignupPage() {
 function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const state = useDashboardStore();
   const [form, setForm] = useState<SignupForm>(initialForm);
   const [loading, setLoading] = useState(false);
   const selectedPlanCode = (searchParams.get('plan') ?? 'PRO').toUpperCase();
@@ -66,6 +67,14 @@ function SignupPageContent() {
     }
     return 'Pro';
   }, [selectedPlanCode]);
+
+  useEffect(() => {
+    if (state.themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [state.themeMode]);
 
   const handleSubmit = async () => {
     if (loading) {
@@ -121,7 +130,20 @@ function SignupPageContent() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f3f4ec] text-slate-950">
+    <main className="min-h-screen bg-[#f3f4ec] text-slate-950 dark:bg-slate-950 dark:text-slate-50">
+      <div className="fixed right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-10 w-10 p-0"
+          onClick={() => state.setThemeMode(state.themeMode === 'dark' ? 'light' : 'dark')}
+          aria-label={state.themeMode === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+          title={state.themeMode === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+        >
+          {state.themeMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+      </div>
+
       <div className="grid min-h-screen lg:grid-cols-[0.96fr,1.04fr]">
         <section className="relative hidden overflow-hidden bg-[#0f1720] text-white lg:block">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(16,185,129,0.25),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(250,204,21,0.18),transparent_22%),linear-gradient(180deg,#0f1720_0%,#101827_100%)]" />
@@ -159,9 +181,9 @@ function SignupPageContent() {
         </section>
 
         <section className="flex items-center justify-center px-6 py-10 sm:px-8">
-          <Card className="w-full max-w-3xl border-slate-200/80 shadow-xl">
+          <Card className="w-full max-w-3xl border-slate-200/80 shadow-xl dark:border-slate-800 dark:bg-slate-950">
             <CardHeader className="space-y-4">
-              <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-slate-900 lg:hidden">
+              <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 lg:hidden">
                 <ArrowLeft className="h-4 w-4" />
                 Voltar
               </Link>
@@ -172,10 +194,10 @@ function SignupPageContent() {
                   </div>
                   <CardTitle>Criar conta da empresa</CardTitle>
                   <CardDescription>
-                    Plano selecionado: <span className="font-semibold text-slate-800">{selectedPlanLabel}</span>. Depois do cadastro, voce vai para a pagina de boas-vindas da empresa.
+                    Plano selecionado: <span className="font-semibold text-slate-800 dark:text-slate-100">{selectedPlanLabel}</span>. Depois do cadastro, voce vai para a pagina de boas-vindas da empresa.
                   </CardDescription>
                 </div>
-                <div className="w-fit whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                <div className="w-fit whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200">
                   1 mes gratis
                 </div>
               </div>
@@ -185,7 +207,7 @@ function SignupPageContent() {
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Empresa</h2>
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Empresa</h2>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2 md:col-span-2">
@@ -198,7 +220,7 @@ function SignupPageContent() {
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Primeira operacao</h2>
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Primeira operacao</h2>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
@@ -220,7 +242,7 @@ function SignupPageContent() {
                         .condhub.com
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500">Sera usado no acesso operacional do condominio. Apenas letras, numeros e hifens.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Sera usado no acesso operacional do condominio. Apenas letras, numeros e hifens.</p>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="condoAddress">Endereco</Label>
@@ -232,7 +254,7 @@ function SignupPageContent() {
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Gestor principal</h2>
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Gestor principal</h2>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
@@ -261,8 +283,8 @@ function SignupPageContent() {
                 </div>
               </section>
 
-              <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm leading-6 text-slate-500">
+              <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
                   Ao concluir, voce entra no workspace da empresa e ja pode adicionar mais condominios a carteira.
                 </p>
                 <Button className="min-w-44" onClick={() => void handleSubmit()} disabled={loading}>
@@ -280,7 +302,7 @@ function SignupPageContent() {
 
 function SignupPageFallback() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f3f4ec] text-slate-600">
+    <main className="flex min-h-screen items-center justify-center bg-[#f3f4ec] text-slate-600 dark:bg-slate-950 dark:text-slate-300">
       <div className="flex items-center gap-3 text-sm">
         <Loader2 className="h-4 w-4 animate-spin" />
         Carregando cadastro...

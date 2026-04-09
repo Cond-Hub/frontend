@@ -11,17 +11,19 @@ import { LandingNavbar } from "@/components/landing/navbar"
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <LandingNavbar />
-      <LandingHero />
-      <LandingSocialProof />
-      <LandingFeatures />
-      <LandingHowItWorks />
-      <LandingShowcase />
-      <LandingPricing />
-      <LandingFaq />
-      <LandingCta />
-      <LandingFooter />
-    </main>
+    <div className="dark">
+      <main className="min-h-screen bg-background text-foreground">
+        <LandingNavbar />
+        <LandingHero />
+        <LandingSocialProof />
+        <LandingFeatures />
+        <LandingHowItWorks />
+        <LandingShowcase />
+        <LandingPricing />
+        <LandingFaq />
+        <LandingCta />
+        <LandingFooter />
+      </main>
+    </div>
   )
 }

@@ -319,9 +319,15 @@ type BackendBillingInvoice = {
   description: string;
   externalInvoiceId?: string;
   checkoutUrl?: string;
+  providerPaymentId?: string;
+  brCode?: string;
+  brCodeBase64?: string;
   createdAtUtc: string;
+  updatedAtUtc: string;
   dueAtUtc: string;
+  expiresAtUtc?: string;
   paidAtUtc?: string;
+  receiptUrl?: string;
 };
 type BackendCompanySupportNote = {
   id: string;
@@ -588,9 +594,15 @@ export interface SaasInvoice {
   description: string;
   externalInvoiceId?: string;
   checkoutUrl?: string;
+  providerPaymentId?: string;
+  brCode?: string;
+  brCodeBase64?: string;
   createdAtUtc: string;
+  updatedAtUtc: string;
   dueAtUtc: string;
+  expiresAtUtc?: string;
   paidAtUtc?: string;
+  receiptUrl?: string;
 }
 
 export interface SaasSupportNote {
@@ -1712,6 +1724,10 @@ export const dashboardApi = {
           billingProvider: payload.billingProvider ? mapBillingProviderToBackend(payload.billingProvider) : undefined,
         },
       });
+      return mapSaasInvoice(data);
+    },
+    currentPayment: async (companyId?: string) => {
+      const data = await requestJson<BackendBillingInvoice>(`/saas/current-payment${toQueryString({ companyId })}`);
       return mapSaasInvoice(data);
     },
     updateInvoiceStatus: async (payload: {

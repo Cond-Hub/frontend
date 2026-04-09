@@ -472,7 +472,8 @@ export function AdminShell({ children }: AdminShellProps) {
           {isManagerScope ? (
             <CondoHomeBrandImage
               variant={collapsedNav ? "mark" : "logo"}
-              className={collapsedNav ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain text-white"}
+              forceWhite
+              className={collapsedNav ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain"}
             />
           ) : activeCondo?.logoUrl ? (
             <img
@@ -482,6 +483,7 @@ export function AdminShell({ children }: AdminShellProps) {
             />
           ) : (
             <CondoHomeBrandImage
+              forceWhite
               variant={collapsedNav ? "mark" : "logo"}
               className={collapsedNav ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain"}
             />

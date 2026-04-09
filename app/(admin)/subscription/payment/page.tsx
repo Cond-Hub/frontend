@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Copy, Loader2, QrCode } from "lucide-react";
+import { CheckCircle2, Copy, Loader2, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { dashboardApi, type CustomerPortal } from "@/src/store/useDashboardStore";
+import { dashboardApi, type CustomerPortal, type SaasInvoice } from "@/src/store/useDashboardStore";
 import { showToast } from "@/src/store/useToastStore";
 
 const currency = new Intl.NumberFormat("pt-BR", {
@@ -14,47 +15,67 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-const fallbackPixCode =
-  "00020101021226890014br.gov.bcb.pix2567mock.condhub.com/pix/empresa-regularizacao5204000053039865406499.005802BR5925CONDHUB ADMINISTRADORA6009SAO PAULO62070503***6304ABCD";
-
 export default function SubscriptionPaymentPage() {
+  const router = useRouter();
   const [portal, setPortal] = useState<CustomerPortal>();
+  const [invoice, setInvoice] = useState<SaasInvoice>();
   const [loading, setLoading] = useState(true);
+  const [polling, setPolling] = useState(false);
   const [error, setError] = useState<string>();
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+  const loadPayment = async (showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
+    } else {
+      setPolling(true);
+    }
+
+    try {
+      const [portalData, paymentData] = await Promise.all([
+        dashboardApi.saas.customerPortal(),
+        dashboardApi.saas.currentPayment(),
+      ]);
+      setPortal(portalData);
+      setInvoice(paymentData);
+      setError(undefined);
+      if (paymentData.status === "PAID") {
+        setPaymentConfirmed(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível carregar o pagamento.");
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      } else {
+        setPolling(false);
+      }
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-
-    dashboardApi.saas
-      .customerPortal()
-      .then((data) => {
-        if (!cancelled) {
-          setPortal(data);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Não foi possível carregar o pagamento.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    void loadPayment(true);
   }, []);
 
-  const amount = useMemo(() => portal?.estimatedMonthlyAmount ?? portal?.currentPlan?.monthlyPrice ?? 499, [portal]);
-  const pixCode = useMemo(
-    () => `${fallbackPixCode}${portal?.companyId?.replace(/-/g, "").slice(0, 24) ?? ""}`,
-    [portal?.companyId],
-  );
+  useEffect(() => {
+    if (paymentConfirmed) {
+      return;
+    }
 
+    const intervalId = window.setInterval(() => {
+      void loadPayment(false);
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [paymentConfirmed]);
+
+  const amount = useMemo(() => invoice?.amount ?? portal?.estimatedMonthlyAmount ?? portal?.currentPlan?.monthlyPrice ?? 499, [invoice?.amount, portal]);
+  const pixCode = invoice?.brCode ?? "";
   const copyPixCode = async () => {
+    if (!pixCode) {
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(pixCode);
       showToast({
@@ -95,6 +116,27 @@ export default function SubscriptionPaymentPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      {paymentConfirmed ? (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-md border-emerald-200 bg-white dark:border-emerald-900/60 dark:bg-slate-950">
+            <CardHeader className="text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+              <CardTitle className="mt-3">Pagamento confirmado</CardTitle>
+              <CardDescription>
+                O acesso da empresa foi regularizado. Você já pode voltar ao sistema.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => router.replace("/company")}>
+                Voltar ao sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
       <Card className="border-amber-200 bg-amber-50 text-amber-950">
         <CardHeader>
           <CardTitle>Assinatura bloqueada por pagamento</CardTitle>
@@ -109,7 +151,7 @@ export default function SubscriptionPaymentPage() {
           <CardHeader>
             <CardTitle>Regularizar agora</CardTitle>
             <CardDescription>
-              Este pagamento está mockado com QR Code e PIX copia e cola para validar a experiência.
+              Gere e acompanhe o PIX da mensalidade da empresa por aqui.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -133,16 +175,24 @@ export default function SubscriptionPaymentPage() {
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-              <div className="mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <QrCode className="h-5 w-5" />
-                <p className="font-semibold">QR Code mockado</p>
+              <div className="mb-4 flex items-center justify-between gap-3 text-slate-900 dark:text-slate-100">
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-5 w-5" />
+                  <p className="font-semibold">QR Code PIX</p>
+                </div>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {polling ? "Verificando pagamento..." : "Atualização automática a cada 5s"}
+                </span>
               </div>
-              <div className="mx-auto grid w-[220px] grid-cols-8 gap-1 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700">
-                {Array.from({ length: 64 }).map((_, index) => {
-                  const filled = [0, 1, 2, 3, 8, 11, 16, 18, 21, 25, 27, 30, 31, 34, 36, 39, 40, 41, 44, 47, 49, 50, 52, 54, 57, 58, 61, 63].includes(index);
-                  return <span key={index} className={`aspect-square rounded-[2px] ${filled ? "bg-slate-950" : "bg-white"}`} />;
-                })}
-              </div>
+              {pixCode ? (
+                <div className="mx-auto flex w-[220px] items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700">
+                  <QRCodeSVG value={pixCode} size={176} bgColor="#ffffff" fgColor="#0f172a" includeMargin />
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  Não foi possível gerar o QR Code agora.
+                </div>
+              )}
             </div>
 
             <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -156,8 +206,10 @@ export default function SubscriptionPaymentPage() {
                   Copiar
                 </Button>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 font-mono text-xs leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
-                {pixCode}
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 font-mono text-xs leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                <div className="break-all whitespace-pre-wrap">
+                  {pixCode}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -178,13 +230,6 @@ export default function SubscriptionPaymentPage() {
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
               A carteira de condominios volta a operar normalmente.
             </div>
-
-            <Link href="/subscription">
-              <Button variant="outline" className="w-full">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar para assinatura
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       </div>

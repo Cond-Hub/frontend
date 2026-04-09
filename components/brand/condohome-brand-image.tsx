@@ -1,6 +1,7 @@
 type CondoHomeBrandImageProps = {
   className?: string;
   variant?: 'logo' | 'mark';
+  forceWhite?: boolean;
 };
 
 type MarkTheme = 'light' | 'dark';
@@ -70,19 +71,19 @@ function CondHubMarkResponsive() {
   );
 }
 
-export function CondoHomeBrandImage({ className, variant = 'logo' }: CondoHomeBrandImageProps) {
+export function CondoHomeBrandImage({ className, variant = 'logo', forceWhite = false }: CondoHomeBrandImageProps) {
   if (variant === 'mark') {
     return (
       <div className={className} aria-label="CondHub" role="img">
-        <CondHubMarkResponsive />
+        {forceWhite ? <CondHubMark theme="dark" /> : <CondHubMarkResponsive />}
       </div>
     );
   }
 
   return (
-    <div className={`flex items-center gap-3 ${className ?? ''}`}>
+    <div className={`flex items-center gap-3 ${forceWhite ? 'text-white' : ''} ${className ?? ''}`}>
       <div className="h-full shrink-0" aria-hidden="true">
-        <CondHubMarkResponsive />
+        {forceWhite ? <CondHubMark theme="dark" /> : <CondHubMarkResponsive />}
       </div>
       <div className="min-w-0">
         <p className="text-[1.1rem] font-semibold tracking-[-0.04em] text-current sm:text-xl">CondHub</p>

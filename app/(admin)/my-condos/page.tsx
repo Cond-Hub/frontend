@@ -403,6 +403,10 @@ export default function MyCondosPage() {
                 {condos.map((condo) => {
                   const condoAccent = condo.primaryColor?.trim() || "#0f766e";
                   const condoLogoUrl = condo.logoUrl?.trim();
+                  const isDarkMode = state.themeMode === "dark";
+                  const cardBackground = isDarkMode
+                    ? `linear-gradient(135deg, ${condoAccent}1f 0%, rgba(15,23,42,0.94) 38%, rgba(2,6,23,0.98) 100%)`
+                    : `linear-gradient(135deg, ${condoAccent}14 0%, rgba(255,255,255,0.92) 38%, rgba(248,250,252,0.98) 100%)`;
 
                   return (
                   <div
@@ -410,7 +414,7 @@ export default function MyCondosPage() {
                     className="rounded-2xl border p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
                     style={{
                       borderColor: `${condoAccent}33`,
-                      background: `linear-gradient(135deg, ${condoAccent}14 0%, rgba(255,255,255,0.92) 38%, rgba(248,250,252,0.98) 100%)`,
+                      background: cardBackground,
                     }}
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
