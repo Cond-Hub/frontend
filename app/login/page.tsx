@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { useDashboardStore } from '../../src/store/useDashboardStore';
+import { ApiError, dashboardApi, useDashboardStore } from '../../src/store/useDashboardStore';
 import { showToast } from '../../src/store/useToastStore';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000').replace(/\/$/, '');
@@ -71,9 +71,19 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (currentUser && state.bootstrapped) {
-      router.replace('/dashboard');
+      if (tenantPrefix) {
+        router.replace('/dashboard');
+        return;
+      }
+
+      if (currentUser.role === 'ADMIN_COMPANY') {
+        router.replace('/company');
+        return;
+      }
+
+      router.replace('/subscription');
     }
-  }, [currentUser, router, state.bootstrapped]);
+  }, [currentUser, router, state.bootstrapped, tenantPrefix]);
 
   const checkApiHealth = useCallback(async () => {
     setApiHealth('checking');
@@ -90,19 +100,31 @@ export default function LoginPage() {
   }, [checkApiHealth]);
 
   const login = async () => {
-    if (!tenantPrefix) {
-      showToast({
-        tone: 'error',
-        title: 'Endereco invalido',
-        description: 'Entre pelo endereco oficial do seu condominio para abrir o painel correto.',
-      });
-      return;
-    }
-
     try {
-      await state.loginStaff(email, password);
-      router.replace('/dashboard');
+      if (tenantPrefix) {
+        await state.loginStaff(email, password);
+        router.replace('/dashboard');
+        return;
+      }
+
+      const result = await dashboardApi.auth.loginBackoffice(email, password);
+      if (result.requiresSubscriptionPayment) {
+        router.replace('/subscription/payment');
+        return;
+      }
+
+      if (result.user.role === 'ADMIN_COMPANY') {
+        router.replace('/company');
+        return;
+      }
+
+      router.replace('/subscription');
     } catch (error) {
+      if (error instanceof ApiError && error.code === 'subscription_payment_required') {
+        router.replace('/subscription/payment');
+        return;
+      }
+
       showToast({
         tone: 'error',
         title: 'Nao foi possivel entrar',
@@ -141,12 +163,18 @@ export default function LoginPage() {
               </Link>
 
               <div className="mt-20 max-w-xl">
-                <p className="text-sm font-medium text-emerald-300">Painel do condominio</p>
+                <p className="text-sm font-medium text-emerald-300">
+                  {tenantPrefix ? 'Operacao do condominio' : 'Workspace da empresa'}
+                </p>
                 <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white">
-                  Entre para acompanhar a operacao diaria do seu condominio.
+                  {tenantPrefix
+                    ? 'Entre para acompanhar a operacao diaria do seu condominio.'
+                    : 'Entre para gerenciar a empresa, a carteira e depois entrar na operacao de cada condominio.'}
                 </h1>
                 <p className="mt-6 text-base leading-8 text-slate-300">
-                  Consulte moradores, boletos, ocorrencias, agenda, reservas e documentos em um unico painel.
+                  {tenantPrefix
+                    ? 'Consulte moradores, boletos, ocorrencias, agenda, reservas e documentos em um unico painel.'
+                    : 'Acesse sua conta sem subdominio para acompanhar a empresa, revisar assinatura e abrir cada operacao quando precisar.'}
                 </p>
               </div>
             </div>
@@ -155,10 +183,14 @@ export default function LoginPage() {
               <div className="rounded-[1.75rem] border border-emerald-400/20 bg-emerald-500/10 p-6">
                 <div className="flex items-center gap-2 text-emerald-200">
                   <ShieldCheck className="h-4 w-4" />
-                  <p className="text-sm font-medium">Acesso vinculado ao endereco do condominio</p>
+                  <p className="text-sm font-medium">
+                    {tenantPrefix ? 'Acesso vinculado ao endereco do condominio' : 'Gestores podem entrar sem subdominio'}
+                  </p>
                 </div>
                 <p className="mt-3 text-sm leading-7 text-slate-200">
-                  Use sempre o link oficial da sua operacao. Assim o sistema abre o painel, os moradores e os dados do condominio correto.
+                  {tenantPrefix
+                    ? 'Use sempre o link oficial da sua operacao. Assim o sistema abre o painel, os moradores e os dados do condominio correto.'
+                    : 'Administradores entram pelo dominio principal e comecam pela visao da empresa. O sistema so leva para um condominio quando voce escolhe a operacao.'}
                 </p>
               </div>
             </div>
@@ -176,9 +208,11 @@ export default function LoginPage() {
                 <div className="mb-3 w-full flex items-center justify-center">
                   <CondoHomeBrandImage className="h-16 w-auto object-contain" />
                 </div>
-                <CardTitle>Entrar no painel do condominio</CardTitle>
+                <CardTitle>{tenantPrefix ? 'Entrar no painel do condominio' : 'Entrar na conta da empresa'}</CardTitle>
                 <CardDescription>
-                  Use seu e-mail e sua senha para acessar moradores, cobranca, agenda e ocorrencias.
+                  {tenantPrefix
+                    ? 'Use seu e-mail e sua senha para acessar moradores, cobranca, agenda e ocorrencias.'
+                    : 'Use seu e-mail e sua senha para acessar a visao da empresa, a assinatura e a carteira operacional.'}
                 </CardDescription>
               </div>
             </CardHeader>
@@ -205,11 +239,19 @@ export default function LoginPage() {
                 />
               </div>
 
-              {!tenantPrefix ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
-                  Para entrar, use o link oficial do seu condominio. Exemplo: <span className="font-mono">aurora.condhub.com/login</span>
-                </div>
-              ) : null}
+              <div
+                className={`rounded-xl px-3 py-3 text-sm leading-6 ${
+                  tenantPrefix
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200'
+                    : 'border border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900/70 dark:bg-sky-950/30 dark:text-sky-200'
+                }`}
+              >
+                {tenantPrefix ? (
+                  <>Voce esta entrando no ambiente do condominio <span className="font-semibold">{tenantPrefix}</span>.</>
+                ) : (
+                  <>Gestores da empresa entram por aqui sem subdominio. Para moradores e sindicos, continue usando o link do condominio.</>
+                )}
+              </div>
 
               {apiHealth !== 'online' ? (
                 <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
@@ -220,8 +262,8 @@ export default function LoginPage() {
                 </div>
               ) : null}
 
-              <Button className="w-full" onClick={login} disabled={!tenantPrefix}>
-                Entrar
+              <Button className="w-full" onClick={login}>
+                {tenantPrefix ? 'Entrar no condominio' : 'Entrar na empresa'}
               </Button>
             </CardContent>
           </Card>

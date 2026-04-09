@@ -32,6 +32,8 @@ type ThemeMode = 'light' | 'dark';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000').replace(/\/$/, '');
 const TENANT_PREFIX_REQUIRED_MESSAGE = 'Acesse o painel pelo endereço do condomínio.';
+export const AUTH_HANDOFF_TOKEN_PARAM = 'condohome_token';
+export const AUTH_HANDOFF_CONDO_PARAM = 'condohome_condo_id';
 
 type BackendUserRole =
   | 'SystemAdmin'
@@ -67,7 +69,8 @@ type BackendCondo = {
   prefix: string;
   name: string;
   address: string;
-  type: 'ESSENTIAL' | 'COMPLETE';
+  primaryColor?: string;
+  logoUrl?: string;
 };
 
 type BackendUser = {
@@ -87,11 +90,15 @@ type BackendLoginResponse = {
   expiresAtUtc: string;
   user: BackendUser;
   accessibleCondos: BackendCondo[];
+  requiresSubscriptionPayment: boolean;
 };
 
 type BackendMeResponse = {
   user: BackendUser;
   accessibleCondos: BackendCondo[];
+};
+type BackendLogoutResponse = {
+  message: string;
 };
 
 type BackendBuilding = { id: string; condoId: string; name: string };
@@ -169,6 +176,12 @@ type BackendDocument = {
   fileUrl: string;
 };
 type BackendDocumentUploadUrl = {
+  storageRef: string;
+  uploadUrl: string;
+  expiresAtUtc: string;
+  contentType?: string;
+};
+type BackendCondoBrandingUploadUrl = {
   storageRef: string;
   uploadUrl: string;
   expiresAtUtc: string;
@@ -270,6 +283,7 @@ type BackendSaasPlan = {
   description?: string;
   monthlyPrice: number;
   maxCondos: number;
+  extraCondoPrice?: number | null;
   maxUnitsPerCondo: number;
   maxResidents: number;
   includesBillingPortal: boolean;
@@ -326,6 +340,7 @@ type BackendCompanySummary = {
   userCount: number;
   condos: BackendCondo[];
   currentSubscription?: BackendCompanySubscription;
+  currentPlan?: BackendSaasPlan;
   recentInvoices: BackendBillingInvoice[];
   supportNotes: BackendCompanySupportNote[];
 };
@@ -338,8 +353,92 @@ type BackendCustomerPortal = {
   companyId: string;
   companyName: string;
   currentSubscription?: BackendCompanySubscription;
+  currentPlan?: BackendSaasPlan;
+  condoCount: number;
+  estimatedMonthlyAmount?: number | null;
   invoices: BackendBillingInvoice[];
   welcomeChecklist: string[];
+};
+type BackendCompanyOccurrenceListItem = { condo: BackendCondo; occurrence: BackendOccurrence };
+type BackendCompanyDocumentListItem = { condo: BackendCondo; document: BackendDocument };
+type BackendCompanyAgendaListItem = { condo: BackendCondo; date: BackendImportantDate };
+type BackendCompanyBoletoListItem = { condo: BackendCondo; boleto: BackendBoleto };
+type BackendCompanyWorkspaceCondo = {
+  condo: BackendCondo;
+  unitCount: number;
+  occupiedUnitCount: number;
+  attentionUnitCount: number;
+  openOccurrenceCount: number;
+  expiringDocumentCount: number;
+  upcomingDateCount: number;
+  overdueBoletoCount: number;
+  overdueBoletoAmountCents: number;
+  availableToWithdrawCents: number;
+};
+type BackendCompanyWorkspace = {
+  companyName: string;
+  condoCount: number;
+  totalUnits: number;
+  occupiedUnits: number;
+  attentionUnits: number;
+  openOccurrenceCount: number;
+  expiringDocumentCount: number;
+  upcomingDateCount: number;
+  overdueBoletoCount: number;
+  overdueBoletoAmountCents: number;
+  availableToWithdrawCents: number;
+  condos: BackendCompanyWorkspaceCondo[];
+  recentOccurrences: BackendCompanyOccurrenceListItem[];
+  recentDocuments: BackendCompanyDocumentListItem[];
+  upcomingDates: BackendCompanyAgendaListItem[];
+  overdueBoletos: BackendCompanyBoletoListItem[];
+};
+type BackendCompanyOccurrences = {
+  openCount: number;
+  inProgressCount: number;
+  resolvedCount: number;
+  closedCount: number;
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: BackendCompanyOccurrenceListItem[];
+};
+type BackendCompanyDocuments = {
+  totalCount: number;
+  expiringCount: number;
+  noExpiryCount: number;
+  categoryCount: number;
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: BackendCompanyDocumentListItem[];
+};
+type BackendCompanyAgenda = {
+  totalCount: number;
+  dueTodayCount: number;
+  nextWeekCount: number;
+  typeCount: number;
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: BackendCompanyAgendaListItem[];
+};
+type BackendCompanyCondoBalance = {
+  condo: BackendCondo;
+  availableToWithdrawCents: number;
+  overdueBoletoCount: number;
+  overdueBoletoAmountCents: number;
+};
+type BackendCompanyFinancial = {
+  availableToWithdrawCents: number;
+  overdueBoletoAmountCents: number;
+  overdueBoletoCount: number;
+  openBoletoAmountCents: number;
+  balances: BackendCompanyCondoBalance[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: BackendCompanyBoletoListItem[];
 };
 type BackendRegisterCompanyResponse = {
   company: BackendCompanySummary;
@@ -363,6 +462,83 @@ type DashboardSummary = {
   upcomingDates: ImportantDate[];
 };
 
+export interface CompanyWorkspaceCondoSnapshot {
+  condo: Condo;
+  unitCount: number;
+  occupiedUnitCount: number;
+  attentionUnitCount: number;
+  openOccurrenceCount: number;
+  expiringDocumentCount: number;
+  upcomingDateCount: number;
+  overdueBoletoCount: number;
+  overdueBoletoAmountCents: number;
+  availableToWithdrawCents: number;
+}
+
+export interface CompanyWorkspaceSnapshot {
+  companyName?: string;
+  condos: CompanyWorkspaceCondoSnapshot[];
+  condoCount: number;
+  totalUnits: number;
+  occupiedUnits: number;
+  attentionUnits: number;
+  openOccurrenceCount: number;
+  expiringDocumentCount: number;
+  upcomingDateCount: number;
+  overdueBoletoCount: number;
+  overdueBoletoAmountCents: number;
+  availableToWithdrawCents: number;
+  recentOccurrences: Array<{ condo: Condo; occurrence: Occurrence }>;
+  recentDocuments: Array<{ condo: Condo; document: Document }>;
+  upcomingDates: Array<{ condo: Condo; date: ImportantDate }>;
+  overdueBoletos: Array<{ condo: Condo; boleto: Boleto }>;
+}
+
+export interface CompanyOccurrencesSnapshot {
+  openCount: number;
+  inProgressCount: number;
+  resolvedCount: number;
+  closedCount: number;
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: Array<{ condo: Condo; occurrence: Occurrence }>;
+}
+
+export interface CompanyDocumentsSnapshot {
+  totalCount: number;
+  expiringCount: number;
+  noExpiryCount: number;
+  categoryCount: number;
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: Array<{ condo: Condo; document: Document }>;
+}
+
+export interface CompanyAgendaSnapshot {
+  totalCount: number;
+  dueTodayCount: number;
+  nextWeekCount: number;
+  typeCount: number;
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: Array<{ condo: Condo; date: ImportantDate }>;
+}
+
+export interface CompanyFinancialSnapshot {
+  availableToWithdrawCents: number;
+  overdueBoletoAmountCents: number;
+  overdueBoletoCount: number;
+  openBoletoAmountCents: number;
+  balances: Array<{ condo: Condo; availableToWithdrawCents: number; overdueBoletoCount: number; overdueBoletoAmountCents: number }>;
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  items: Array<{ condo: Condo; boleto: Boleto }>;
+}
+
 export type SaasSubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'SUSPENDED' | 'CANCELED';
 export type SaasBillingProvider = 'MANUAL' | 'STRIPE' | 'ASAAS';
 export type SaasInvoiceStatus = 'DRAFT' | 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELED';
@@ -374,6 +550,7 @@ export interface SaasPlan {
   description?: string;
   monthlyPrice: number;
   maxCondos: number;
+  extraCondoPrice?: number | null;
   maxUnitsPerCondo: number;
   maxResidents: number;
   includesBillingPortal: boolean;
@@ -434,6 +611,7 @@ export interface SaasCompanySummary {
   userCount: number;
   condos: Condo[];
   currentSubscription?: SaasSubscription;
+  currentPlan?: SaasPlan;
   recentInvoices: SaasInvoice[];
   supportNotes: SaasSupportNote[];
 }
@@ -448,6 +626,9 @@ export interface CustomerPortal {
   companyId: string;
   companyName: string;
   currentSubscription?: SaasSubscription;
+  currentPlan?: SaasPlan;
+  condoCount: number;
+  estimatedMonthlyAmount?: number | null;
   invoices: SaasInvoice[];
   welcomeChecklist: string[];
 }
@@ -474,6 +655,9 @@ interface DashboardState {
   loginStaff: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setActiveCondoId: (condoId: string) => Promise<void>;
+  updateCondoBranding: (payload: { primaryColor?: string; logoUrl?: string }) => Promise<Condo>;
+  createCondoBrandingUploadUrl: (payload: { fileName: string; contentType?: string }) => Promise<BackendCondoBrandingUploadUrl>;
+  resetCondoBranding: () => Promise<Condo>;
   setThemeMode: (mode: ThemeMode) => void;
   resetDemo: () => Promise<void>;
 }
@@ -507,6 +691,20 @@ const mapRole = (role: BackendUserRole): UserRole => {
       return 'ADMIN_COMPANY';
     default:
       return 'RESIDENT';
+  }
+};
+
+const mapRoleToBackend = (role: UserRole): number => {
+  switch (role) {
+    case 'SYSTEM_ADMIN':
+      return -1;
+    case 'ADMIN_COMPANY':
+      return 0;
+    case 'SYNDIC':
+      return 2;
+    case 'RESIDENT':
+    default:
+      return 3;
   }
 };
 
@@ -603,11 +801,13 @@ const mapCondo = (value: BackendCondo): Condo => ({
   prefix: value.prefix,
   name: value.name,
   address: value.address,
-  type: value.type,
+  primaryColor: value.primaryColor,
+  logoUrl: value.logoUrl,
 });
 
 const mapUser = (value: BackendUser, accessibleCondos: Condo[]): User => ({
   id: value.id,
+  companyId: value.companyId,
   name: value.name,
   email: value.email,
   role: mapRole(value.role),
@@ -761,6 +961,98 @@ const mapImportantDate = (value: BackendImportantDate): ImportantDate => ({
   type: value.type,
   notes: value.notes,
 });
+const mapCompanyWorkspaceCondo = (value: BackendCompanyWorkspaceCondo): CompanyWorkspaceCondoSnapshot => ({
+  condo: mapCondo(value.condo),
+  unitCount: value.unitCount,
+  occupiedUnitCount: value.occupiedUnitCount,
+  attentionUnitCount: value.attentionUnitCount,
+  openOccurrenceCount: value.openOccurrenceCount,
+  expiringDocumentCount: value.expiringDocumentCount,
+  upcomingDateCount: value.upcomingDateCount,
+  overdueBoletoCount: value.overdueBoletoCount,
+  overdueBoletoAmountCents: value.overdueBoletoAmountCents,
+  availableToWithdrawCents: value.availableToWithdrawCents,
+});
+const mapCompanyOccurrenceItem = (value: BackendCompanyOccurrenceListItem) => ({
+  condo: mapCondo(value.condo),
+  occurrence: mapOccurrence(value.occurrence),
+});
+const mapCompanyDocumentItem = (value: BackendCompanyDocumentListItem) => ({
+  condo: mapCondo(value.condo),
+  document: mapDocument(value.document),
+});
+const mapCompanyAgendaItem = (value: BackendCompanyAgendaListItem) => ({
+  condo: mapCondo(value.condo),
+  date: mapImportantDate(value.date),
+});
+const mapCompanyBoletoItem = (value: BackendCompanyBoletoListItem) => ({
+  condo: mapCondo(value.condo),
+  boleto: mapBoleto(value.boleto),
+});
+const mapCompanyWorkspace = (value: BackendCompanyWorkspace): CompanyWorkspaceSnapshot => ({
+  companyName: value.companyName,
+  condoCount: value.condoCount,
+  totalUnits: value.totalUnits,
+  occupiedUnits: value.occupiedUnits,
+  attentionUnits: value.attentionUnits,
+  openOccurrenceCount: value.openOccurrenceCount,
+  expiringDocumentCount: value.expiringDocumentCount,
+  upcomingDateCount: value.upcomingDateCount,
+  overdueBoletoCount: value.overdueBoletoCount,
+  overdueBoletoAmountCents: value.overdueBoletoAmountCents,
+  availableToWithdrawCents: value.availableToWithdrawCents,
+  condos: value.condos.map(mapCompanyWorkspaceCondo),
+  recentOccurrences: value.recentOccurrences.map(mapCompanyOccurrenceItem),
+  recentDocuments: value.recentDocuments.map(mapCompanyDocumentItem),
+  upcomingDates: value.upcomingDates.map(mapCompanyAgendaItem),
+  overdueBoletos: value.overdueBoletos.map(mapCompanyBoletoItem),
+});
+const mapCompanyOccurrences = (value: BackendCompanyOccurrences): CompanyOccurrencesSnapshot => ({
+  openCount: value.openCount,
+  inProgressCount: value.inProgressCount,
+  resolvedCount: value.resolvedCount,
+  closedCount: value.closedCount,
+  totalItems: value.totalItems,
+  page: value.page,
+  pageSize: value.pageSize,
+  items: value.items.map(mapCompanyOccurrenceItem),
+});
+const mapCompanyDocuments = (value: BackendCompanyDocuments): CompanyDocumentsSnapshot => ({
+  totalCount: value.totalCount,
+  expiringCount: value.expiringCount,
+  noExpiryCount: value.noExpiryCount,
+  categoryCount: value.categoryCount,
+  totalItems: value.totalItems,
+  page: value.page,
+  pageSize: value.pageSize,
+  items: value.items.map(mapCompanyDocumentItem),
+});
+const mapCompanyAgenda = (value: BackendCompanyAgenda): CompanyAgendaSnapshot => ({
+  totalCount: value.totalCount,
+  dueTodayCount: value.dueTodayCount,
+  nextWeekCount: value.nextWeekCount,
+  typeCount: value.typeCount,
+  totalItems: value.totalItems,
+  page: value.page,
+  pageSize: value.pageSize,
+  items: value.items.map(mapCompanyAgendaItem),
+});
+const mapCompanyFinancial = (value: BackendCompanyFinancial): CompanyFinancialSnapshot => ({
+  availableToWithdrawCents: value.availableToWithdrawCents,
+  overdueBoletoAmountCents: value.overdueBoletoAmountCents,
+  overdueBoletoCount: value.overdueBoletoCount,
+  openBoletoAmountCents: value.openBoletoAmountCents,
+  totalItems: value.totalItems,
+  page: value.page,
+  pageSize: value.pageSize,
+  balances: value.balances.map((item) => ({
+    condo: mapCondo(item.condo),
+    availableToWithdrawCents: item.availableToWithdrawCents,
+    overdueBoletoCount: item.overdueBoletoCount,
+    overdueBoletoAmountCents: item.overdueBoletoAmountCents,
+  })),
+  items: value.items.map(mapCompanyBoletoItem),
+});
 const mapNotification = (value: BackendNotification): Notification => ({
   id: value.id,
   condoId: value.condoId,
@@ -892,6 +1184,7 @@ const mapSaasCompanySummary = (value: BackendCompanySummary): SaasCompanySummary
   userCount: value.userCount,
   condos: value.condos.map(mapCondo),
   currentSubscription: value.currentSubscription ? mapSaasSubscription(value.currentSubscription) : undefined,
+  currentPlan: value.currentPlan ? mapSaasPlan(value.currentPlan) : undefined,
   recentInvoices: value.recentInvoices.map(mapSaasInvoice),
   supportNotes: value.supportNotes.map(mapSaasSupportNote),
 });
@@ -899,6 +1192,9 @@ const mapCustomerPortal = (value: BackendCustomerPortal): CustomerPortal => ({
   companyId: value.companyId,
   companyName: value.companyName,
   currentSubscription: value.currentSubscription ? mapSaasSubscription(value.currentSubscription) : undefined,
+  currentPlan: value.currentPlan ? mapSaasPlan(value.currentPlan) : undefined,
+  condoCount: value.condoCount,
+  estimatedMonthlyAmount: value.estimatedMonthlyAmount,
   invoices: value.invoices.map(mapSaasInvoice),
   welcomeChecklist: value.welcomeChecklist,
 });
@@ -959,13 +1255,122 @@ const toQueryString = (params: Record<string, string | number | boolean | undefi
   return rendered ? `?${rendered}` : '';
 };
 
-const readErrorMessage = async (response: Response): Promise<string> => {
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export const buildTenantUrl = (
+  prefix: string | undefined,
+  path: string,
+  accessToken?: string,
+  condoId?: string,
+  query?: Record<string, string | undefined>,
+) => {
+  if (typeof window === 'undefined' || !prefix) {
+    return path;
+  }
+
+  const { protocol, hostname, port } = window.location;
+  const labels = hostname.split('.').filter(Boolean);
+  let targetHost = `${prefix}.localhost`;
+
+  if (hostname.endsWith('.localhost') || hostname === 'localhost') {
+    targetHost = `${prefix}.localhost`;
+  } else if (labels.length >= 3) {
+    targetHost = [prefix, ...labels.slice(1)].join('.');
+  }
+
+  const handoff = new URLSearchParams();
+  if (accessToken) {
+    handoff.set(AUTH_HANDOFF_TOKEN_PARAM, accessToken);
+  }
+  if (condoId) {
+    handoff.set(AUTH_HANDOFF_CONDO_PARAM, condoId);
+  }
+
+  const search = new URLSearchParams();
+  Object.entries(query ?? {}).forEach(([key, value]) => {
+    if (value) {
+      search.set(key, value);
+    }
+  });
+
+  return `${protocol}//${targetHost}${port ? `:${port}` : ''}${path}${search.size ? `?${search.toString()}` : ''}${handoff.size ? `#${handoff.toString()}` : ''}`;
+};
+
+export const buildManagerUrl = (
+  path: string,
+  accessToken?: string,
+  query?: Record<string, string | undefined>,
+) => {
+  if (typeof window === 'undefined') {
+    return path;
+  }
+
+  const { protocol, hostname, port } = window.location;
+  const labels = hostname.split('.').filter(Boolean);
+  let targetHost = hostname;
+
+  if (hostname.endsWith('.localhost')) {
+    targetHost = 'localhost';
+  } else if (labels.length >= 3) {
+    targetHost = labels.slice(1).join('.');
+  }
+
+  const handoff = new URLSearchParams();
+  if (accessToken) {
+    handoff.set(AUTH_HANDOFF_TOKEN_PARAM, accessToken);
+  }
+
+  const search = new URLSearchParams();
+  Object.entries(query ?? {}).forEach(([key, value]) => {
+    if (value) {
+      search.set(key, value);
+    }
+  });
+
+  return `${protocol}//${targetHost}${port ? `:${port}` : ''}${path}${search.size ? `?${search.toString()}` : ''}${handoff.size ? `#${handoff.toString()}` : ''}`;
+};
+
+const readErrorPayload = async (response: Response): Promise<{ message: string; code?: string }> => {
   try {
     const payload = (await response.json()) as { title?: string; detail?: string; message?: string; error?: string };
-    return payload.detail ?? payload.message ?? payload.title ?? payload.error ?? `HTTP ${response.status}`;
+    return {
+      message: payload.detail ?? payload.message ?? payload.title ?? payload.error ?? `HTTP ${response.status}`,
+      code: payload.title,
+    };
   } catch {
-    return `HTTP ${response.status}`;
+    return { message: `HTTP ${response.status}` };
   }
+};
+
+const consumeAuthHandoff = (): { accessToken: string; activeCondoId?: string } | undefined => {
+  if (typeof window === 'undefined' || !window.location.hash) {
+    return undefined;
+  }
+
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get(AUTH_HANDOFF_TOKEN_PARAM);
+  if (!accessToken) {
+    return undefined;
+  }
+
+  const activeCondoId = params.get(AUTH_HANDOFF_CONDO_PARAM) ?? undefined;
+  params.delete(AUTH_HANDOFF_TOKEN_PARAM);
+  params.delete(AUTH_HANDOFF_CONDO_PARAM);
+
+  const nextHash = params.toString();
+  const nextUrl = `${window.location.pathname}${window.location.search}${nextHash ? `#${nextHash}` : ''}`;
+  window.history.replaceState(null, '', nextUrl);
+
+  return { accessToken, activeCondoId };
 };
 
 const requestJson = async <T>(
@@ -1023,7 +1428,8 @@ const requestJson = async <T>(
         themeMode: state.themeMode,
       });
     }
-    throw new Error(await readErrorMessage(response));
+    const payload = await readErrorPayload(response);
+    throw new ApiError(payload.message, response.status, payload.code);
   }
 
   if (response.status === 204) {
@@ -1075,6 +1481,26 @@ interface DocumentFilters {
 
 export const dashboardApi = {
   auth: {
+    register: async (payload: {
+      name: string;
+      email: string;
+      password: string;
+      role: UserRole;
+      companyId: string;
+      accessibleCondoIds: string[];
+      residentUnitId?: string | null;
+    }) => {
+      const data = await requestJson<BackendUser>('/auth/register', {
+        method: 'POST',
+        body: {
+          ...payload,
+          role: mapRoleToBackend(payload.role),
+          residentUnitId: payload.residentUnitId ?? null,
+        },
+      });
+
+      return mapUser(data, []);
+    },
     login: async (email: string, password: string, allowedRoles: UserRole[]) => {
       const condoPrefix = getTenantPrefixFromWindow();
       if (!condoPrefix) {
@@ -1121,7 +1547,10 @@ export const dashboardApi = {
         });
       }
 
-      return applied.user;
+      return {
+        user: applied.user,
+        requiresSubscriptionPayment: payload.requiresSubscriptionPayment,
+      };
     },
     me: async () => {
       const payload = await requestJson<BackendMeResponse>('/auth/me');
@@ -1140,6 +1569,29 @@ export const dashboardApi = {
     },
     listUsersByRole: async (_roles: UserRole[]) => {
       return [] as User[];
+    },
+    listSyndicsByCondo: async (condoId: string) => {
+      const data = await requestJson<BackendUser[]>(`/auth/condos/${condoId}/syndics`, {
+        method: 'GET',
+      });
+      return data.map((item) => mapUser(item, []));
+    },
+    updateManagedUser: async (userId: string, payload: {
+      name: string;
+      email: string;
+      password?: string;
+      accessibleCondoIds: string[];
+    }) => {
+      const data = await requestJson<BackendUser>(`/auth/users/${userId}`, {
+        method: 'PUT',
+        body: payload,
+      });
+      return mapUser(data, []);
+    },
+    deleteManagedUser: async (userId: string) => {
+      return await requestJson<BackendLogoutResponse>(`/auth/users/${userId}`, {
+        method: 'DELETE',
+      });
     },
   },
 
@@ -1209,7 +1661,37 @@ export const dashboardApi = {
         method: 'POST',
         body: payload,
       });
-      return mapCondo(data);
+      const condo = mapCondo(data);
+      useDashboardStore.setState((state) => {
+        const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
+        if (!currentUser || currentUser.role !== 'ADMIN_COMPANY') {
+          return {
+            condos: {
+              ...state.condos,
+              [condo.id]: condo,
+            },
+          };
+        }
+
+        const accessibleCondoIds = currentUser.accessibleCondoIds.includes(condo.id)
+          ? currentUser.accessibleCondoIds
+          : [...currentUser.accessibleCondoIds, condo.id];
+
+        return {
+          condos: {
+            ...state.condos,
+            [condo.id]: condo,
+          },
+          users: {
+            ...state.users,
+            [currentUser.id]: {
+              ...currentUser,
+              accessibleCondoIds,
+            },
+          },
+        };
+      });
+      return condo;
     },
     changeSubscription: async (companyId: string, payload: { planCode: string; status: SaasSubscriptionStatus; billingProvider: SaasBillingProvider; trialDays?: number; notes?: string }) => {
       const data = await requestJson<BackendCompanySubscription>(`/saas/companies/${companyId}/subscription`, {
@@ -1293,6 +1775,42 @@ export const dashboardApi = {
       useDashboardStore.setState({ activeCondoId: condoId });
       return state.condos[condoId];
     },
+    updateBranding: async (condoId: string, payload: { primaryColor?: string; logoUrl?: string }) => {
+      const data = await requestJson<BackendCondo>(`/condos/${condoId}/branding`, {
+        method: 'PUT',
+        body: {
+          primaryColor: payload.primaryColor,
+          logoUrl: payload.logoUrl,
+        },
+      });
+      const condo = mapCondo(data);
+      useDashboardStore.setState((state) => ({
+        condos: {
+          ...state.condos,
+          [condo.id]: condo,
+        },
+      }));
+      return condo;
+    },
+    createBrandingUploadUrl: async (condoId: string, payload: { fileName: string; contentType?: string }) => {
+      return await requestJson<BackendCondoBrandingUploadUrl>(`/condos/${condoId}/branding/upload-url`, {
+        method: 'POST',
+        body: payload,
+      });
+    },
+    resetBranding: async (condoId: string) => {
+      const data = await requestJson<BackendCondo>(`/condos/${condoId}/branding/reset`, {
+        method: 'POST',
+      });
+      const condo = mapCondo(data);
+      useDashboardStore.setState((state) => ({
+        condos: {
+          ...state.condos,
+          [condo.id]: condo,
+        },
+      }));
+      return condo;
+    },
   },
 
   home: {
@@ -1334,6 +1852,69 @@ export const dashboardApi = {
         expiringDocuments: documents.filter((item) => !!item.expiresAtISO && isWithinDays(item.expiresAtISO, 30)),
         upcomingDates: dates,
       };
+    },
+  },
+
+  company: {
+    getWorkspace: async (filters: { condoId?: string } = {}): Promise<CompanyWorkspaceSnapshot> => {
+      const state = useDashboardStore.getState();
+      const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
+
+      if (!currentUser || currentUser.role !== 'ADMIN_COMPANY') {
+        throw new Error('Esta area e exclusiva para administradores da empresa.');
+      }
+
+      const data = await requestJson<BackendCompanyWorkspace>(`/saas/company-workspace${toQueryString({ condoId: filters.condoId })}`);
+      return mapCompanyWorkspace(data);
+    },
+    getOccurrences: async (filters: {
+      condoId?: string;
+      search?: string;
+      status?: string;
+      priority?: string;
+      category?: string;
+      page?: number;
+      pageSize?: number;
+    } = {}): Promise<CompanyOccurrencesSnapshot> => {
+      const data = await requestJson<BackendCompanyOccurrences>(`/saas/company-occurrences${toQueryString(filters)}`);
+      return mapCompanyOccurrences(data);
+    },
+    getDocuments: async (filters: {
+      condoId?: string;
+      search?: string;
+      category?: string;
+      expiringOnly?: boolean;
+      withoutExpiry?: boolean;
+      page?: number;
+      pageSize?: number;
+    } = {}): Promise<CompanyDocumentsSnapshot> => {
+      const data = await requestJson<BackendCompanyDocuments>(`/saas/company-documents${toQueryString(filters)}`);
+      return mapCompanyDocuments(data);
+    },
+    getAgenda: async (filters: {
+      condoId?: string;
+      search?: string;
+      type?: string;
+      startDate?: string;
+      endDate?: string;
+      upcomingDays?: number;
+      page?: number;
+      pageSize?: number;
+    } = {}): Promise<CompanyAgendaSnapshot> => {
+      const data = await requestJson<BackendCompanyAgenda>(`/saas/company-agenda${toQueryString(filters)}`);
+      return mapCompanyAgenda(data);
+    },
+    getFinancial: async (filters: {
+      condoId?: string;
+      search?: string;
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      page?: number;
+      pageSize?: number;
+    } = {}): Promise<CompanyFinancialSnapshot> => {
+      const data = await requestJson<BackendCompanyFinancial>(`/saas/company-financial${toQueryString(filters)}`);
+      return mapCompanyFinancial(data);
     },
   },
 
@@ -1910,6 +2491,15 @@ export const useDashboardStore = create<DashboardState>()(
       bootstrapped: false,
       markHydrated: (value) => set({ hydrationComplete: value }),
       bootstrap: async () => {
+        const handoff = consumeAuthHandoff();
+        if (handoff) {
+          set({
+            accessToken: handoff.accessToken,
+            activeCondoId: handoff.activeCondoId,
+            bootstrapped: false,
+          });
+        }
+
         const state = get();
         if (state.bootstrapped) {
           return;
@@ -1951,6 +2541,30 @@ export const useDashboardStore = create<DashboardState>()(
       },
       setActiveCondoId: async (condoId) => {
         await dashboardApi.tenant.setActiveCondo(condoId);
+      },
+      updateCondoBranding: async (payload) => {
+        const condoId = get().activeCondoId;
+        if (!condoId) {
+          throw new Error('Nenhum condomínio ativo selecionado.');
+        }
+
+        return await dashboardApi.tenant.updateBranding(condoId, payload);
+      },
+      createCondoBrandingUploadUrl: async (payload) => {
+        const condoId = get().activeCondoId;
+        if (!condoId) {
+          throw new Error('Nenhum condomínio ativo selecionado.');
+        }
+
+        return await dashboardApi.tenant.createBrandingUploadUrl(condoId, payload);
+      },
+      resetCondoBranding: async () => {
+        const condoId = get().activeCondoId;
+        if (!condoId) {
+          throw new Error('Nenhum condomínio ativo selecionado.');
+        }
+
+        return await dashboardApi.tenant.resetBranding(condoId);
       },
       setThemeMode: (mode) => set({ themeMode: mode }),
       resetDemo: async () => {

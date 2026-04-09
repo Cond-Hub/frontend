@@ -10,7 +10,6 @@ const footerLinks = {
   ],
   empresa: [
     { label: "Painel", href: "/login" },
-    { label: "Planos e cobranca", href: "/saas" },
   ],
   recursos: [
     { label: "Mapa", href: "#features" },

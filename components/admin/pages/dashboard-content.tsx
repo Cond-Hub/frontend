@@ -366,7 +366,7 @@ export function DashboardContent() {
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
   const activeCondo = state.activeCondoId ? state.condos[state.activeCondoId] : undefined;
   const canManageFinance = currentUser?.role === 'ADMIN_COMPANY' || currentUser?.role === 'SYSTEM_ADMIN';
-  const canViewWalletChart = canManageFinance && activeCondo?.type === 'COMPLETE';
+  const canViewWalletChart = canManageFinance;
 
   const [summary, setSummary] = useState<DashboardData>();
   const [occurrences, setOccurrences] = useState<OccurrenceList>([]);
@@ -438,7 +438,7 @@ export function DashboardContent() {
       {
         label: 'PIX recebidos',
         value: canViewWalletChart ? walletPayments.filter((item) => item.status === 'PAID').length : 0,
-        detail: canViewWalletChart ? 'Pagamentos liquidados no condomínio atual.' : 'Disponível em condomínios COMPLETE.',
+        detail: canViewWalletChart ? 'Pagamentos liquidados no condomínio atual.' : 'Disponível para administradores financeiros.',
         icon: CreditCard,
       },
       {

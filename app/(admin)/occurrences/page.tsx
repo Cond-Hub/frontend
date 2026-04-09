@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, CheckCircle2, Clock3, Eye, Filter, GripVertical, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
@@ -88,6 +89,9 @@ function OccurrenceBoardSkeleton() {
 }
 
 export default function OccurrencesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedOccurrenceId = searchParams.get('occurrenceId') ?? '';
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,6 +127,23 @@ export default function OccurrencesPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    if (!requestedOccurrenceId || occurrences.length === 0) {
+      return;
+    }
+
+    const requestedOccurrence = occurrences.find((item) => item.id === requestedOccurrenceId);
+    if (!requestedOccurrence) {
+      return;
+    }
+
+    if (requestedOccurrence.unitId) {
+      setUnitFilter(requestedOccurrence.unitId);
+    }
+
+    setSelectedOccurrence(requestedOccurrence);
+  }, [occurrences, requestedOccurrenceId]);
 
   const unitLabelById = useMemo(() => new Map(units.map((unit) => [unit.id, unit.label])), [units]);
 
@@ -412,7 +433,12 @@ export default function OccurrencesPage() {
         <ModalFrame
           title={selectedOccurrence.title}
           description="Detalhes completos da ocorrencia, contexto e anexos."
-          onClose={() => setSelectedOccurrence(undefined)}
+          onClose={() => {
+            setSelectedOccurrence(undefined);
+            if (requestedOccurrenceId) {
+              router.replace('/occurrences');
+            }
+          }}
         >
           <div className="space-y-6">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

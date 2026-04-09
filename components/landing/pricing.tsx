@@ -6,38 +6,68 @@ const whatsappNumber = "5547992611819"
 
 const plans = [
   {
-    name: "Essencial",
-    description: "Ideal para centralizar a operacao do condominio",
-    price: "149",
+    code: "STARTER",
+    name: "Starter",
+    description: "Para empresas gestoras pequenas que querem centralizar os primeiros condominios.",
+    price: "199",
     period: "/mes",
     features: [
-      "Visao geral e analytics",
-      "Gestao de unidades e blocos",
-      "Gestao de ocorrencias e chamados",
-      "Calendario e agendamentos",
-      "Boletos",
-      "Sistema de reserva de amenidades",
-      "Gestao de moradores",
+      "Ate 3 condominios",
+      "Ate 250 unidades no total",
+      "Ate 500 moradores",
+      "Todas as features principais inclusas",
+      "Suporte padrao",
+      "Condominio extra: R$ 49/mes",
     ],
     cta: "Escolher plano",
     highlighted: false,
   },
   {
-    name: "Completo",
-    description: "Para condominios que tambem querem receber pelo app",
-    price: "199",
+    code: "PRO",
+    name: "Pro",
+    description: "Para empresas gestoras que ja operam multiplos condominios e precisam de escala.",
+    price: "499",
     period: "/mes",
     features: [
-      "Tudo do primeiro plano",
-      "Pagamentos com PIX imediatos",
-      "Notificacoes automaticas para moradores pelo app",
-      "Taxa operacional de R$ 1,99 por recebimento via PIX",
-      "Saques gratis e ilimitados",
+      "Ate 10 condominios",
+      "Ate 1.000 unidades no total",
+      "Ate 3.000 moradores",
+      "Todas as features principais inclusas",
+      "Suporte prioritario",
+      "Condominio extra: R$ 39/mes",
     ],
     cta: "Escolher plano",
     highlighted: true,
     badge: "Mais escolhido",
   },
+  {
+    code: "ENTERPRISE",
+    name: "Enterprise",
+    description: "Para empresas gestoras com alto volume e necessidades avancadas.",
+    price: "Sob consulta",
+    period: "",
+    features: [
+      "Ate 100 condominios ou volume negociado",
+      "Volume de unidades sob consulta",
+      "Ate 20.000 moradores",
+      "Todas as features principais inclusas",
+      "SLA e suporte prioritario",
+      "Integracoes e condicoes comerciais sob demanda",
+      "Condominio extra: sob consulta",
+    ],
+    cta: "Falar com vendas",
+    highlighted: false,
+  },
+]
+
+const includedFeatures = [
+  "Multi-condominio",
+  "Workspace da empresa",
+  "Moradores e unidades",
+  "Ocorrencias e documentos",
+  "Agenda, espacos e reservas",
+  "Boletos, Carteira e PIX",
+  "Branding por condominio",
 ]
 
 export function LandingPricing() {
@@ -48,15 +78,28 @@ export function LandingPricing() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Planos</p>
           <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Escolha o plano ideal para seu condominio
+            Escolha o plano ideal para sua empresa
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Dois planos objetivos para operar o condominio e, se quiser, receber com PIX.
+            Todos os planos incluem as features principais. A diferenca esta no volume, suporte e condicoes comerciais.
           </p>
+          <p className="mt-3 text-sm font-semibold text-primary">Todos os planos com 1 mes gratis para comecar.</p>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-5xl rounded-2xl border border-border bg-card p-6">
+          <p className="text-sm font-semibold text-foreground">Incluso em todos os planos</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {includedFeatures.map((feature) => (
+              <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Check className="h-4 w-4 shrink-0 text-primary" />
+                <span>{feature}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Pricing cards */}
-        <div className="mx-auto mt-16 grid max-w-4xl gap-8 lg:grid-cols-2">
+        <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-3">
           {plans.map((plan, index) => (
             <div
               key={index}
@@ -79,12 +122,15 @@ export function LandingPricing() {
               <div className="mb-6">
                 <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+                <div className="mt-4 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                  1 mes gratis
+                </div>
               </div>
 
               {/* Price */}
               <div className="mb-6">
                 <span className="text-4xl font-bold text-foreground">
-                  {plan.price === "Custom" ? "" : "R$ "}
+                  {plan.price === "Sob consulta" ? "" : "R$ "}
                   {plan.price}
                 </span>
                 <span className="text-muted-foreground">{plan.period}</span>
@@ -102,11 +148,15 @@ export function LandingPricing() {
 
               {/* CTA */}
               <Link
-                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                  `Olá, tenho interesse no plano ${plan.name} da ContHub`,
-                )}`}
-                target="_blank"
-                rel="noreferrer"
+                href={
+                  plan.code === "ENTERPRISE"
+                    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                        `Olá, tenho interesse no plano ${plan.name} da ContHub`,
+                      )}`
+                    : `/signup?plan=${plan.code}`
+                }
+                target={plan.code === "ENTERPRISE" ? "_blank" : undefined}
+                rel={plan.code === "ENTERPRISE" ? "noreferrer" : undefined}
               >
                 <Button
                   className={`w-full ${

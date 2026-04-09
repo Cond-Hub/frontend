@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye, FileText, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import type { Document, Resident, Unit } from '../../../shared/src';
@@ -115,8 +115,10 @@ async function uploadDocumentFile(file: File) {
 }
 
 export default function DocumentsPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedUnitId = searchParams.get('unitId') ?? '';
+  const requestedDocumentId = searchParams.get('documentId') ?? '';
   const autoOpenedRef = useRef(false);
 
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -127,6 +129,7 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState('');
   const [unitFilter, setUnitFilter] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | undefined>();
   const [editingDocument, setEditingDocument] = useState<Document | undefined>();
   const [documentToRemove, setDocumentToRemove] = useState<Document | undefined>();
   const [form, setForm] = useState<DocumentFormState>(emptyForm);
@@ -194,7 +197,7 @@ export default function DocumentsPage() {
   }, [residents, units]);
 
   useEffect(() => {
-    if (!requestedUnitId || autoOpenedRef.current || unitOptions.length === 0) {
+    if (!requestedUnitId || requestedDocumentId || autoOpenedRef.current || unitOptions.length === 0) {
       return;
     }
 
@@ -211,7 +214,24 @@ export default function DocumentsPage() {
       unitId: requestedUnitId,
     });
     setIsFormOpen(true);
-  }, [requestedUnitId, unitOptions]);
+  }, [requestedDocumentId, requestedUnitId, unitOptions]);
+
+  useEffect(() => {
+    if (!requestedDocumentId || documents.length === 0) {
+      return;
+    }
+
+    const requestedDocument = documents.find((item) => item.id === requestedDocumentId);
+    if (!requestedDocument) {
+      return;
+    }
+
+    if (requestedDocument.unitId) {
+      setUnitFilter(requestedDocument.unitId);
+    }
+
+    setSelectedDocument(requestedDocument);
+  }, [documents, requestedDocumentId]);
 
   const openCreate = () => {
     setEditingDocument(undefined);
@@ -458,7 +478,14 @@ export default function DocumentsPage() {
               </div>
             ) : (
               filteredDocuments.map((document) => (
-                <div key={document.id} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                <div
+                  key={document.id}
+                  className={`rounded-2xl border bg-white p-4 dark:bg-slate-950 ${
+                    requestedDocumentId === document.id
+                      ? 'border-sky-400 ring-2 ring-sky-200 dark:border-sky-600 dark:ring-sky-900/60'
+                      : 'border-slate-200 dark:border-slate-800'
+                  }`}
+                >
                   <p className="text-base font-semibold text-slate-950 dark:text-slate-50">{document.title}</p>
                   <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <p><strong>Unidade:</strong> {document.unitLabel ?? 'Sem unidade'}</p>
@@ -467,6 +494,10 @@ export default function DocumentsPage() {
                     <p><strong>Descricao:</strong> {document.description?.trim() || 'Sem descricao'}</p>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setSelectedDocument(document)}>
+                      <Eye className="h-4 w-4" />
+                      Ver detalhe
+                    </Button>
                     {document.fileUrl ? (
                       <a href={document.fileUrl} target="_blank" rel="noreferrer">
                         <Button variant="outline" size="sm" className="gap-2">
@@ -514,7 +545,7 @@ export default function DocumentsPage() {
                     </tr>
                   ) : (
                     filteredDocuments.map((document) => (
-                      <tr key={document.id} className="border-b border-slate-200 last:border-b-0 dark:border-slate-800">
+                      <tr key={document.id} className={`border-b last:border-b-0 dark:border-slate-800 ${requestedDocumentId === document.id ? 'bg-sky-50/70 dark:bg-sky-950/20' : 'border-slate-200'}`}>
                         <td className="px-6 py-4">
                           <div>
                             <p className="font-medium text-slate-950 dark:text-slate-50">{document.title}</p>
@@ -539,6 +570,10 @@ export default function DocumentsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" className="gap-2" onClick={() => setSelectedDocument(document)}>
+                              <Eye className="h-4 w-4" />
+                              Detalhe
+                            </Button>
                             <Button variant="outline" size="sm" className="gap-2" onClick={() => openEdit(document)}>
                               <Pencil className="h-4 w-4" />
                               Editar
@@ -572,6 +607,58 @@ export default function DocumentsPage() {
           }
         }}
       />
+
+      {selectedDocument ? (
+        <ModalFrame
+          title={selectedDocument.title}
+          description="Detalhes do documento e acesso rapido ao arquivo."
+          onClose={() => {
+            setSelectedDocument(undefined);
+            if (requestedDocumentId) {
+              router.replace('/documents');
+            }
+          }}
+        >
+          <div className="space-y-6">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Unidade</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-slate-50">{selectedDocument.unitLabel ?? 'Sem unidade'}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Categoria</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-slate-50">{selectedDocument.category}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Referencia</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-slate-50">{selectedDocument.expiresAtISO ? formatDateBR(selectedDocument.expiresAtISO) : 'Sem data'}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Enviado em</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-slate-50">{formatDateBR(selectedDocument.uploadedAtISO)}</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
+              <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">{selectedDocument.description?.trim() || 'Sem descricao cadastrada.'}</p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              {selectedDocument.fileUrl ? (
+                <a href={selectedDocument.fileUrl} target="_blank" rel="noreferrer">
+                  <Button variant="outline">Abrir arquivo</Button>
+                </a>
+              ) : null}
+              <Button onClick={() => {
+                setSelectedDocument(undefined);
+                openEdit(selectedDocument);
+              }}>
+                Editar documento
+              </Button>
+            </div>
+          </div>
+        </ModalFrame>
+      ) : null}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   FileText,
   LayoutDashboard,
   Map,
+  Settings,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -19,7 +20,8 @@ export type AdminSectionId =
   | 'boletos'
   | 'payments'
   | 'common-spaces'
-  | 'residents';
+  | 'residents'
+  | 'settings';
 
 export type AdminSection = {
   id: AdminSectionId;
@@ -112,6 +114,15 @@ export const adminSections: AdminSection[] = [
     pageTitle: 'Moradores',
     pageDescription: 'Gestao de pessoas e unidades em uma pagina propria e nova.',
     icon: Users,
+  },
+  {
+    id: 'settings',
+    href: '/settings',
+    label: 'Configuracoes',
+    description: 'Marca e tema',
+    pageTitle: 'Configuracoes',
+    pageDescription: 'Personalize cores e logo do condominio ativo.',
+    icon: Settings,
   },
 ];
 

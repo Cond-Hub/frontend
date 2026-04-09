@@ -1,7 +1,8 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Plus, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronLeft, ChevronRight, GripHorizontal, Plus, Users, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { type CommonSpace, type CommonSpaceReservation, type ImportantDate, type Resident } from '../../../shared/src';
 import { Button } from '../../../components/ui/button';
@@ -38,6 +39,7 @@ type CalendarItem =
       kind: 'other';
       title: string;
       startsAtISO: string;
+      endsAtISO: string;
       subtitle: string;
       colorClass: string;
       source: ImportantDate;
@@ -47,6 +49,7 @@ type CalendarItem =
       kind: 'reservation';
       title: string;
       startsAtISO: string;
+      endsAtISO: string;
       subtitle: string;
       colorClass: string;
       source: CommonSpaceReservation;
@@ -55,7 +58,15 @@ type CalendarItem =
 type DragPayload = {
   itemId: string;
   targetDayKey: string;
-  targetHour: number;
+  targetMinutes: number;
+};
+
+type ResizePayload = {
+  itemId: string;
+  edge: 'start' | 'end';
+  originY: number;
+  initialStartISO: string;
+  initialEndISO: string;
 };
 
 type ModalFrameProps = {
@@ -98,6 +109,12 @@ const creationOptions = [
 ];
 
 const hourLabels = Array.from({ length: 24 }, (_, index) => index);
+const HOUR_ROW_HEIGHT = 80;
+const DAY_COLUMN_HEIGHT = HOUR_ROW_HEIGHT * 24;
+const SNAP_MINUTES = 15;
+const DEFAULT_OTHER_DURATION_MINUTES = 60;
+const MIN_RESERVATION_DURATION_MINUTES = 30;
+const MIN_ITEM_HEIGHT = 28;
 const DATE_TIME_LIKE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/;
 
 function ModalFrame({ title, description, children, onClose }: ModalFrameProps) {
@@ -200,6 +217,13 @@ function createDateAtHour(day: Date, hour: number) {
   return next;
 }
 
+function createDateAtMinutes(day: Date, minutes: number) {
+  const next = new Date(day);
+  next.setHours(0, 0, 0, 0);
+  next.setMinutes(minutes, 0, 0);
+  return next;
+}
+
 function formatDateTimeBR(value: string) {
   const match = DATE_TIME_LIKE_PATTERN.exec(value);
   if (match) {
@@ -224,7 +248,24 @@ function applyTimeToLocalDateTime(value: string, timeHHMM: string) {
   return `${datePart}T${timeHHMM}`;
 }
 
+function getMinutesSinceMidnight(value: string) {
+  const date = parseDateTimeLike(value);
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+function clampMinutes(value: number) {
+  return Math.max(0, Math.min(24 * 60, value));
+}
+
+function snapMinutes(value: number) {
+  return Math.round(value / SNAP_MINUTES) * SNAP_MINUTES;
+}
+
 export default function AgendaPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedDateId = searchParams.get('dateId') ?? '';
+  const calendarScrollRef = useRef<HTMLDivElement>(null);
   const [dates, setDates] = useState<ImportantDate[]>([]);
   const [reservations, setReservations] = useState<CommonSpaceReservation[]>([]);
   const [commonSpaces, setCommonSpaces] = useState<CommonSpace[]>([]);
@@ -242,6 +283,8 @@ export default function AgendaPage() {
   const [reservationForm, setReservationForm] = useState<ReservationFormState>(emptyReservationForm);
   const [draggingItemId, setDraggingItemId] = useState<string>();
   const [dragOverCell, setDragOverCell] = useState<string>();
+  const [resizeState, setResizeState] = useState<ResizePayload>();
+  const [draftTimings, setDraftTimings] = useState<Record<string, { startsAtISO: string; endsAtISO: string }>>({});
 
   const load = async () => {
     setLoading(true);
@@ -278,6 +321,23 @@ export default function AgendaPage() {
     void load();
   }, [weekAnchor]);
 
+  useEffect(() => {
+    if (!requestedDateId || dates.length === 0) {
+      return;
+    }
+
+    const requestedDate = dates.find((item) => item.id === requestedDateId);
+    if (!requestedDate) {
+      return;
+    }
+
+    const targetDate = parseDateTimeLike(requestedDate.dateISO);
+    const targetWeekStart = startOfWeek(targetDate);
+    if (toDateKey(targetWeekStart) !== toDateKey(startOfWeek(weekAnchor))) {
+      setWeekAnchor(targetDate);
+    }
+  }, [dates, requestedDateId, weekAnchor]);
+
   const groupedResidents = useMemo(() => {
     const groups = new Map<string, Resident>();
     for (const resident of residents) {
@@ -309,6 +369,7 @@ export default function AgendaPage() {
         kind: 'other',
         title: item.title,
         startsAtISO: item.dateISO,
+        endsAtISO: toDateTimeLocalValue(new Date(parseDateTimeLike(item.dateISO).getTime() + DEFAULT_OTHER_DURATION_MINUTES * 60_000)),
         subtitle: item.type,
         colorClass: 'bg-emerald-500',
         source: item,
@@ -321,6 +382,7 @@ export default function AgendaPage() {
         kind: 'reservation',
         title: item.title,
         startsAtISO: item.startAtISO,
+        endsAtISO: item.endAtISO,
         subtitle: commonSpaceNameById.get(item.commonSpaceId) ?? 'Reserva',
         colorClass: 'bg-amber-500',
         source: item,
@@ -328,6 +390,17 @@ export default function AgendaPage() {
 
     return [...otherItems, ...reservationItems];
   }, [commonSpaceNameById, dates, reservations, weekDays]);
+
+  useEffect(() => {
+    if (!requestedDateId || calendarItems.length === 0) {
+      return;
+    }
+
+    const requestedItem = calendarItems.find((item) => item.kind === 'other' && item.source.id === requestedDateId);
+    if (requestedItem) {
+      setSelectedItem(requestedItem);
+    }
+  }, [calendarItems, requestedDateId]);
 
   const openCreationChooser = (date?: Date) => {
     setCreationChooserOpen(true);
@@ -371,7 +444,9 @@ export default function AgendaPage() {
     }
   };
 
-  const moveItem = async ({ itemId, targetDayKey, targetHour }: DragPayload) => {
+  const getRenderedTiming = (item: CalendarItem) => draftTimings[item.id] ?? { startsAtISO: item.startsAtISO, endsAtISO: item.endsAtISO };
+
+  const moveItem = async ({ itemId, targetDayKey, targetMinutes }: DragPayload) => {
     const item = calendarItems.find((entry) => entry.id === itemId);
     const targetDay = weekDays.find((day) => toDateKey(day) === targetDayKey);
 
@@ -379,7 +454,11 @@ export default function AgendaPage() {
       return;
     }
 
-    const targetStart = createDateAtHour(targetDay, targetHour);
+    const renderedTiming = getRenderedTiming(item);
+    const currentStart = parseDateTimeLike(renderedTiming.startsAtISO);
+    const currentEnd = parseDateTimeLike(renderedTiming.endsAtISO);
+    const durationMs = currentEnd.getTime() - currentStart.getTime();
+    const targetStart = createDateAtMinutes(targetDay, targetMinutes);
 
     try {
       if (item.kind === 'other') {
@@ -390,9 +469,6 @@ export default function AgendaPage() {
           notes: item.source.notes ?? undefined,
         });
       } else {
-        const currentStart = parseDateTimeLike(item.source.startAtISO);
-        const currentEnd = parseDateTimeLike(item.source.endAtISO);
-        const durationMs = currentEnd.getTime() - currentStart.getTime();
         const targetEnd = new Date(targetStart.getTime() + durationMs);
 
         await dashboardApi.commonSpaceReservations.update(item.source.id, {
@@ -413,6 +489,92 @@ export default function AgendaPage() {
       });
     }
   };
+
+  useEffect(() => {
+    if (!resizeState) {
+      return;
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const deltaMinutes = snapMinutes(((event.clientY - resizeState.originY) / HOUR_ROW_HEIGHT) * 60);
+      const initialStart = parseDateTimeLike(resizeState.initialStartISO);
+      const initialEnd = parseDateTimeLike(resizeState.initialEndISO);
+      const initialStartMinutes = initialStart.getHours() * 60 + initialStart.getMinutes();
+      const initialEndMinutes = initialEnd.getHours() * 60 + initialEnd.getMinutes();
+
+      let nextStartMinutes = initialStartMinutes;
+      let nextEndMinutes = initialEndMinutes;
+
+      if (resizeState.edge === 'start') {
+        nextStartMinutes = clampMinutes(Math.min(initialEndMinutes - MIN_RESERVATION_DURATION_MINUTES, initialStartMinutes + deltaMinutes));
+      } else {
+        nextEndMinutes = clampMinutes(Math.max(initialStartMinutes + MIN_RESERVATION_DURATION_MINUTES, initialEndMinutes + deltaMinutes));
+      }
+
+      const day = new Date(initialStart);
+      day.setHours(0, 0, 0, 0);
+
+      setDraftTimings((current) => ({
+        ...current,
+        [resizeState.itemId]: {
+          startsAtISO: toDateTimeLocalValue(createDateAtMinutes(day, nextStartMinutes)),
+          endsAtISO: toDateTimeLocalValue(createDateAtMinutes(day, nextEndMinutes)),
+        },
+      }));
+    };
+
+    const handleMouseUp = () => {
+      const item = calendarItems.find((entry) => entry.id === resizeState.itemId);
+      const draft = draftTimings[resizeState.itemId];
+      setResizeState(undefined);
+
+      if (!item || item.kind !== 'reservation' || !draft) {
+        return;
+      }
+
+      setSaving(true);
+      void dashboardApi.commonSpaceReservations
+        .update(item.source.id, {
+          commonSpaceId: item.source.commonSpaceId,
+          title: item.source.title,
+          notes: item.source.notes ?? undefined,
+          startAtISO: draft.startsAtISO,
+          endAtISO: draft.endsAtISO,
+          residentId: undefined,
+        })
+        .then(async () => {
+          setDraftTimings((current) => {
+            const next = { ...current };
+            delete next[resizeState.itemId];
+            return next;
+          });
+          await load();
+        })
+        .catch((resizeError) => {
+          setDraftTimings((current) => {
+            const next = { ...current };
+            delete next[resizeState.itemId];
+            return next;
+          });
+          showToast({
+            tone: 'error',
+            title: 'Falha ao ajustar período',
+            description: resizeError instanceof Error ? resizeError.message : 'Tente novamente.',
+          });
+        })
+        .finally(() => {
+          setSaving(false);
+        });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [calendarItems, draftTimings, load, resizeState]);
 
   const beginCreateFlow = (kind: CreationKind) => {
     const baseDateISO = creationPromptDate ? toDateTimeLocalValue(creationPromptDate) : '';
@@ -603,7 +765,7 @@ export default function AgendaPage() {
               ))}
             </div>
           ) : (
-            <div className="max-h-[72vh] overflow-auto">
+            <div ref={calendarScrollRef} className="max-h-[72vh] overflow-auto">
               <div className="grid min-w-[1120px] grid-cols-[88px_repeat(7,minmax(140px,1fr))]">
                 <div className="sticky left-0 top-0 z-30 border-b border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950" />
                 {weekDays.map((day) => (
@@ -611,109 +773,169 @@ export default function AgendaPage() {
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{formatDayLabel(day)}</p>
                   </div>
                 ))}
-
-                {hourLabels.map((hour) => (
-                  <div key={hour} className="contents">
-                    <div className="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
-                      {String(hour).padStart(2, '0')}:00
+                <div className="sticky left-0 z-10 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950" style={{ height: DAY_COLUMN_HEIGHT }}>
+                  {hourLabels.map((hour) => (
+                    <div
+                      key={hour}
+                      className="absolute left-0 right-0 border-b border-slate-200 px-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400"
+                      style={{ top: hour * HOUR_ROW_HEIGHT, height: HOUR_ROW_HEIGHT }}
+                    >
+                      <span className="relative -top-3 block bg-white dark:bg-slate-950">
+                        {String(hour).padStart(2, '0')}:00
+                      </span>
                     </div>
+                  ))}
+                </div>
 
-                    {weekDays.map((day) => {
-                      const dayKey = toDateKey(day);
-                      const items = calendarItems.filter((item) => {
-                        const startDate = parseDateTimeLike(item.startsAtISO);
-                        return toDateKey(startDate) === dayKey && startDate.getHours() === hour;
-                      });
+                {weekDays.map((day) => {
+                  const dayKey = toDateKey(day);
+                  const dayItems = calendarItems.filter((item) => toDateKey(parseDateTimeLike(getRenderedTiming(item).startsAtISO)) === dayKey);
 
-                      return (
+                  return (
+                    <div
+                      key={dayKey}
+                      className={`relative border-r border-slate-200 bg-white transition dark:border-slate-800 dark:bg-slate-950 ${dragOverCell === dayKey ? 'ring-2 ring-emerald-400 ring-inset' : ''}`}
+                      style={{ height: DAY_COLUMN_HEIGHT }}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        setDragOverCell(dayKey);
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverCell === dayKey) {
+                          setDragOverCell(undefined);
+                        }
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const itemId = event.dataTransfer.getData('text/plain');
+                        setDragOverCell(undefined);
+                        if (!itemId) {
+                          return;
+                        }
+
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        const targetMinutes = snapMinutes(clampMinutes(((event.clientY - rect.top) / HOUR_ROW_HEIGHT) * 60));
+                        void moveItem({ itemId, targetDayKey: dayKey, targetMinutes });
+                      }}
+                      onClick={(event) => {
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        const targetMinutes = snapMinutes(clampMinutes(((event.clientY - rect.top) / HOUR_ROW_HEIGHT) * 60));
+                        openCreationChooser(createDateAtMinutes(day, targetMinutes));
+                      }}
+                    >
+                      {hourLabels.map((hour) => (
                         <div
                           key={`${dayKey}-${hour}`}
-                          className={`relative min-h-20 border-b border-r border-slate-200 bg-white p-2 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900 ${dragOverCell === `${dayKey}-${hour}` ? 'ring-2 ring-emerald-400 ring-inset' : ''}`}
-                          onDragOver={(event) => {
-                            event.preventDefault();
-                            setDragOverCell(`${dayKey}-${hour}`);
-                          }}
-                          onDragLeave={() => {
-                            if (dragOverCell === `${dayKey}-${hour}`) {
-                              setDragOverCell(undefined);
-                            }
-                          }}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            const itemId = event.dataTransfer.getData('text/plain');
-                            setDragOverCell(undefined);
-                            if (!itemId) {
-                              return;
-                            }
-                            void moveItem({ itemId, targetDayKey: dayKey, targetHour: hour });
-                          }}
-                        >
-                          <button
-                            type="button"
-                            className="absolute inset-0"
-                            aria-label={`Adicionar item em ${dayKey} as ${String(hour).padStart(2, '0')}:00`}
-                            onClick={() => {
-                              const date = new Date(day);
-                              date.setHours(hour, 0, 0, 0);
-                              openCreationChooser(date);
+                          className="absolute left-0 right-0 border-b border-slate-200/80 dark:border-slate-800"
+                          style={{ top: hour * HOUR_ROW_HEIGHT, height: HOUR_ROW_HEIGHT }}
+                        />
+                      ))}
+
+                      {dayItems.map((item) => {
+                        const timing = getRenderedTiming(item);
+                        const startMinutes = getMinutesSinceMidnight(timing.startsAtISO);
+                        const endMinutes = Math.max(startMinutes + (item.kind === 'reservation' ? MIN_RESERVATION_DURATION_MINUTES : DEFAULT_OTHER_DURATION_MINUTES), getMinutesSinceMidnight(timing.endsAtISO));
+                        const top = (startMinutes / 60) * HOUR_ROW_HEIGHT;
+                        const height = Math.max(((endMinutes - startMinutes) / 60) * HOUR_ROW_HEIGHT, MIN_ITEM_HEIGHT);
+
+                        return (
+                          <div
+                            key={item.id}
+                            draggable
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              if (item.kind === 'other') {
+                                openEditOther(item.source);
+                                return;
+                              }
+                              setSelectedItem(item);
                             }}
-                          />
-                          <div className="space-y-2">
-                            {items.map((item) => (
-                              <div
-                                key={item.id}
-                                draggable
-                                onDragStart={(event) => {
-                                  event.dataTransfer.setData('text/plain', item.id);
-                                  event.dataTransfer.effectAllowed = 'move';
-                                  setDraggingItemId(item.id);
+                            onDragStart={(event) => {
+                              event.dataTransfer.setData('text/plain', item.id);
+                              event.dataTransfer.effectAllowed = 'move';
+                              setDraggingItemId(item.id);
+                            }}
+                            onDragEnd={() => {
+                              setDraggingItemId(undefined);
+                              setDragOverCell(undefined);
+                            }}
+                            className={`absolute left-2 right-2 z-10 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-left shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 ${draggingItemId === item.id ? 'opacity-60' : ''}`}
+                            style={{ top, height }}
+                          >
+                            {item.kind === 'reservation' ? (
+                              <button
+                                type="button"
+                                className="absolute inset-x-3 top-0 h-3 cursor-ns-resize"
+                                onMouseDown={(event) => {
+                                  event.stopPropagation();
+                                  event.preventDefault();
+                                  setResizeState({
+                                    itemId: item.id,
+                                    edge: 'start',
+                                    originY: event.clientY,
+                                    initialStartISO: timing.startsAtISO,
+                                    initialEndISO: timing.endsAtISO,
+                                  });
                                 }}
-                                onDragEnd={() => {
-                                  setDraggingItemId(undefined);
-                                  setDragOverCell(undefined);
-                                }}
-                                className={`relative z-10 block w-full rounded-xl border border-slate-200 bg-slate-50 p-2 pr-8 text-left shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 ${draggingItemId === item.id ? 'opacity-60' : ''}`}
-                              >
-                                <button
-                                  type="button"
-                                  aria-label="Remover item"
-                                  className="absolute right-2 top-2 rounded-md p-1 text-slate-400 transition hover:bg-slate-200 hover:text-rose-600 dark:hover:bg-slate-800"
-                                  onClick={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    setItemToRemove(item);
-                                  }}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    if (item.kind === 'other') {
-                                      openEditOther(item.source);
-                                      return;
-                                    }
-                                    setSelectedItem(item);
-                                  }}
-                                  className="block w-full text-left"
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.colorClass}`} />
-                                    <div className="min-w-0">
-                                      <p className="truncate text-sm font-medium text-slate-950 dark:text-slate-50">{item.title}</p>
-                                      <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{item.subtitle}</p>
-                                    </div>
-                                  </div>
-                                </button>
+                                aria-label="Ajustar início"
+                              />
+                            ) : null}
+
+                            <button
+                              type="button"
+                              aria-label="Remover item"
+                              className="absolute right-2 top-2 rounded-md p-1 text-slate-400 transition hover:bg-slate-200 hover:text-rose-600 dark:hover:bg-slate-800"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setItemToRemove(item);
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+
+                            <div className="flex h-full flex-col p-3 pr-8">
+                              <div className="flex items-start gap-2">
+                                <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.colorClass}`} />
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-medium text-slate-950 dark:text-slate-50">{item.title}</p>
+                                  <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{item.subtitle}</p>
+                                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                    {formatDateTimeBR(timing.startsAtISO).slice(-5)} - {formatDateTimeBR(timing.endsAtISO).slice(-5)}
+                                  </p>
+                                </div>
                               </div>
-                            ))}
+                              {item.kind === 'reservation' ? (
+                                <div className="mt-auto flex items-center justify-center text-slate-400 dark:text-slate-500">
+                                  <GripHorizontal className="h-3.5 w-3.5" />
+                                </div>
+                              ) : null}
+                            </div>
+
+                            {item.kind === 'reservation' ? (
+                              <button
+                                type="button"
+                                className="absolute inset-x-3 bottom-0 h-3 cursor-ns-resize"
+                                onMouseDown={(event) => {
+                                  event.stopPropagation();
+                                  event.preventDefault();
+                                  setResizeState({
+                                    itemId: item.id,
+                                    edge: 'end',
+                                    originY: event.clientY,
+                                    initialStartISO: timing.startsAtISO,
+                                    initialEndISO: timing.endsAtISO,
+                                  });
+                                }}
+                                aria-label="Ajustar fim"
+                              />
+                            ) : null}
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -935,7 +1157,12 @@ export default function AgendaPage() {
               ? 'Detalhes da reserva.'
               : 'Detalhes do item.'
           }
-          onClose={closeAllModals}
+          onClose={() => {
+            closeAllModals();
+            if (requestedDateId) {
+              router.replace('/agenda');
+            }
+          }}
         >
           {selectedItem.kind === 'reservation' ? (
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">

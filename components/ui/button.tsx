@@ -6,12 +6,12 @@ type ButtonVariant = 'default' | 'outline' | 'secondary' | 'ghost' | 'destructiv
 type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
 
 const variantClasses: Record<ButtonVariant, string> = {
-  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-  outline: 'border border-border bg-background text-foreground hover:bg-primary hover:text-primary-foreground',
-  secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-  ghost: 'text-foreground hover:bg-primary hover:text-primary-foreground',
+  default: 'bg-slate-950 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200',
+  outline: 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900',
+  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
+  ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-50',
   destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-  link: 'text-primary underline-offset-4 hover:underline',
+  link: 'text-slate-900 underline-offset-4 hover:underline dark:text-slate-100',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

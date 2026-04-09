@@ -171,6 +171,7 @@ export default function BoletosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedUnitId = searchParams.get('unitId') ?? '';
+  const requestedBoletoId = searchParams.get('boletoId') ?? '';
   const autoOpenedRef = useRef(false);
 
   const [boletos, setBoletos] = useState<Boleto[]>([]);
@@ -216,7 +217,7 @@ export default function BoletosPage() {
   }, []);
 
   useEffect(() => {
-    if (!requestedUnitId || autoOpenedRef.current || units.length === 0) {
+    if (!requestedUnitId || requestedBoletoId || autoOpenedRef.current || units.length === 0) {
       return;
     }
 
@@ -236,7 +237,21 @@ export default function BoletosPage() {
       dueDateISO: previous.dueDateISO,
     }));
     setIsFormOpen(true);
-  }, [requestedUnitId, units]);
+  }, [requestedBoletoId, requestedUnitId, units]);
+
+  useEffect(() => {
+    if (!requestedBoletoId || boletos.length === 0) {
+      return;
+    }
+
+    const requestedBoleto = boletos.find((item) => item.id === requestedBoletoId);
+    if (!requestedBoleto) {
+      return;
+    }
+
+    setUnitFilter(requestedBoleto.unitId);
+    setStatusFilter(requestedBoleto.status);
+  }, [boletos, requestedBoletoId]);
 
   const openCreate = () => {
     setEditingBoleto(undefined);
@@ -267,7 +282,7 @@ export default function BoletosPage() {
     setEditingBoleto(undefined);
     setForm(emptyForm);
 
-    if (requestedUnitId) {
+    if (requestedUnitId || requestedBoletoId) {
       router.replace('/boletos');
     }
   };
@@ -571,7 +586,14 @@ export default function BoletosPage() {
               </div>
             ) : (
               filteredBoletos.map((boleto) => (
-                <div key={boleto.id} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+                <div
+                  key={boleto.id}
+                  className={`rounded-2xl border bg-white p-4 dark:bg-slate-950 ${
+                    requestedBoletoId === boleto.id
+                      ? 'border-sky-400 ring-2 ring-sky-200 dark:border-sky-600 dark:ring-sky-900/60'
+                      : 'border-slate-200 dark:border-slate-800'
+                  }`}
+                >
                   <p className="text-base font-semibold text-slate-950 dark:text-slate-50">{boleto.unitLabel}</p>
                   <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <p><strong>Valor:</strong> {formatCurrencyBRL(boleto.amountCents)}</p>
@@ -633,7 +655,7 @@ export default function BoletosPage() {
                     </tr>
                   ) : (
                     filteredBoletos.map((boleto) => (
-                      <tr key={boleto.id} className="border-b border-slate-200 last:border-b-0 dark:border-slate-800">
+                      <tr key={boleto.id} className={`border-b last:border-b-0 dark:border-slate-800 ${requestedBoletoId === boleto.id ? 'bg-sky-50/70 dark:bg-sky-950/20' : 'border-slate-200'}`}>
                         <td className="px-6 py-4">
                           <div>
                             <p className="font-medium text-slate-950 dark:text-slate-50">{boleto.unitLabel}</p>

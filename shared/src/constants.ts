@@ -3,7 +3,6 @@ import type {
   BoletoPixCharge,
   OccurrencePriority,
   OccurrenceStatus,
-  TenantType,
   UnitStatus,
   UserRole,
   WalletPayment,
@@ -15,11 +14,6 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   RESIDENT: 'Morador',
   SYNDIC: 'Síndico',
   ADMIN_COMPANY: 'Administrador da empresa',
-};
-
-export const TENANT_TYPE_LABELS: Record<TenantType, string> = {
-  ESSENTIAL: 'Essencial',
-  COMPLETE: 'Completo',
 };
 
 export const UNIT_STATUS_LABELS: Record<UnitStatus, string> = {

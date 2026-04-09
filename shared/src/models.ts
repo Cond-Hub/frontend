@@ -1,11 +1,11 @@
 export type UserRole = 'SYSTEM_ADMIN' | 'RESIDENT' | 'SYNDIC' | 'ADMIN_COMPANY';
-export type TenantType = 'ESSENTIAL' | 'COMPLETE';
 export type UnitStatus = 'GREEN' | 'YELLOW' | 'RED';
 export type OccurrencePriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type OccurrenceStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 
 export interface User {
   id: string;
+  companyId: string;
   name: string;
   email: string;
   role: UserRole;
@@ -20,7 +20,8 @@ export interface Condo {
   name: string;
   address: string;
   prefix?: string;
-  type: TenantType;
+  primaryColor?: string;
+  logoUrl?: string;
 }
 
 export interface Building {
