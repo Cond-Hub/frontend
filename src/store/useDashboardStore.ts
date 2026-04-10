@@ -1299,8 +1299,12 @@ export const buildTenantUrl = (
 
   if (hostname.endsWith('.localhost') || hostname === 'localhost') {
     targetHost = `${prefix}.localhost`;
+  } else if (labels.length >= 3 && (labels[0] === 'www' || labels[0] === 'api')) {
+    targetHost = [prefix, ...labels.slice(1)].join('.');
   } else if (labels.length >= 3) {
     targetHost = [prefix, ...labels.slice(1)].join('.');
+  } else if (labels.length >= 2) {
+    targetHost = `${prefix}.${labels.join('.')}`;
   }
 
   const handoff = new URLSearchParams();
