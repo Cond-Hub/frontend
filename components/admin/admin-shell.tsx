@@ -296,10 +296,23 @@ export function AdminShell({ children }: AdminShellProps) {
       return;
     }
 
-    useDashboardStore.setState({ activeCondoId: condoId });
-    startCondoWorkspaceTransition(
-      buildTenantUrl(condo.prefix, pathname ?? "/dashboard", state.accessToken, condoId, undefined, CONDO_TRANSITION_ENTER),
+    const targetUrl = buildTenantUrl(
+      condo.prefix,
+      pathname ?? "/dashboard",
+      state.accessToken,
+      condoId,
+      undefined,
+      CONDO_TRANSITION_ENTER,
     );
+
+    useDashboardStore.setState({ activeCondoId: condoId });
+    setDesktopCollapsed(true);
+    setPreNavigatingToCondo(true);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        window.location.assign(targetUrl);
+      });
+    });
   };
 
   const handleExit = async () => {
@@ -372,6 +385,10 @@ export function AdminShell({ children }: AdminShellProps) {
                 key={condo.id}
                 type="button"
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  void switchCondo(condo.id);
+                }}
                 onClick={() => {
                   void switchCondo(condo.id);
                 }}
@@ -594,7 +611,7 @@ export function AdminShell({ children }: AdminShellProps) {
   }) => (
     <div className="flex h-full flex-col">
       <div
-        className={`mb-8 flex px-2 ${collapsed ? "justify-center" : "items-center gap-3"}`}
+        className={`mb-8 flex min-h-[96px] px-2 ${collapsed ? "justify-center" : "items-center gap-3"}`}
       >
         <div className="flex w-full items-center justify-center">
           {managerBrand ? (
@@ -832,7 +849,7 @@ export function AdminShell({ children }: AdminShellProps) {
           }`}
         >
           <div
-            className="sticky top-0 h-screen overflow-y-auto p-6"
+            className="sticky top-0 h-screen overflow-y-auto p-4"
             style={{
               background: `linear-gradient(180deg, ${primaryColor} 0%, #070d18 58%, #070d18 100%)`,
             }}
