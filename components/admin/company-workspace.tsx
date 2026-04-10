@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { buildTenantUrl, dashboardApi, type CompanyWorkspaceSnapshot, useDashboardStore } from '@/src/store/useDashboardStore';
+import { buildTenantUrl, dashboardApi, startCondoWorkspaceTransition, type CompanyWorkspaceSnapshot, useDashboardStore, CONDO_TRANSITION_ENTER } from '@/src/store/useDashboardStore';
 import { showToast } from '@/src/store/useToastStore';
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -248,7 +248,13 @@ export function OpenCondoButton({
   label?: string;
 }) {
   return (
-    <Button onClick={() => window.location.assign(buildTenantUrl(prefix, path, accessToken, condoId, query))}>
+    <Button
+      onClick={() =>
+        startCondoWorkspaceTransition(
+          buildTenantUrl(prefix, path, accessToken, condoId, query, CONDO_TRANSITION_ENTER),
+        )
+      }
+    >
       {label}
       <ArrowRight className="ml-2 h-4 w-4" />
     </Button>

@@ -28,7 +28,12 @@ import {
 import {
   buildManagerUrl,
   buildTenantUrl,
+  CONDO_TRANSITION_ENTER,
+  CONDO_TRANSITION_PARAM,
+  MANAGER_TRANSITION_ENTER,
   dashboardApi,
+  startCondoWorkspaceTransition,
+  startManagerWorkspaceTransition,
   useDashboardStore,
 } from "../../src/store/useDashboardStore";
 
@@ -86,15 +91,39 @@ const isPlatformPage = (path?: string | null) => {
   return path.startsWith("/subscription") || path.startsWith("/my-condos") || path.startsWith("/company");
 };
 
+const SIDEBAR_STATE_PARAM = "condohome_sidebar";
+
 export function AdminShell({ children }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const state = useDashboardStore();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return new URLSearchParams(window.location.search).get(SIDEBAR_STATE_PARAM) === "collapsed";
+  });
   const [condoMenuOpen, setCondoMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [subscriptionLocked, setSubscriptionLocked] = useState(false);
+  const [preNavigatingToCondo, setPreNavigatingToCondo] = useState(false);
+  const [preNavigatingToManager, setPreNavigatingToManager] = useState(false);
+  const [enteringCondoWorkspace, setEnteringCondoWorkspace] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return new URLSearchParams(window.location.search).get(CONDO_TRANSITION_PARAM) === CONDO_TRANSITION_ENTER;
+  });
+  const [enteringManagerWorkspace, setEnteringManagerWorkspace] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return new URLSearchParams(window.location.search).get(CONDO_TRANSITION_PARAM) === MANAGER_TRANSITION_ENTER;
+  });
   const condoMenuRef = useRef<HTMLDivElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -216,6 +245,7 @@ export function AdminShell({ children }: AdminShellProps) {
       : pathname?.startsWith("/my-condos") && canViewSubscription
       ? myCondosSection
       : visibleSections.find((section) => section.id === requestedSection.id) ?? visibleSections[0];
+  const showCompanyRail = currentUser?.role === "ADMIN_COMPANY" && !isManagerScope;
   const collapsedNav = desktopCollapsed && !mobileOpen;
   const primaryColor = isManagerScope ? "#0f172a" : activeCondo?.primaryColor ?? "#0f766e";
 
@@ -267,12 +297,16 @@ export function AdminShell({ children }: AdminShellProps) {
     }
 
     useDashboardStore.setState({ activeCondoId: condoId });
-    window.location.assign(buildTenantUrl(condo.prefix, pathname ?? "/dashboard", state.accessToken, condoId));
+    startCondoWorkspaceTransition(
+      buildTenantUrl(condo.prefix, pathname ?? "/dashboard", state.accessToken, condoId, undefined, CONDO_TRANSITION_ENTER),
+    );
   };
 
   const handleExit = async () => {
     if (currentUser?.role === "ADMIN_COMPANY" && !isManagerScope) {
-      window.location.assign(buildManagerUrl("/company", state.accessToken));
+      startManagerWorkspaceTransition(
+        buildManagerUrl("/company", state.accessToken, { [SIDEBAR_STATE_PARAM]: "expanded" }, MANAGER_TRANSITION_ENTER),
+      );
       return;
     }
 
@@ -393,6 +427,81 @@ export function AdminShell({ children }: AdminShellProps) {
   }, [condoMenuOpen, userMenuOpen]);
 
   useEffect(() => {
+    const handleEnterCondo = (event: Event) => {
+      const customEvent = event as CustomEvent<{ url?: string }>;
+      const targetUrl = customEvent.detail?.url;
+      if (!targetUrl) {
+        return;
+      }
+      setDesktopCollapsed(true);
+      setPreNavigatingToCondo(true);
+      window.setTimeout(() => {
+        window.location.assign(targetUrl);
+      }, 320);
+    };
+
+    window.addEventListener("condohome:enter-condo", handleEnterCondo as EventListener);
+    return () => {
+      window.removeEventListener("condohome:enter-condo", handleEnterCondo as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleEnterManager = (event: Event) => {
+      const customEvent = event as CustomEvent<{ url?: string }>;
+      const targetUrl = customEvent.detail?.url;
+      if (!targetUrl) {
+        return;
+      }
+      setPreNavigatingToManager(true);
+      window.setTimeout(() => {
+        window.location.assign(targetUrl);
+      }, 320);
+    };
+
+    window.addEventListener("condohome:enter-manager", handleEnterManager as EventListener);
+    return () => {
+      window.removeEventListener("condohome:enter-manager", handleEnterManager as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !enteringCondoWorkspace || isManagerScope) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete(CONDO_TRANSITION_PARAM);
+    params.delete(SIDEBAR_STATE_PARAM);
+    const rendered = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${rendered ? `?${rendered}` : ""}${window.location.hash}`);
+
+    const timer = window.setTimeout(() => {
+      setEnteringCondoWorkspace(false);
+    }, 360);
+
+    return () => window.clearTimeout(timer);
+  }, [enteringCondoWorkspace, isManagerScope]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !enteringManagerWorkspace || !isManagerScope) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete(CONDO_TRANSITION_PARAM);
+    params.delete(SIDEBAR_STATE_PARAM);
+    const rendered = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${rendered ? `?${rendered}` : ""}${window.location.hash}`);
+
+    const timer = window.setTimeout(() => {
+      setEnteringManagerWorkspace(false);
+    }, 420);
+
+    return () => window.clearTimeout(timer);
+  }, [enteringManagerWorkspace, isManagerScope]);
+
+  useEffect(() => {
     if (state.hydrationComplete && !state.bootstrapped) {
       void state.bootstrap();
     }
@@ -463,155 +572,263 @@ export function AdminShell({ children }: AdminShellProps) {
     };
   }, [currentUser?.role, pathname, router, state.bootstrapped, state.hydrationComplete]);
 
-  const sidebar = (
+  const renderSidebar = ({
+    sections,
+    collapsed,
+    managerBrand,
+    activeResolver,
+    showCollapseControl,
+    showExitButton,
+    sectionActionResolver,
+  }: {
+    sections: Array<{ id: string; href: string; label: string; description: string; icon: typeof Building2 }>;
+    collapsed: boolean;
+    managerBrand: boolean;
+    activeResolver: (href: string, id: string) => boolean;
+    showCollapseControl: boolean;
+    showExitButton: boolean;
+    sectionActionResolver?: (section: { id: string; href: string; label: string; description: string; icon: typeof Building2 }) => {
+      href: string;
+      onClick?: () => void;
+    };
+  }) => (
     <div className="flex h-full flex-col">
       <div
-        className={`mb-8 flex px-2 ${collapsedNav ? "justify-center" : "items-center gap-3"}`}
+        className={`mb-8 flex px-2 ${collapsed ? "justify-center" : "items-center gap-3"}`}
       >
         <div className="flex w-full items-center justify-center">
-          {isManagerScope ? (
+          {managerBrand ? (
             <CondoHomeBrandImage
-              variant={collapsedNav ? "mark" : "logo"}
+              variant={collapsed ? "mark" : "logo"}
               forceWhite
-              className={collapsedNav ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain"}
+              className={collapsed ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain"}
             />
           ) : activeCondo?.logoUrl ? (
             <img
               src={activeCondo.logoUrl}
               alt={activeCondo.name}
-              className={collapsedNav ? "h-14 w-14 rounded-2xl object-contain" : "max-h-16 w-auto object-contain"}
+              className={collapsed ? "h-16 w-16 rounded-[1.25rem] object-contain" : "max-h-16 w-auto object-contain"}
             />
           ) : (
-            <CondoHomeBrandImage
-              forceWhite
-              variant={collapsedNav ? "mark" : "logo"}
-              className={collapsedNav ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain"}
-            />
+            currentUser?.role === "ADMIN_COMPANY" ? (
+              <div
+                className={`flex items-center justify-center text-white ${collapsed ? "min-h-16 w-full rounded-[1.25rem] bg-white/10 px-2 text-center" : "min-h-16 rounded-2xl bg-white/5 px-4 py-3"}`}
+              >
+                {collapsed ? (
+                  <p className="line-clamp-3 text-[11px] font-semibold leading-4">{activeCondo?.name ?? "Condomínio"}</p>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{activeCondo?.name ?? "Condomínio"}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <CondoHomeBrandImage
+                forceWhite
+                variant={collapsed ? "mark" : "logo"}
+                className={collapsed ? "h-14 w-14 object-contain" : "h-16 w-auto object-contain"}
+              />
+            )
           )}
         </div>
       </div>
 
       <nav className="space-y-1">
-        {(isManagerScope ? companySections : visibleSections).map((section) => {
+        {sections.map((section) => {
           const Icon = section.icon;
-          const active = isManagerScope
-            ? section.href === "/company"
-              ? pathname === "/company"
-              : pathname === section.href
-            : currentSection.id === section.id;
+          const active = activeResolver(section.href, section.id);
+          const action = sectionActionResolver?.(section) ?? { href: section.href };
+          const itemClass = collapsed
+            ? `flex items-center justify-center rounded-xl px-0 py-3 transition ${
+                active
+                  ? "bg-white/15 text-white shadow-sm"
+                  : "text-zinc-400 hover:bg-white/5 hover:text-white"
+              }`
+            : `flex items-center border-l-4 px-4 py-3 transition ${
+                active
+                  ? "bg-white/15 text-white shadow-sm"
+                  : "border-transparent text-zinc-400 hover:bg-white/5 hover:text-white"
+              }`;
 
           return (
             <Link
               key={section.id}
-              href={section.href}
-              onClick={() => setMobileOpen(false)}
-              style={active ? { borderLeftColor: primaryColor } : undefined}
-              className={`flex items-center border-l-4 px-4 py-3 transition ${
-                active
-                  ? "bg-white/15 text-white shadow-sm"
-                  : "border-transparent text-zinc-400 hover:bg-white/5 hover:text-white"
-              }`}
+              href={action.href}
+              onClick={(event) => {
+                setMobileOpen(false);
+                action.onClick?.();
+                if (action.onClick) {
+                  event.preventDefault();
+                }
+              }}
+              style={!collapsed && active ? { borderLeftColor: primaryColor } : undefined}
+              className={itemClass}
+              aria-label={collapsed ? section.label : undefined}
+              title={collapsed ? section.label : undefined}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              <span
-                className={`sidebar-copy min-w-0 pl-3 ${collapsedNav ? "sidebar-copy-hidden" : "sidebar-copy-visible"}`}
-              >
-                {!collapsedNav ? (
-                  <>
-                    <span className="block text-sm font-medium">
-                      {section.label}
-                    </span>
-                    <span
-                      className={`mt-0.5 block text-xs ${active ? "text-zinc-300" : "text-zinc-500"}`}
-                    >
-                      {section.description}
-                    </span>
-                  </>
-                ) : null}
-              </span>
+              {!collapsed ? (
+                <span className="sidebar-copy sidebar-copy-visible min-w-0 pl-3">
+                  <span className="block text-sm font-medium">
+                    {section.label}
+                  </span>
+                  <span
+                    className={`mt-0.5 block text-xs ${active ? "text-zinc-300" : "text-zinc-500"}`}
+                  >
+                    {section.description}
+                  </span>
+                </span>
+              ) : null}
             </Link>
           );
         })}
       </nav>
 
       <div className="mt-auto space-y-3 px-2 pt-6">
-        <Button
-          variant="ghost"
-          className={`text-zinc-300 hover:bg-white/10 hover:text-white ${
-            collapsedNav
-              ? "mx-auto h-10 w-10 justify-center rounded-xl p-0"
-              : "w-full justify-start gap-2"
-          }`}
-          onClick={() => {
-            void handleExit();
-          }}
-          aria-label="Sair"
-          title="Sair"
-        >
-          <LogOut className="h-4 w-4 shrink-0" />
-          <span
-            className={`sidebar-copy ${collapsedNav ? "sidebar-copy-hidden" : "sidebar-copy-visible"}`}
+        {showExitButton ? (
+          <Button
+            variant="ghost"
+            className={`text-zinc-300 hover:bg-white/10 hover:text-white ${
+              collapsed
+                ? "mx-auto h-10 w-10 justify-center rounded-xl p-0"
+                : "w-full justify-start gap-2"
+            }`}
+            onClick={() => {
+              void handleExit();
+            }}
+            aria-label="Sair"
+            title="Sair"
           >
-            {!collapsedNav ? "Sair" : null}
-          </span>
-        </Button>
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span
+              className={`sidebar-copy ${collapsed ? "sidebar-copy-hidden" : "sidebar-copy-visible"}`}
+            >
+              {!collapsed ? "Sair" : null}
+            </span>
+          </Button>
+        ) : null}
 
-        <Button
-          variant="ghost"
-          className={`hidden text-zinc-200 hover:bg-white/10 hover:text-white lg:inline-flex ${
-            collapsedNav
-              ? "mx-auto h-10 w-10 justify-center rounded-xl border border-white/10 bg-white/5 p-0 px-0 py-0"
-              : "w-full justify-start gap-2"
-          }`}
-          onClick={() => setDesktopCollapsed((prev) => !prev)}
-          aria-label={collapsedNav ? "Expandir menu" : "Recolher menu"}
-          title={collapsedNav ? "Expandir menu" : "Recolher menu"}
-        >
-          {collapsedNav ? (
-            <ChevronsRight className="h-4 w-4" />
-          ) : (
-            <ChevronsLeft className="h-4 w-4" />
-          )}
-          <span
-            className={`sidebar-copy ${collapsedNav ? "sidebar-copy-hidden" : "sidebar-copy-visible"}`}
-          >
-            {!collapsedNav ? "Recolher menu" : null}
-          </span>
-        </Button>
+        {showCollapseControl ? null : null}
       </div>
     </div>
   );
-
+  const sidebar = renderSidebar({
+    sections: isManagerScope ? companySections : visibleSections,
+    collapsed: collapsedNav,
+    managerBrand: isManagerScope,
+    activeResolver: (href, id) =>
+      isManagerScope
+        ? href === "/company"
+          ? pathname === "/company"
+          : pathname === href
+        : currentSection.id === id,
+    showCollapseControl: false,
+    showExitButton: true,
+  });
+  const companyRail = renderSidebar({
+    sections: companySections,
+    collapsed: true,
+    managerBrand: true,
+    activeResolver: () => false,
+    showCollapseControl: false,
+    showExitButton: false,
+    sectionActionResolver: showCompanyRail
+      ? (section) => ({
+          href: buildManagerUrl(section.href, state.accessToken, { [SIDEBAR_STATE_PARAM]: "expanded" }, MANAGER_TRANSITION_ENTER),
+          onClick: () => {
+            startManagerWorkspaceTransition(
+              buildManagerUrl(section.href, state.accessToken, { [SIDEBAR_STATE_PARAM]: "expanded" }, MANAGER_TRANSITION_ENTER),
+            );
+          },
+        })
+      : undefined,
+  });
   if (!state.hydrationComplete || !state.bootstrapped) {
+    if (enteringCondoWorkspace || enteringManagerWorkspace) {
+      return (
+        <main className="min-h-screen bg-slate-100 dark:bg-slate-950">
+          <div className="flex min-h-screen">
+            <aside className={`hidden shrink-0 border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block ${enteringManagerWorkspace ? "w-[300px]" : "w-24"}`}>
+              <div
+                className={`sticky top-0 h-screen overflow-y-auto ${enteringManagerWorkspace ? "p-6" : "p-4"}`}
+                style={{
+                  background: "linear-gradient(180deg, #0f172a 0%, #070d18 58%, #070d18 100%)",
+                }}
+              >
+                {enteringManagerWorkspace
+                  ? renderSidebar({
+                      sections: companySections,
+                      collapsed: false,
+                      managerBrand: true,
+                      activeResolver: (href) => pathname === href,
+                      showCollapseControl: false,
+                      showExitButton: true,
+                    })
+                  : companyRail}
+              </div>
+            </aside>
+            <aside className="hidden w-0 shrink-0 overflow-hidden border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block" />
+            <div className="min-w-0 flex-1">
+              <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+                <div className="h-[89px]" />
+              </header>
+              <div className="px-4 py-6 sm:px-6 lg:px-8" />
+            </div>
+          </div>
+        </main>
+      );
+    }
+
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-        Carregando painel...
-      </main>
+      <main className="min-h-screen bg-slate-100 dark:bg-slate-950" />
     );
   }
 
   if (!currentUser) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-        Redirecionando...
-      </main>
+      <main className="min-h-screen bg-slate-100 dark:bg-slate-950" />
     );
   }
 
   if (subscriptionLocked && pathname !== "/subscription/payment") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600 dark:bg-slate-950 dark:text-slate-300">
-        Redirecionando para pagamento...
-      </main>
+      <main className="min-h-screen bg-slate-100 dark:bg-slate-950" />
     );
   }
 
   return (
     <main className="min-h-screen bg-slate-100 dark:bg-slate-950">
       <div className="flex min-h-screen">
+        {showCompanyRail ? (
+          <aside className={`hidden shrink-0 border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block ${preNavigatingToManager ? "w-[300px]" : "w-24"}`}>
+            <div
+              className={`sticky top-0 h-screen overflow-y-auto ${preNavigatingToManager ? "p-6" : "p-4"}`}
+              style={{
+                background: "linear-gradient(180deg, #0f172a 0%, #070d18 58%, #070d18 100%)",
+              }}
+            >
+              {preNavigatingToManager
+                ? renderSidebar({
+                    sections: companySections,
+                    collapsed: false,
+                    managerBrand: true,
+                    activeResolver: (href) => pathname === href,
+                    showCollapseControl: false,
+                    showExitButton: true,
+                  })
+                : companyRail}
+            </div>
+          </aside>
+        ) : null}
         <aside
-          className={`hidden shrink-0 border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block ${
-            desktopCollapsed ? "w-24" : "w-[300px]"
+          className={`hidden shrink-0 overflow-hidden border-r border-slate-100/10 bg-slate-950 ${enteringManagerWorkspace ? "" : "transition-[width,opacity] duration-300 ease-out"} lg:block ${
+            enteringCondoWorkspace || preNavigatingToManager
+              ? "w-0 opacity-0"
+              : desktopCollapsed
+              ? "w-24"
+              : "w-[300px]"
           }`}
         >
           <div
@@ -782,7 +999,9 @@ export function AdminShell({ children }: AdminShellProps) {
             </div>
           </header>
 
-          <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <div className="relative px-4 py-6 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </div>
       </div>
 

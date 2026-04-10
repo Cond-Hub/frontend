@@ -405,8 +405,8 @@ export default function MyCondosPage() {
                   const condoLogoUrl = condo.logoUrl?.trim();
                   const isDarkMode = state.themeMode === "dark";
                   const cardBackground = isDarkMode
-                    ? `linear-gradient(135deg, ${condoAccent}1f 0%, rgba(15,23,42,0.94) 38%, rgba(2,6,23,0.98) 100%)`
-                    : `linear-gradient(135deg, ${condoAccent}14 0%, rgba(255,255,255,0.92) 38%, rgba(248,250,252,0.98) 100%)`;
+                    ? `linear-gradient(135deg, ${condoAccent}38 0%, rgba(15,23,42,0.9) 34%, rgba(2,6,23,0.98) 100%)`
+                    : `linear-gradient(135deg, ${condoAccent}2c 0%, rgba(255,255,255,0.94) 34%, rgba(248,250,252,0.98) 100%)`;
 
                   return (
                   <div
@@ -450,10 +450,6 @@ export default function MyCondosPage() {
                         <div>
                           <p className="font-semibold text-slate-950 dark:text-slate-50">{condo.name}</p>
                           <p className="text-sm text-slate-600 dark:text-slate-400">{condo.address}</p>
-                          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-300">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: condoAccent }} />
-                            Cor principal da operação
-                          </div>
                         </div>
                       </div>
                       <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">

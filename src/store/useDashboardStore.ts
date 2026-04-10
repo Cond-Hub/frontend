@@ -34,6 +34,9 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'
 const TENANT_PREFIX_REQUIRED_MESSAGE = 'Acesse o painel pelo endereço do condomínio.';
 export const AUTH_HANDOFF_TOKEN_PARAM = 'condohome_token';
 export const AUTH_HANDOFF_CONDO_PARAM = 'condohome_condo_id';
+export const CONDO_TRANSITION_PARAM = 'condohome_transition';
+export const CONDO_TRANSITION_ENTER = 'enter-condo';
+export const MANAGER_TRANSITION_ENTER = 'enter-manager';
 
 type BackendUserRole =
   | 'SystemAdmin'
@@ -1284,6 +1287,7 @@ export const buildTenantUrl = (
   accessToken?: string,
   condoId?: string,
   query?: Record<string, string | undefined>,
+  transition?: typeof CONDO_TRANSITION_ENTER,
 ) => {
   if (typeof window === 'undefined' || !prefix) {
     return path;
@@ -1313,14 +1317,30 @@ export const buildTenantUrl = (
       search.set(key, value);
     }
   });
+  if (transition) {
+    search.set(CONDO_TRANSITION_PARAM, transition);
+  }
 
   return `${protocol}//${targetHost}${port ? `:${port}` : ''}${path}${search.size ? `?${search.toString()}` : ''}${handoff.size ? `#${handoff.toString()}` : ''}`;
+};
+
+export const startCondoWorkspaceTransition = (url: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent('condohome:enter-condo', {
+      detail: { url },
+    }),
+  );
 };
 
 export const buildManagerUrl = (
   path: string,
   accessToken?: string,
   query?: Record<string, string | undefined>,
+  transition?: typeof MANAGER_TRANSITION_ENTER,
 ) => {
   if (typeof window === 'undefined') {
     return path;
@@ -1347,8 +1367,23 @@ export const buildManagerUrl = (
       search.set(key, value);
     }
   });
+  if (transition) {
+    search.set(CONDO_TRANSITION_PARAM, transition);
+  }
 
   return `${protocol}//${targetHost}${port ? `:${port}` : ''}${path}${search.size ? `?${search.toString()}` : ''}${handoff.size ? `#${handoff.toString()}` : ''}`;
+};
+
+export const startManagerWorkspaceTransition = (url: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent('condohome:enter-manager', {
+      detail: { url },
+    }),
+  );
 };
 
 const readErrorPayload = async (response: Response): Promise<{ message: string; code?: string }> => {
