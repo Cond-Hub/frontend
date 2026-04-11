@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { Skeleton } from '../../components/ui/skeleton';
 import { ApiError, dashboardApi, useDashboardStore } from '../../src/store/useDashboardStore';
 import { showToast } from '../../src/store/useToastStore';
 
@@ -60,14 +61,6 @@ export default function LoginPage() {
   useEffect(() => {
     setTenantPrefix(resolveTenantPrefix());
   }, []);
-
-  useEffect(() => {
-    if (state.themeMode === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [state.themeMode]);
 
   useEffect(() => {
     if (currentUser && state.bootstrapped) {
@@ -134,7 +127,7 @@ export default function LoginPage() {
   };
 
   if (!state.hydrationComplete || !state.bootstrapped) {
-    return <main className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600 dark:bg-slate-950 dark:text-slate-300">Carregando...</main>;
+    return <LoginPageSkeleton />;
   }
 
   return (
@@ -265,6 +258,77 @@ export default function LoginPage() {
               <Button className="w-full" onClick={login}>
                 {tenantPrefix ? 'Entrar no condominio' : 'Entrar na empresa'}
               </Button>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function LoginPageSkeleton() {
+  return (
+    <main className="min-h-screen bg-[#f5f7f3] dark:bg-slate-950">
+      <div className="fixed right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <Skeleton className="h-10 w-10 rounded-full" />
+      </div>
+
+      <div className="grid min-h-screen lg:grid-cols-[1.02fr,0.98fr]">
+        <section className="relative hidden overflow-hidden bg-[#0b1310] text-white lg:block">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_85%_18%,_rgba(234,179,8,0.12),transparent_24%)]" />
+          <div className="relative flex h-full flex-col justify-between p-12">
+            <div>
+              <Skeleton className="h-5 w-36 bg-white/10 dark:bg-white/10" />
+              <div className="mt-20 max-w-xl space-y-4">
+                <Skeleton className="h-4 w-40 bg-emerald-300/20 dark:bg-emerald-300/20" />
+                <Skeleton className="h-12 w-full max-w-lg bg-white/10 dark:bg-white/10" />
+                <Skeleton className="h-12 w-[92%] max-w-xl bg-white/10 dark:bg-white/10" />
+                <Skeleton className="h-5 w-full max-w-xl bg-white/10 dark:bg-white/10" />
+                <Skeleton className="h-5 w-[88%] max-w-xl bg-white/10 dark:bg-white/10" />
+              </div>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-emerald-400/20 bg-emerald-500/10 p-6">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4 rounded-full bg-emerald-300/20 dark:bg-emerald-300/20" />
+                <Skeleton className="h-4 w-72 bg-emerald-300/20 dark:bg-emerald-300/20" />
+              </div>
+              <div className="mt-4 space-y-3">
+                <Skeleton className="h-4 w-full bg-white/10 dark:bg-white/10" />
+                <Skeleton className="h-4 w-[92%] bg-white/10 dark:bg-white/10" />
+                <Skeleton className="h-4 w-[76%] bg-white/10 dark:bg-white/10" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="flex items-center justify-center p-6 sm:p-8">
+          <Card className="w-full max-w-md border-slate-200/80 shadow-xl dark:border-slate-800">
+            <CardHeader className="space-y-4">
+              <Skeleton className="h-5 w-20 lg:hidden" />
+              <div>
+                <div className="mb-3 flex w-full items-center justify-center">
+                  <Skeleton className="h-16 w-40 rounded-xl" />
+                </div>
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="mt-3 h-4 w-full" />
+                <Skeleton className="mt-2 h-4 w-[88%]" />
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-10 w-full rounded-md" />
             </CardContent>
           </Card>
         </section>

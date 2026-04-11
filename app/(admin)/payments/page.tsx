@@ -258,7 +258,7 @@ export default function PaymentsPage() {
           <div>
             <CardTitle className="text-2xl text-slate-950 dark:text-slate-50">Carteira</CardTitle>
             <CardDescription className="max-w-2xl text-sm leading-6">
-              Aqui voce acompanha o que entrou via PIX em tempo real e o valor disponivel para saque, considerando R$ 1,99 por recebimento e saques gratis e ilimitados.
+              Aqui voce acompanha o que entrou via PIX em tempo real e o valor disponivel para saque, considerando R$ 1,99 por transacao recebida e saques gratis e ilimitados.
             </CardDescription>
           </div>
 
@@ -297,7 +297,7 @@ export default function PaymentsPage() {
       </div>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        O saldo disponível já desconta apenas as taxas operacionais dos recebimentos. O saque exibido ao condomínio é sempre sem taxa.
+        O saldo disponível já desconta apenas R$ 1,99 por transação recebida. O saque exibido ao condomínio é sempre grátis e ilimitado.
       </p>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
@@ -340,7 +340,7 @@ export default function PaymentsPage() {
         <Card className="border-slate-200/80 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Saques</CardTitle>
-            <CardDescription>Saidas da carteira para a chave PIX informada, sem taxa visível para o condomínio.</CardDescription>
+            <CardDescription>Saidas da carteira para a chave PIX informada, sempre grátis e ilimitadas para o condomínio.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (

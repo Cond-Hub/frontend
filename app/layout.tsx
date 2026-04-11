@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { MessageCircle } from 'lucide-react';
+import { ThemeSync } from '../components/theme/theme-sync';
 import { ToastViewport } from '../components/ui/toast';
 import './globals.css';
 
@@ -40,8 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     'https://wa.me/5547992611819?text=' + encodeURIComponent('Olá, vim procurar suporte para o CondHub!');
 
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR">
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
+        <ThemeSync />
         {children}
         <a
           href={whatsappHref}

@@ -260,14 +260,6 @@ export function AdminShell({ children }: AdminShellProps) {
   }, [pathname, showManagerCondoFilter]);
 
   useEffect(() => {
-    if (state.themeMode === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [state.themeMode]);
-
-  useEffect(() => {
     const root = document.documentElement;
     const primary = !isManagerScope && activeCondo?.primaryColor ? hexToHsl(activeCondo.primaryColor) : undefined;
 

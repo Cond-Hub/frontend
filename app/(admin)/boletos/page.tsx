@@ -976,12 +976,6 @@ export default function BoletosPage() {
                     </p>
                   </div>
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Taxa da plataforma</p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">
-                      {formatCurrencyBRL(pixCharge.platformFeeCents)}
-                    </p>
-                  </div>
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
                     <p className="text-sm text-slate-500 dark:text-slate-400">Vencimento do boleto</p>
                     <p className="mt-2 text-base font-medium text-slate-950 dark:text-slate-50">
                       {formatDateBR(pixBoleto.dueDateISO)}

@@ -29,6 +29,7 @@ import {
 
 export const STORE_KEY = 'condohome-web-v3';
 type ThemeMode = 'light' | 'dark';
+type ThemePreference = ThemeMode | 'system';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000').replace(/\/$/, '');
 const TENANT_PREFIX_REQUIRED_MESSAGE = 'Acesse o painel pelo endereço do condomínio.';
@@ -663,6 +664,7 @@ interface DashboardState {
   activeCondoId?: string;
   accessToken?: string;
   themeMode: ThemeMode;
+  themePreference: ThemePreference;
   hydrationComplete: boolean;
   bootstrapped: boolean;
   markHydrated: (value: boolean) => void;
@@ -674,16 +676,26 @@ interface DashboardState {
   createCondoBrandingUploadUrl: (payload: { fileName: string; contentType?: string }) => Promise<BackendCondoBrandingUploadUrl>;
   resetCondoBranding: () => Promise<Condo>;
   setThemeMode: (mode: ThemeMode) => void;
+  syncSystemTheme: () => void;
   resetDemo: () => Promise<void>;
 }
 
-const initialState: Pick<DashboardState, 'users' | 'condos' | 'currentUserId' | 'activeCondoId' | 'accessToken' | 'themeMode'> = {
+const resolveSystemTheme = (): ThemeMode => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const initialState: Pick<DashboardState, 'users' | 'condos' | 'currentUserId' | 'activeCondoId' | 'accessToken' | 'themeMode' | 'themePreference'> = {
   users: {},
   condos: {},
   currentUserId: undefined,
   activeCondoId: undefined,
   accessToken: undefined,
-  themeMode: 'light',
+  themeMode: resolveSystemTheme(),
+  themePreference: 'system',
 };
 
 const mapRole = (role: BackendUserRole): UserRole => {
@@ -2621,19 +2633,27 @@ export const useDashboardStore = create<DashboardState>()(
 
         return await dashboardApi.tenant.resetBranding(condoId);
       },
-      setThemeMode: (mode) => set({ themeMode: mode }),
+      setThemeMode: (mode) => set({ themeMode: mode, themePreference: mode }),
+      syncSystemTheme: () => {
+        if (get().themePreference !== 'system') {
+          return;
+        }
+
+        set({ themeMode: resolveSystemTheme() });
+      },
       resetDemo: async () => {
-        const themeMode = get().themeMode;
+        const { themeMode, themePreference } = get();
         set({
           ...initialState,
           themeMode,
+          themePreference,
           bootstrapped: true,
         });
       },
     }),
     {
       name: STORE_KEY,
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         users: state.users,
@@ -2642,8 +2662,23 @@ export const useDashboardStore = create<DashboardState>()(
         activeCondoId: state.activeCondoId,
         accessToken: state.accessToken,
         themeMode: state.themeMode,
+        themePreference: state.themePreference,
       }),
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<DashboardState> | undefined;
+        if (!state) {
+          return persistedState;
+        }
+
+        return {
+          ...state,
+          themePreference: state.themePreference ?? 'system',
+        };
+      },
       onRehydrateStorage: () => (state) => {
+        if (state?.themePreference === 'system') {
+          state.syncSystemTheme();
+        }
         state?.markHydrated(true);
       },
     }

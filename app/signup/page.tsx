@@ -68,14 +68,6 @@ function SignupPageContent() {
     return 'Pro';
   }, [selectedPlanCode]);
 
-  useEffect(() => {
-    if (state.themeMode === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [state.themeMode]);
-
   const handleSubmit = async () => {
     if (loading) {
       return;
