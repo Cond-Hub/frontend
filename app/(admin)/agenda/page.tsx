@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, GripHorizontal, Plus, Users, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { type CommonSpace, type CommonSpaceReservation, type ImportantDate, type Resident } from '../../../shared/src';
@@ -61,14 +61,6 @@ type DragPayload = {
   targetMinutes: number;
 };
 
-type ResizePayload = {
-  itemId: string;
-  edge: 'start' | 'end';
-  originY: number;
-  initialStartISO: string;
-  initialEndISO: string;
-};
-
 type ModalFrameProps = {
   title: string;
   description: string;
@@ -115,6 +107,7 @@ const SNAP_MINUTES = 15;
 const DEFAULT_OTHER_DURATION_MINUTES = 60;
 const MIN_RESERVATION_DURATION_MINUTES = 30;
 const MIN_ITEM_HEIGHT = 28;
+const MAX_RENDERED_ITEM_HEIGHT = HOUR_ROW_HEIGHT * 3;
 const DATE_TIME_LIKE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/;
 
 function ModalFrame({ title, description, children, onClose }: ModalFrameProps) {
@@ -224,6 +217,11 @@ function createDateAtMinutes(day: Date, minutes: number) {
   return next;
 }
 
+function formatTimeBR(value: string) {
+  const date = parseDateTimeLike(value);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 function formatDateTimeBR(value: string) {
   const match = DATE_TIME_LIKE_PATTERN.exec(value);
   if (match) {
@@ -236,16 +234,19 @@ function formatDateTimeBR(value: string) {
   }).format(new Date(value));
 }
 
-function minutesToTime(minutes: number) {
-  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+function formatMinutesToTime(minutes: number) {
+  const safeMinutes = Math.max(0, Math.min(minutes, 24 * 60 - 1));
+  return `${String(Math.floor(safeMinutes / 60)).padStart(2, '0')}:${String(safeMinutes % 60).padStart(2, '0')}`;
 }
 
-function applyTimeToLocalDateTime(value: string, timeHHMM: string) {
+function applyMinutesToLocalDateTime(value: string, minutes: number) {
   if (!value) {
     return '';
   }
-  const datePart = value.slice(0, 10);
-  return `${datePart}T${timeHHMM}`;
+
+  const baseDate = parseDateTimeLike(value);
+  baseDate.setHours(0, 0, 0, 0);
+  return toDateTimeLocalValue(createDateAtMinutes(baseDate, minutes));
 }
 
 function getMinutesSinceMidnight(value: string) {
@@ -283,8 +284,6 @@ export default function AgendaPage() {
   const [reservationForm, setReservationForm] = useState<ReservationFormState>(emptyReservationForm);
   const [draggingItemId, setDraggingItemId] = useState<string>();
   const [dragOverCell, setDragOverCell] = useState<string>();
-  const [resizeState, setResizeState] = useState<ResizePayload>();
-  const [draftTimings, setDraftTimings] = useState<Record<string, { startsAtISO: string; endsAtISO: string }>>({});
 
   const load = async () => {
     setLoading(true);
@@ -444,7 +443,7 @@ export default function AgendaPage() {
     }
   };
 
-  const getRenderedTiming = (item: CalendarItem) => draftTimings[item.id] ?? { startsAtISO: item.startsAtISO, endsAtISO: item.endsAtISO };
+  const getRenderedTiming = (item: CalendarItem) => ({ startsAtISO: item.startsAtISO, endsAtISO: item.endsAtISO });
 
   const moveItem = async ({ itemId, targetDayKey, targetMinutes }: DragPayload) => {
     const item = calendarItems.find((entry) => entry.id === itemId);
@@ -489,92 +488,6 @@ export default function AgendaPage() {
       });
     }
   };
-
-  useEffect(() => {
-    if (!resizeState) {
-      return;
-    }
-
-    const handleMouseMove = (event: MouseEvent) => {
-      const deltaMinutes = snapMinutes(((event.clientY - resizeState.originY) / HOUR_ROW_HEIGHT) * 60);
-      const initialStart = parseDateTimeLike(resizeState.initialStartISO);
-      const initialEnd = parseDateTimeLike(resizeState.initialEndISO);
-      const initialStartMinutes = initialStart.getHours() * 60 + initialStart.getMinutes();
-      const initialEndMinutes = initialEnd.getHours() * 60 + initialEnd.getMinutes();
-
-      let nextStartMinutes = initialStartMinutes;
-      let nextEndMinutes = initialEndMinutes;
-
-      if (resizeState.edge === 'start') {
-        nextStartMinutes = clampMinutes(Math.min(initialEndMinutes - MIN_RESERVATION_DURATION_MINUTES, initialStartMinutes + deltaMinutes));
-      } else {
-        nextEndMinutes = clampMinutes(Math.max(initialStartMinutes + MIN_RESERVATION_DURATION_MINUTES, initialEndMinutes + deltaMinutes));
-      }
-
-      const day = new Date(initialStart);
-      day.setHours(0, 0, 0, 0);
-
-      setDraftTimings((current) => ({
-        ...current,
-        [resizeState.itemId]: {
-          startsAtISO: toDateTimeLocalValue(createDateAtMinutes(day, nextStartMinutes)),
-          endsAtISO: toDateTimeLocalValue(createDateAtMinutes(day, nextEndMinutes)),
-        },
-      }));
-    };
-
-    const handleMouseUp = () => {
-      const item = calendarItems.find((entry) => entry.id === resizeState.itemId);
-      const draft = draftTimings[resizeState.itemId];
-      setResizeState(undefined);
-
-      if (!item || item.kind !== 'reservation' || !draft) {
-        return;
-      }
-
-      setSaving(true);
-      void dashboardApi.commonSpaceReservations
-        .update(item.source.id, {
-          commonSpaceId: item.source.commonSpaceId,
-          title: item.source.title,
-          notes: item.source.notes ?? undefined,
-          startAtISO: draft.startsAtISO,
-          endAtISO: draft.endsAtISO,
-          residentId: undefined,
-        })
-        .then(async () => {
-          setDraftTimings((current) => {
-            const next = { ...current };
-            delete next[resizeState.itemId];
-            return next;
-          });
-          await load();
-        })
-        .catch((resizeError) => {
-          setDraftTimings((current) => {
-            const next = { ...current };
-            delete next[resizeState.itemId];
-            return next;
-          });
-          showToast({
-            tone: 'error',
-            title: 'Falha ao ajustar período',
-            description: resizeError instanceof Error ? resizeError.message : 'Tente novamente.',
-          });
-        })
-        .finally(() => {
-          setSaving(false);
-        });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [calendarItems, draftTimings, load, resizeState]);
 
   const beginCreateFlow = (kind: CreationKind) => {
     const baseDateISO = creationPromptDate ? toDateTimeLocalValue(creationPromptDate) : '';
@@ -710,8 +623,8 @@ export default function AgendaPage() {
         return prev;
       }
 
-      const nextStart = applyTimeToLocalDateTime(baseStart || baseEnd, minutesToTime(selectedReservationSpace.openMinutes));
-      const nextEnd = applyTimeToLocalDateTime(baseEnd || baseStart, minutesToTime(selectedReservationSpace.closeMinutes));
+      const nextStart = applyMinutesToLocalDateTime(baseStart || baseEnd, selectedReservationSpace.openMinutes);
+      const nextEnd = applyMinutesToLocalDateTime(baseEnd || baseStart, selectedReservationSpace.closeMinutes);
 
       if (nextStart === prev.startAtISO && nextEnd === prev.endAtISO) {
         return prev;
@@ -833,10 +746,21 @@ export default function AgendaPage() {
 
                       {dayItems.map((item) => {
                         const timing = getRenderedTiming(item);
+                        const startDate = parseDateTimeLike(timing.startsAtISO);
+                        const endDate = parseDateTimeLike(timing.endsAtISO);
                         const startMinutes = getMinutesSinceMidnight(timing.startsAtISO);
-                        const endMinutes = Math.max(startMinutes + (item.kind === 'reservation' ? MIN_RESERVATION_DURATION_MINUTES : DEFAULT_OTHER_DURATION_MINUTES), getMinutesSinceMidnight(timing.endsAtISO));
+                        const minimumDuration = item.kind === 'reservation' ? MIN_RESERVATION_DURATION_MINUTES : DEFAULT_OTHER_DURATION_MINUTES;
+                        const actualDurationMinutes = Math.max(
+                          minimumDuration,
+                          Math.round((endDate.getTime() - startDate.getTime()) / 60_000),
+                        );
+                        const remainingDayMinutes = Math.max(SNAP_MINUTES, 24 * 60 - startMinutes);
+                        const renderDurationMinutes = Math.min(actualDurationMinutes, remainingDayMinutes);
                         const top = (startMinutes / 60) * HOUR_ROW_HEIGHT;
-                        const height = Math.max(((endMinutes - startMinutes) / 60) * HOUR_ROW_HEIGHT, MIN_ITEM_HEIGHT);
+                        const height = Math.min(
+                          Math.max((renderDurationMinutes / 60) * HOUR_ROW_HEIGHT, MIN_ITEM_HEIGHT),
+                          MAX_RENDERED_ITEM_HEIGHT,
+                        );
 
                         return (
                           <div
@@ -862,25 +786,6 @@ export default function AgendaPage() {
                             className={`absolute left-2 right-2 z-10 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-left shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 ${draggingItemId === item.id ? 'opacity-60' : ''}`}
                             style={{ top, height }}
                           >
-                            {item.kind === 'reservation' ? (
-                              <button
-                                type="button"
-                                className="absolute inset-x-3 top-0 h-3 cursor-ns-resize"
-                                onMouseDown={(event) => {
-                                  event.stopPropagation();
-                                  event.preventDefault();
-                                  setResizeState({
-                                    itemId: item.id,
-                                    edge: 'start',
-                                    originY: event.clientY,
-                                    initialStartISO: timing.startsAtISO,
-                                    initialEndISO: timing.endsAtISO,
-                                  });
-                                }}
-                                aria-label="Ajustar início"
-                              />
-                            ) : null}
-
                             <button
                               type="button"
                               aria-label="Remover item"
@@ -901,35 +806,11 @@ export default function AgendaPage() {
                                   <p className="truncate text-sm font-medium text-slate-950 dark:text-slate-50">{item.title}</p>
                                   <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{item.subtitle}</p>
                                   <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                    {formatDateTimeBR(timing.startsAtISO).slice(-5)} - {formatDateTimeBR(timing.endsAtISO).slice(-5)}
+                                    {formatTimeBR(timing.startsAtISO)} - {formatTimeBR(timing.endsAtISO)}
                                   </p>
                                 </div>
                               </div>
-                              {item.kind === 'reservation' ? (
-                                <div className="mt-auto flex items-center justify-center text-slate-400 dark:text-slate-500">
-                                  <GripHorizontal className="h-3.5 w-3.5" />
-                                </div>
-                              ) : null}
                             </div>
-
-                            {item.kind === 'reservation' ? (
-                              <button
-                                type="button"
-                                className="absolute inset-x-3 bottom-0 h-3 cursor-ns-resize"
-                                onMouseDown={(event) => {
-                                  event.stopPropagation();
-                                  event.preventDefault();
-                                  setResizeState({
-                                    itemId: item.id,
-                                    edge: 'end',
-                                    originY: event.clientY,
-                                    initialStartISO: timing.startsAtISO,
-                                    initialEndISO: timing.endsAtISO,
-                                  });
-                                }}
-                                aria-label="Ajustar fim"
-                              />
-                            ) : null}
                           </div>
                         );
                       })}
@@ -998,7 +879,7 @@ export default function AgendaPage() {
               </select>
               {selectedReservationSpace ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Janela permitida: {minutesToTime(selectedReservationSpace.openMinutes)} ate {minutesToTime(selectedReservationSpace.closeMinutes)}
+                  Janela permitida: {formatMinutesToTime(selectedReservationSpace.openMinutes)} ate {formatMinutesToTime(selectedReservationSpace.closeMinutes)}
                 </p>
               ) : null}
             </div>
@@ -1046,8 +927,8 @@ export default function AgendaPage() {
                       return {
                         ...prev,
                         isAllDay: true,
-                        startAtISO: applyTimeToLocalDateTime(baseStart, minutesToTime(selectedReservationSpace.openMinutes)),
-                        endAtISO: applyTimeToLocalDateTime(baseEnd, minutesToTime(selectedReservationSpace.closeMinutes)),
+                        startAtISO: applyMinutesToLocalDateTime(baseStart, selectedReservationSpace.openMinutes),
+                        endAtISO: applyMinutesToLocalDateTime(baseEnd, selectedReservationSpace.closeMinutes),
                       };
                     });
                   }}

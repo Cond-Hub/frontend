@@ -18,7 +18,7 @@ const footerLinks = {
     { label: "Moradores", href: "#features" },
   ],
   legal: [
-    { label: "Privacidade", href: "#" },
+    { label: "Privacidade", href: "/privacy-policy" },
     { label: "Termos", href: "#" },
     { label: "LGPD", href: "#" },
   ],
