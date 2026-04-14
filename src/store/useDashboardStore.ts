@@ -22,6 +22,7 @@ import {
   type UnitStatus,
   type User,
   type UserRole,
+  type CondoBillingSettings,
   type WalletPayment,
   type WalletSummary,
   type WalletWithdrawal,
@@ -75,6 +76,28 @@ type BackendCondo = {
   address: string;
   primaryColor?: string;
   logoUrl?: string;
+  billingSettings: BackendCondoBillingSettings;
+};
+
+type BackendCondoBillingSettings = {
+  automaticGenerationEnabled: boolean;
+  generationDayEnabled: boolean;
+  generationDay?: number;
+  defaultAmountEnabled: boolean;
+  defaultAmountCents?: number;
+  dueDayEnabled: boolean;
+  dueDay?: number;
+  lateFeeEnabled: boolean;
+  lateFeePercent?: number;
+  lateInterestEnabled: boolean;
+  lateInterestMonthlyPercent?: number;
+  notifyOnGenerationEnabled: boolean;
+  reminderEnabled: boolean;
+  reminderLeadDays?: number;
+  importantDateNotificationsEnabled: boolean;
+  reservationTomorrowNotificationsEnabled: boolean;
+  occurrenceStatusNotificationsEnabled: boolean;
+  occurrenceAssignmentNotificationsEnabled: boolean;
 };
 
 type BackendUser = {
@@ -175,9 +198,18 @@ type BackendDocument = {
   title: string;
   category: string;
   description?: string;
+  regimentoRowsJson?: string;
   uploadedAt: string;
   expiresAt?: string;
   fileUrl: string;
+};
+type BackendRegimentoRow = {
+  title: string;
+  description: string;
+};
+type AnalyzeRegimentoResponse = {
+  title: string;
+  rows: BackendRegimentoRow[];
 };
 type BackendDocumentUploadUrl = {
   storageRef: string;
@@ -373,6 +405,7 @@ type BackendCompanyOccurrenceListItem = { condo: BackendCondo; occurrence: Backe
 type BackendCompanyDocumentListItem = { condo: BackendCondo; document: BackendDocument };
 type BackendCompanyAgendaListItem = { condo: BackendCondo; date: BackendImportantDate };
 type BackendCompanyBoletoListItem = { condo: BackendCondo; boleto: BackendBoleto };
+type BackendCompanyIncomingPayment = { condo: BackendCondo; paidAtUtc: string; amountCents: number; source: string };
 type BackendCompanyWorkspaceCondo = {
   condo: BackendCondo;
   unitCount: number;
@@ -402,6 +435,7 @@ type BackendCompanyWorkspace = {
   recentDocuments: BackendCompanyDocumentListItem[];
   upcomingDates: BackendCompanyAgendaListItem[];
   overdueBoletos: BackendCompanyBoletoListItem[];
+  incomingPayments: BackendCompanyIncomingPayment[];
 };
 type BackendCompanyOccurrences = {
   openCount: number;
@@ -502,6 +536,7 @@ export interface CompanyWorkspaceSnapshot {
   recentDocuments: Array<{ condo: Condo; document: Document }>;
   upcomingDates: Array<{ condo: Condo; date: ImportantDate }>;
   overdueBoletos: Array<{ condo: Condo; boleto: Boleto }>;
+  incomingPayments: Array<{ condo: Condo; paidAtUtc: string; amountCents: number; source: string }>;
 }
 
 export interface CompanyOccurrencesSnapshot {
@@ -673,6 +708,7 @@ interface DashboardState {
   logout: () => Promise<void>;
   setActiveCondoId: (condoId: string) => Promise<void>;
   updateCondoBranding: (payload: { primaryColor?: string; logoUrl?: string }) => Promise<Condo>;
+  updateCondoBillingSettings: (payload: CondoBillingSettings) => Promise<Condo>;
   createCondoBrandingUploadUrl: (payload: { fileName: string; contentType?: string }) => Promise<BackendCondoBrandingUploadUrl>;
   resetCondoBranding: () => Promise<Condo>;
   setThemeMode: (mode: ThemeMode) => void;
@@ -830,6 +866,7 @@ const mapCondo = (value: BackendCondo): Condo => ({
   address: value.address,
   primaryColor: value.primaryColor,
   logoUrl: value.logoUrl,
+  billingSettings: value.billingSettings,
 });
 
 const mapUser = (value: BackendUser, accessibleCondos: Condo[]): User => ({
@@ -895,6 +932,7 @@ const mapDocument = (value: BackendDocument): Document => ({
   title: value.title,
   category: value.category,
   description: value.description,
+  regimentoRowsJson: value.regimentoRowsJson,
   uploadedAtISO: value.uploadedAt,
   expiresAtISO: value.expiresAt,
   fileUrl: value.fileUrl,
@@ -1016,6 +1054,12 @@ const mapCompanyBoletoItem = (value: BackendCompanyBoletoListItem) => ({
   condo: mapCondo(value.condo),
   boleto: mapBoleto(value.boleto),
 });
+const mapCompanyIncomingPayment = (value: BackendCompanyIncomingPayment) => ({
+  condo: mapCondo(value.condo),
+  paidAtUtc: value.paidAtUtc,
+  amountCents: value.amountCents,
+  source: value.source,
+});
 const mapCompanyWorkspace = (value: BackendCompanyWorkspace): CompanyWorkspaceSnapshot => ({
   companyName: value.companyName,
   condoCount: value.condoCount,
@@ -1033,6 +1077,7 @@ const mapCompanyWorkspace = (value: BackendCompanyWorkspace): CompanyWorkspaceSn
   recentDocuments: value.recentDocuments.map(mapCompanyDocumentItem),
   upcomingDates: value.upcomingDates.map(mapCompanyAgendaItem),
   overdueBoletos: value.overdueBoletos.map(mapCompanyBoletoItem),
+  incomingPayments: value.incomingPayments.map(mapCompanyIncomingPayment),
 });
 const mapCompanyOccurrences = (value: BackendCompanyOccurrences): CompanyOccurrencesSnapshot => ({
   openCount: value.openCount,
@@ -1859,6 +1904,20 @@ export const dashboardApi = {
       }));
       return condo;
     },
+    updateBillingSettings: async (condoId: string, payload: CondoBillingSettings) => {
+      const data = await requestJson<BackendCondo>(`/condos/${condoId}/billing-settings`, {
+        method: 'PUT',
+        body: payload,
+      });
+      const condo = mapCondo(data);
+      useDashboardStore.setState((state) => ({
+        condos: {
+          ...state.condos,
+          [condo.id]: condo,
+        },
+      }));
+      return condo;
+    },
     createBrandingUploadUrl: async (condoId: string, payload: { fileName: string; contentType?: string }) => {
       return await requestJson<BackendCondoBrandingUploadUrl>(`/condos/${condoId}/branding/upload-url`, {
         method: 'POST',
@@ -2311,10 +2370,11 @@ export const dashboardApi = {
       });
     },
     upload: async (payload: {
-      unitId: string;
+      unitId?: string | null;
       title: string;
       category: string;
       description?: string;
+      regimentoRowsJson?: string;
       expiresAtISO?: string;
       fileUrl?: string;
     }) => {
@@ -2326,6 +2386,7 @@ export const dashboardApi = {
           title: payload.title,
           category: payload.category,
           description: payload.description,
+          regimentoRowsJson: payload.regimentoRowsJson,
           expiresAt: payload.expiresAtISO,
           fileUrl: payload.fileUrl,
         },
@@ -2333,10 +2394,11 @@ export const dashboardApi = {
       return mapDocument(data);
     },
     update: async (documentId: string, payload: {
-      unitId: string;
+      unitId?: string | null;
       title: string;
       category: string;
       description?: string;
+      regimentoRowsJson?: string;
       expiresAtISO?: string;
       fileUrl?: string;
     }) => {
@@ -2348,11 +2410,19 @@ export const dashboardApi = {
           title: payload.title,
           category: payload.category,
           description: payload.description,
+          regimentoRowsJson: payload.regimentoRowsJson,
           expiresAt: payload.expiresAtISO,
           fileUrl: payload.fileUrl,
         },
       });
       return mapDocument(data);
+    },
+    analyzeRegimento: async (payload: { fileUrl: string }) => {
+      return await requestJson<AnalyzeRegimentoResponse>('/documents/analyze-regimento', {
+        method: 'POST',
+        requireTenant: true,
+        body: payload,
+      });
     },
     setExpiry: async (documentId: string, expiresAtISO?: string) => {
       const data = await requestJson<BackendDocument>(`/documents/${documentId}/expiry`, {
@@ -2616,6 +2686,14 @@ export const useDashboardStore = create<DashboardState>()(
         }
 
         return await dashboardApi.tenant.updateBranding(condoId, payload);
+      },
+      updateCondoBillingSettings: async (payload) => {
+        const condoId = get().activeCondoId;
+        if (!condoId) {
+          throw new Error('Nenhum condomínio ativo selecionado.');
+        }
+
+        return await dashboardApi.tenant.updateBillingSettings(condoId, payload);
       },
       createCondoBrandingUploadUrl: async (payload) => {
         const condoId = get().activeCondoId;

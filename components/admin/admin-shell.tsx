@@ -9,10 +9,12 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Compass,
+  CreditCard,
   LogOut,
   Menu,
   Moon,
   ReceiptText,
+  Wallet,
   Sun,
   UserCircle,
   X,
@@ -107,6 +109,7 @@ export function AdminShell({ children }: AdminShellProps) {
   });
   const [condoMenuOpen, setCondoMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [featureMenuOpen, setFeatureMenuOpen] = useState(false);
   const [subscriptionLocked, setSubscriptionLocked] = useState(false);
   const [preNavigatingToCondo, setPreNavigatingToCondo] = useState(false);
   const [preNavigatingToManager, setPreNavigatingToManager] = useState(false);
@@ -126,6 +129,7 @@ export function AdminShell({ children }: AdminShellProps) {
   });
   const condoMenuRef = useRef<HTMLDivElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const featureMenuRef = useRef<HTMLDivElement | null>(null);
 
   const currentUser = state.currentUserId
     ? state.users[state.currentUserId]
@@ -161,12 +165,6 @@ export function AdminShell({ children }: AdminShellProps) {
       (section.id !== "settings" || canSwitchCondos),
   );
   const requestedSection = getAdminSectionByPathname(pathname ?? "/dashboard");
-  const subscriptionSection: ContextSection = {
-    id: "subscription",
-    label: "Minha assinatura",
-    pageTitle: "Minha assinatura",
-    pageDescription: "Acompanhe plano, cobrança e estimativa mensal da conta da empresa.",
-  };
   const myCondosSection: ContextSection = {
     id: "my-condos",
     label: "Carteira operacional",
@@ -179,6 +177,13 @@ export function AdminShell({ children }: AdminShellProps) {
         label: "Visão da empresa",
         pageTitle: "Ocorrências da carteira",
         pageDescription: "Acompanhe os chamados abertos e o histórico operacional de toda a carteira.",
+      }
+    : pathname?.startsWith("/regimento-interno")
+    ? {
+        id: "regimento-interno",
+        label: "Mais funcionalidades",
+        pageTitle: "Regimento Interno",
+        pageDescription: "Centralize o documento, as versões e os arquivos do regimento interno do condomínio.",
       }
     : pathname?.startsWith("/company/agenda")
     ? {
@@ -193,6 +198,13 @@ export function AdminShell({ children }: AdminShellProps) {
         label: "Visão da empresa",
         pageTitle: "Documentos da carteira",
         pageDescription: "Monitore vencimentos e arquivos da carteira sem sair da visão da empresa.",
+      }
+    : pathname?.startsWith("/company/wallet")
+    ? {
+        id: "company",
+        label: "Visão da empresa",
+        pageTitle: "Minha carteira",
+        pageDescription: "Acompanhe o saldo consolidado de todas as carteiras da empresa.",
       }
     : pathname?.startsWith("/company/financial")
     ? {
@@ -220,7 +232,14 @@ export function AdminShell({ children }: AdminShellProps) {
       href: "/company/financial",
       label: "Financeiro",
       description: "Cobrança e saldo",
-      icon: Building2,
+      icon: CreditCard,
+    },
+    {
+      id: "company-wallet",
+      href: "/company/wallet",
+      label: "Minha carteira",
+      description: "Saque consolidado",
+      icon: Wallet,
     },
     {
       id: "company-condos",
@@ -229,20 +248,18 @@ export function AdminShell({ children }: AdminShellProps) {
       description: "Carteira operacional",
       icon: Building2,
     },
-    {
-      id: "company-subscription",
-      href: "/subscription",
-      label: "Minha assinatura",
-      description: "Plano e cobrança",
-      icon: ReceiptText,
-    },
   ];
   const currentSection =
-    pathname?.startsWith("/company") && canViewSubscription
+    pathname?.startsWith("/regimento-interno")
+      ? {
+          id: "regimento-interno",
+          label: "Mais funcionalidades",
+          pageTitle: "Regimento Interno",
+          pageDescription: "Centralize o documento, as versões e os arquivos do regimento interno do condomínio.",
+        }
+    : pathname?.startsWith("/company") && canViewSubscription
       ? companySection
-      : pathname?.startsWith("/subscription") && canViewSubscription
-      ? subscriptionSection
-      : pathname?.startsWith("/my-condos") && canViewSubscription
+    : pathname?.startsWith("/my-condos") && canViewSubscription
       ? myCondosSection
       : visibleSections.find((section) => section.id === requestedSection.id) ?? visibleSections[0];
   const showCompanyRail = currentUser?.role === "ADMIN_COMPANY" && !isManagerScope;
@@ -325,6 +342,9 @@ export function AdminShell({ children }: AdminShellProps) {
     }
 
     setManagerSelectedCondoId(value || "ALL");
+    if (value && value !== "ALL") {
+      useDashboardStore.setState({ activeCondoId: value });
+    }
 
     const next = new URLSearchParams(window.location.search);
     if (!value || value === "ALL") {
@@ -427,13 +447,17 @@ export function AdminShell({ children }: AdminShellProps) {
       if (userMenuOpen && userMenuRef.current && !userMenuRef.current.contains(target)) {
         setUserMenuOpen(false);
       }
+
+      if (featureMenuOpen && featureMenuRef.current && !featureMenuRef.current.contains(target)) {
+        setFeatureMenuOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [condoMenuOpen, userMenuOpen]);
+  }, [condoMenuOpen, featureMenuOpen, userMenuOpen]);
 
   useEffect(() => {
     const handleEnterCondo = (event: Event) => {
@@ -533,6 +557,12 @@ export function AdminShell({ children }: AdminShellProps) {
       allowedPaths.add("/subscription");
       allowedPaths.add("/subscription/payment");
       allowedPaths.add("/my-condos");
+    }
+    allowedPaths.add("/regimento-interno");
+
+    if (pathname?.startsWith("/chatbot")) {
+      router.replace(currentUser.role === "ADMIN_COMPANY" ? "/company" : "/dashboard");
+      return;
     }
 
     if (currentUser.role !== "ADMIN_COMPANY" && pathname?.startsWith("/company")) {
@@ -735,6 +765,15 @@ export function AdminShell({ children }: AdminShellProps) {
         : currentSection.id === id,
     showCollapseControl: false,
     showExitButton: true,
+    sectionActionResolver: !isManagerScope
+      ? (section) =>
+          section.id === "settings"
+            ? {
+                href: pathname ?? "/dashboard",
+                onClick: () => setFeatureMenuOpen((value) => !value),
+              }
+            : { href: section.href }
+      : undefined,
   });
   const companyRail = renderSidebar({
     sections: companySections,
@@ -757,11 +796,11 @@ export function AdminShell({ children }: AdminShellProps) {
   if (!state.hydrationComplete || !state.bootstrapped) {
     if (enteringCondoWorkspace || enteringManagerWorkspace) {
       return (
-        <main className="min-h-screen bg-slate-100 dark:bg-slate-950">
-          <div className="flex min-h-screen">
+        <main className="h-dvh overflow-hidden bg-slate-100 dark:bg-slate-950">
+          <div className="flex h-full min-h-0">
             <aside className={`hidden shrink-0 border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block ${enteringManagerWorkspace ? "w-[300px]" : "w-24"}`}>
               <div
-                className={`sticky top-0 h-screen overflow-y-auto ${enteringManagerWorkspace ? "p-6" : "p-4"}`}
+                className={`h-full overflow-y-auto ${enteringManagerWorkspace ? "p-6" : "p-4"}`}
                 style={{
                   background: "linear-gradient(180deg, #0f172a 0%, #070d18 58%, #070d18 100%)",
                 }}
@@ -779,11 +818,11 @@ export function AdminShell({ children }: AdminShellProps) {
               </div>
             </aside>
             <aside className="hidden w-0 shrink-0 overflow-hidden border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block" />
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 min-h-0 flex flex-col">
               <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
                 <div className="h-[89px]" />
               </header>
-              <div className="px-4 py-6 sm:px-6 lg:px-8" />
+              <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8" />
             </div>
           </div>
         </main>
@@ -791,29 +830,29 @@ export function AdminShell({ children }: AdminShellProps) {
     }
 
     return (
-      <main className="min-h-screen bg-slate-100 dark:bg-slate-950" />
-    );
+    <main className="h-dvh overflow-hidden bg-slate-100 dark:bg-slate-950" />
+  );
   }
 
   if (!currentUser) {
     return (
-      <main className="min-h-screen bg-slate-100 dark:bg-slate-950" />
-    );
+    <main className="h-dvh overflow-hidden bg-slate-100 dark:bg-slate-950" />
+  );
   }
 
   if (subscriptionLocked && pathname !== "/subscription/payment") {
     return (
-      <main className="min-h-screen bg-slate-100 dark:bg-slate-950" />
-    );
+    <main className="h-dvh overflow-hidden bg-slate-100 dark:bg-slate-950" />
+  );
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 dark:bg-slate-950">
-      <div className="flex min-h-screen">
+    <main className="h-dvh overflow-hidden bg-slate-100 dark:bg-slate-950">
+      <div className="flex h-full min-h-0">
         {showCompanyRail ? (
           <aside className={`hidden shrink-0 border-r border-slate-100/10 bg-slate-950 transition-[width] duration-300 ease-out lg:block ${preNavigatingToManager ? "w-[300px]" : "w-24"}`}>
             <div
-              className={`sticky top-0 h-screen overflow-y-auto ${preNavigatingToManager ? "p-6" : "p-4"}`}
+              className={`h-full overflow-y-auto ${preNavigatingToManager ? "p-6" : "p-4"}`}
               style={{
                 background: "linear-gradient(180deg, #0f172a 0%, #070d18 58%, #070d18 100%)",
               }}
@@ -841,7 +880,7 @@ export function AdminShell({ children }: AdminShellProps) {
           }`}
         >
           <div
-            className="sticky top-0 h-screen overflow-y-auto p-4"
+            className="h-full overflow-y-auto p-4"
             style={{
               background: `linear-gradient(180deg, ${primaryColor} 0%, #070d18 58%, #070d18 100%)`,
             }}
@@ -850,7 +889,7 @@ export function AdminShell({ children }: AdminShellProps) {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 min-h-0 flex flex-col">
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
             <div className="space-y-3 px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between gap-4">
@@ -1008,11 +1047,51 @@ export function AdminShell({ children }: AdminShellProps) {
             </div>
           </header>
 
-          <div className="relative px-4 py-6 sm:px-6 lg:px-8">
+          <div className="relative flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
             {children}
           </div>
         </div>
       </div>
+
+      {featureMenuOpen && !isManagerScope ? (
+        <div className="fixed inset-0 z-[60] bg-slate-950/35 backdrop-blur-[1px]">
+          <div className="flex h-full items-start justify-center px-4 pt-28 sm:pt-36">
+            <div
+              ref={featureMenuRef}
+              className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950"
+            >
+              <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">Mais funcionalidades</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Acesse recursos adicionais do condomínio.
+                </p>
+              </div>
+              <div className="p-2">
+                <Link
+                  href="/regimento-interno"
+                  className="flex items-center justify-between rounded-2xl px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  onClick={() => setFeatureMenuOpen(false)}
+                >
+                  <span>
+                    <span className="block font-medium">Regimento Interno</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400">Documentos e versões</span>
+                  </span>
+                </Link>
+                <Link
+                  href="/settings"
+                  className="flex items-center justify-between rounded-2xl px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  onClick={() => setFeatureMenuOpen(false)}
+                >
+                  <span>
+                    <span className="block font-medium">Configurações</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400">Regras de cobrança e notificações</span>
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">

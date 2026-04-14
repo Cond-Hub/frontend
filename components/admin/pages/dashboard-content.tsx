@@ -372,7 +372,7 @@ export function DashboardContent() {
   const [occurrences, setOccurrences] = useState<OccurrenceList>([]);
   const [units, setUnits] = useState<UnitList>([]);
   const [walletPayments, setWalletPayments] = useState<WalletPaymentList>([]);
-  const [period, setPeriod] = useState<PixChartPeriod>('30D');
+  const [period, setPeriod] = useState<PixChartPeriod>('12M');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

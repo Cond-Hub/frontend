@@ -61,6 +61,12 @@ type DragPayload = {
   targetMinutes: number;
 };
 
+type SlotSelectionState = {
+  dayKey: string;
+  hour: number;
+  items: CalendarItem[];
+};
+
 type ModalFrameProps = {
   title: string;
   description: string;
@@ -103,12 +109,10 @@ const creationOptions = [
 const hourLabels = Array.from({ length: 24 }, (_, index) => index);
 const HOUR_ROW_HEIGHT = 80;
 const DAY_COLUMN_HEIGHT = HOUR_ROW_HEIGHT * 24;
-const SNAP_MINUTES = 15;
 const DEFAULT_OTHER_DURATION_MINUTES = 60;
 const MIN_RESERVATION_DURATION_MINUTES = 30;
-const MIN_ITEM_HEIGHT = 28;
-const MAX_RENDERED_ITEM_HEIGHT = HOUR_ROW_HEIGHT * 3;
 const DATE_TIME_LIKE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/;
+const SAO_PAULO_TIME_ZONE = 'America/Sao_Paulo';
 
 function ModalFrame({ title, description, children, onClose }: ModalFrameProps) {
   return (
@@ -219,47 +223,28 @@ function createDateAtMinutes(day: Date, minutes: number) {
 
 function formatTimeBR(value: string) {
   const date = parseDateTimeLike(value);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: SAO_PAULO_TIME_ZONE,
+  }).format(date);
 }
 
 function formatDateTimeBR(value: string) {
-  const match = DATE_TIME_LIKE_PATTERN.exec(value);
-  if (match) {
-    return `${match[3]}/${match[2]}/${match[1]} ${match[4]}:${match[5]}`;
-  }
+  const date = parseDateTimeLike(value);
 
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
-  }).format(new Date(value));
+    hour12: false,
+    timeZone: SAO_PAULO_TIME_ZONE,
+  }).format(date);
 }
 
 function formatMinutesToTime(minutes: number) {
   const safeMinutes = Math.max(0, Math.min(minutes, 24 * 60 - 1));
   return `${String(Math.floor(safeMinutes / 60)).padStart(2, '0')}:${String(safeMinutes % 60).padStart(2, '0')}`;
-}
-
-function applyMinutesToLocalDateTime(value: string, minutes: number) {
-  if (!value) {
-    return '';
-  }
-
-  const baseDate = parseDateTimeLike(value);
-  baseDate.setHours(0, 0, 0, 0);
-  return toDateTimeLocalValue(createDateAtMinutes(baseDate, minutes));
-}
-
-function getMinutesSinceMidnight(value: string) {
-  const date = parseDateTimeLike(value);
-  return date.getHours() * 60 + date.getMinutes();
-}
-
-function clampMinutes(value: number) {
-  return Math.max(0, Math.min(24 * 60, value));
-}
-
-function snapMinutes(value: number) {
-  return Math.round(value / SNAP_MINUTES) * SNAP_MINUTES;
 }
 
 export default function AgendaPage() {
@@ -283,7 +268,8 @@ export default function AgendaPage() {
   const [otherForm, setOtherForm] = useState<OtherFormState>(emptyOtherForm);
   const [reservationForm, setReservationForm] = useState<ReservationFormState>(emptyReservationForm);
   const [draggingItemId, setDraggingItemId] = useState<string>();
-  const [dragOverCell, setDragOverCell] = useState<string>();
+  const [dragOverSlotKey, setDragOverSlotKey] = useState<string>();
+  const [slotSelection, setSlotSelection] = useState<SlotSelectionState>();
 
   const load = async () => {
     setLoading(true);
@@ -357,6 +343,9 @@ export default function AgendaPage() {
 
   const weekStart = useMemo(() => startOfWeek(weekAnchor), [weekAnchor]);
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart]);
+  function getRenderedTiming(item: CalendarItem) {
+    return { startsAtISO: item.startsAtISO, endsAtISO: item.endsAtISO };
+  }
 
   const calendarItems = useMemo<CalendarItem[]>(() => {
     const weekKeys = new Set(weekDays.map(toDateKey));
@@ -390,6 +379,27 @@ export default function AgendaPage() {
     return [...otherItems, ...reservationItems];
   }, [commonSpaceNameById, dates, reservations, weekDays]);
 
+  const calendarSlots = useMemo(() => {
+    const slots = new Map<string, CalendarItem[]>();
+
+    for (const item of calendarItems) {
+      const startDate = parseDateTimeLike(getRenderedTiming(item).startsAtISO);
+      const dayKey = toDateKey(startDate);
+      const hour = startDate.getHours();
+      const slotKey = `${dayKey}-${hour}`;
+      const current = slots.get(slotKey) ?? [];
+      current.push(item);
+      slots.set(slotKey, current);
+    }
+
+    for (const [key, items] of slots.entries()) {
+      items.sort((left, right) => parseDateTimeLike(getRenderedTiming(left).startsAtISO).getTime() - parseDateTimeLike(getRenderedTiming(right).startsAtISO).getTime());
+      slots.set(key, items);
+    }
+
+    return slots;
+  }, [calendarItems]);
+
   useEffect(() => {
     if (!requestedDateId || calendarItems.length === 0) {
       return;
@@ -414,6 +424,7 @@ export default function AgendaPage() {
     setEditingDate(undefined);
     setSelectedItem(undefined);
     setItemToRemove(undefined);
+    setSlotSelection(undefined);
     setOtherForm(emptyOtherForm);
     setReservationForm(emptyReservationForm);
   };
@@ -443,8 +454,6 @@ export default function AgendaPage() {
     }
   };
 
-  const getRenderedTiming = (item: CalendarItem) => ({ startsAtISO: item.startsAtISO, endsAtISO: item.endsAtISO });
-
   const moveItem = async ({ itemId, targetDayKey, targetMinutes }: DragPayload) => {
     const item = calendarItems.find((entry) => entry.id === itemId);
     const targetDay = weekDays.find((day) => toDateKey(day) === targetDayKey);
@@ -457,7 +466,7 @@ export default function AgendaPage() {
     const currentStart = parseDateTimeLike(renderedTiming.startsAtISO);
     const currentEnd = parseDateTimeLike(renderedTiming.endsAtISO);
     const durationMs = currentEnd.getTime() - currentStart.getTime();
-    const targetStart = createDateAtMinutes(targetDay, targetMinutes);
+    const targetStart = createDateAtHour(targetDay, Math.floor(targetMinutes / 60));
 
     try {
       if (item.kind === 'other') {
@@ -623,8 +632,8 @@ export default function AgendaPage() {
         return prev;
       }
 
-      const nextStart = applyMinutesToLocalDateTime(baseStart || baseEnd, selectedReservationSpace.openMinutes);
-      const nextEnd = applyMinutesToLocalDateTime(baseEnd || baseStart, selectedReservationSpace.closeMinutes);
+      const nextStart = toDateTimeLocalValue(createDateAtMinutes(parseDateTimeLike(baseStart || baseEnd), selectedReservationSpace.openMinutes));
+      const nextEnd = toDateTimeLocalValue(createDateAtMinutes(parseDateTimeLike(baseEnd || baseStart), selectedReservationSpace.closeMinutes));
 
       if (nextStart === prev.startAtISO && nextEnd === prev.endAtISO) {
         return prev;
@@ -690,10 +699,10 @@ export default function AgendaPage() {
                   {hourLabels.map((hour) => (
                     <div
                       key={hour}
-                      className="absolute left-0 right-0 border-b border-slate-200 px-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400"
+                      className="absolute left-0 right-0 flex items-center justify-center border-b border-slate-200 px-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400"
                       style={{ top: hour * HOUR_ROW_HEIGHT, height: HOUR_ROW_HEIGHT }}
                     >
-                      <span className="relative -top-3 block bg-white dark:bg-slate-950">
+                      <span className="block leading-none bg-white dark:bg-slate-950">
                         {String(hour).padStart(2, '0')}:00
                       </span>
                     </div>
@@ -702,116 +711,107 @@ export default function AgendaPage() {
 
                 {weekDays.map((day) => {
                   const dayKey = toDateKey(day);
-                  const dayItems = calendarItems.filter((item) => toDateKey(parseDateTimeLike(getRenderedTiming(item).startsAtISO)) === dayKey);
 
                   return (
-                    <div
-                      key={dayKey}
-                      className={`relative border-r border-slate-200 bg-white transition dark:border-slate-800 dark:bg-slate-950 ${dragOverCell === dayKey ? 'ring-2 ring-emerald-400 ring-inset' : ''}`}
-                      style={{ height: DAY_COLUMN_HEIGHT }}
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        setDragOverCell(dayKey);
-                      }}
-                      onDragLeave={() => {
-                        if (dragOverCell === dayKey) {
-                          setDragOverCell(undefined);
-                        }
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        const itemId = event.dataTransfer.getData('text/plain');
-                        setDragOverCell(undefined);
-                        if (!itemId) {
-                          return;
-                        }
-
-                        const rect = event.currentTarget.getBoundingClientRect();
-                        const targetMinutes = snapMinutes(clampMinutes(((event.clientY - rect.top) / HOUR_ROW_HEIGHT) * 60));
-                        void moveItem({ itemId, targetDayKey: dayKey, targetMinutes });
-                      }}
-                      onClick={(event) => {
-                        const rect = event.currentTarget.getBoundingClientRect();
-                        const targetMinutes = snapMinutes(clampMinutes(((event.clientY - rect.top) / HOUR_ROW_HEIGHT) * 60));
-                        openCreationChooser(createDateAtMinutes(day, targetMinutes));
-                      }}
-                    >
-                      {hourLabels.map((hour) => (
-                        <div
-                          key={`${dayKey}-${hour}`}
-                          className="absolute left-0 right-0 border-b border-slate-200/80 dark:border-slate-800"
-                          style={{ top: hour * HOUR_ROW_HEIGHT, height: HOUR_ROW_HEIGHT }}
-                        />
-                      ))}
-
-                      {dayItems.map((item) => {
-                        const timing = getRenderedTiming(item);
-                        const startDate = parseDateTimeLike(timing.startsAtISO);
-                        const endDate = parseDateTimeLike(timing.endsAtISO);
-                        const startMinutes = getMinutesSinceMidnight(timing.startsAtISO);
-                        const minimumDuration = item.kind === 'reservation' ? MIN_RESERVATION_DURATION_MINUTES : DEFAULT_OTHER_DURATION_MINUTES;
-                        const actualDurationMinutes = Math.max(
-                          minimumDuration,
-                          Math.round((endDate.getTime() - startDate.getTime()) / 60_000),
-                        );
-                        const remainingDayMinutes = Math.max(SNAP_MINUTES, 24 * 60 - startMinutes);
-                        const renderDurationMinutes = Math.min(actualDurationMinutes, remainingDayMinutes);
-                        const top = (startMinutes / 60) * HOUR_ROW_HEIGHT;
-                        const height = Math.min(
-                          Math.max((renderDurationMinutes / 60) * HOUR_ROW_HEIGHT, MIN_ITEM_HEIGHT),
-                          MAX_RENDERED_ITEM_HEIGHT,
-                        );
+                    <div key={dayKey} className="relative border-r border-slate-200 bg-white transition dark:border-slate-800 dark:bg-slate-950" style={{ height: DAY_COLUMN_HEIGHT }}>
+                      {hourLabels.map((hour) => {
+                        const slotKey = `${dayKey}-${hour}`;
+                        const slotItems = calendarSlots.get(slotKey) ?? [];
+                        const hasItems = slotItems.length > 0;
 
                         return (
-                          <div
-                            key={item.id}
-                            draggable
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              if (item.kind === 'other') {
-                                openEditOther(item.source);
+                          <button
+                            key={slotKey}
+                            type="button"
+                            draggable={hasItems && slotItems.length === 1}
+                            className={`absolute left-0 right-0 z-10 border-b border-slate-200/80 px-2 py-2 text-left transition dark:border-slate-800 ${
+                              dragOverSlotKey === slotKey
+                                ? 'bg-slate-200/80 dark:bg-slate-700/40'
+                                : hasItems
+                                  ? 'cursor-pointer bg-slate-50/60 hover:bg-slate-100 dark:bg-slate-900/30 dark:hover:bg-slate-800/60'
+                                  : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/40'
+                            } ${draggingItemId === slotItems[0]?.id ? 'opacity-60' : ''}`}
+                            style={{ top: hour * HOUR_ROW_HEIGHT, height: HOUR_ROW_HEIGHT }}
+                            onDragStart={(event) => {
+                              if (slotItems.length !== 1) {
+                                event.preventDefault();
                                 return;
                               }
-                              setSelectedItem(item);
-                            }}
-                            onDragStart={(event) => {
-                              event.dataTransfer.setData('text/plain', item.id);
+
+                              event.dataTransfer.setData('text/plain', slotItems[0].id);
                               event.dataTransfer.effectAllowed = 'move';
-                              setDraggingItemId(item.id);
+                              setDraggingItemId(slotItems[0].id);
                             }}
                             onDragEnd={() => {
                               setDraggingItemId(undefined);
-                              setDragOverCell(undefined);
+                              setDragOverSlotKey(undefined);
                             }}
-                            className={`absolute left-2 right-2 z-10 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-left shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 ${draggingItemId === item.id ? 'opacity-60' : ''}`}
-                            style={{ top, height }}
-                          >
-                            <button
-                              type="button"
-                              aria-label="Remover item"
-                              className="absolute right-2 top-2 rounded-md p-1 text-slate-400 transition hover:bg-slate-200 hover:text-rose-600 dark:hover:bg-slate-800"
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                setItemToRemove(item);
-                              }}
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
+                            onDragOver={(event) => {
+                              event.preventDefault();
+                              setDragOverSlotKey(slotKey);
+                            }}
+                            onDragLeave={() => {
+                              if (dragOverSlotKey === slotKey) {
+                                setDragOverSlotKey(undefined);
+                              }
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              const itemId = event.dataTransfer.getData('text/plain');
+                              setDragOverSlotKey(undefined);
+                              if (!itemId) {
+                                return;
+                              }
 
-                            <div className="flex h-full flex-col p-3 pr-8">
-                              <div className="flex items-start gap-2">
-                                <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.colorClass}`} />
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-slate-950 dark:text-slate-50">{item.title}</p>
-                                  <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{item.subtitle}</p>
-                                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                    {formatTimeBR(timing.startsAtISO)} - {formatTimeBR(timing.endsAtISO)}
-                                  </p>
+                              void moveItem({ itemId, targetDayKey: dayKey, targetMinutes: hour * 60 });
+                            }}
+                            onClick={() => {
+                              if (!hasItems) {
+                                openCreationChooser(createDateAtHour(day, hour));
+                                return;
+                              }
+
+                              if (slotItems.length === 1) {
+                                setSelectedItem(slotItems[0]);
+                                return;
+                              }
+
+                              setSlotSelection({ dayKey, hour, items: slotItems });
+                            }}
+                          >
+                            <div className="flex h-full items-center">
+                              {hasItems ? (
+                                <div className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition dark:border-slate-700 dark:bg-slate-900/90">
+                                  {slotItems.length === 1 ? (
+                                    <div className="flex items-start gap-2">
+                                      <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${slotItems[0].colorClass}`} />
+                                      <div className="min-w-0">
+                                        <p className="truncate text-sm font-medium text-slate-950 dark:text-slate-50">{slotItems[0].title}</p>
+                                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{slotItems[0].subtitle}</p>
+                                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                          {formatTimeBR(slotItems[0].startsAtISO)} - {formatTimeBR(slotItems[0].endsAtISO)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">{slotItems.length} datas</p>
+                                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{slotItems[0].subtitle}</p>
+                                      </div>
+                                      <span className="rounded-full bg-slate-950 px-2.5 py-1 text-[11px] font-semibold text-white dark:bg-slate-100 dark:text-slate-950">
+                                        Ver
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
+                              ) : (
+                                <span className="w-full text-center text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                  {String(hour).padStart(2, '0')}:00
+                                </span>
+                              )}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -927,8 +927,8 @@ export default function AgendaPage() {
                       return {
                         ...prev,
                         isAllDay: true,
-                        startAtISO: applyMinutesToLocalDateTime(baseStart, selectedReservationSpace.openMinutes),
-                        endAtISO: applyMinutesToLocalDateTime(baseEnd, selectedReservationSpace.closeMinutes),
+                        startAtISO: toDateTimeLocalValue(createDateAtMinutes(parseDateTimeLike(baseStart), selectedReservationSpace.openMinutes)),
+                        endAtISO: toDateTimeLocalValue(createDateAtMinutes(parseDateTimeLike(baseEnd), selectedReservationSpace.closeMinutes)),
                       };
                     });
                   }}
@@ -1060,6 +1060,39 @@ export default function AgendaPage() {
               <p><strong>Observacoes:</strong> {selectedItem.source.notes?.trim() || 'Sem observacoes.'}</p>
             </div>
           )}
+        </ModalFrame>
+      ) : null}
+
+      {slotSelection ? (
+        <ModalFrame
+          title={`${slotSelection.items.length} datas às ${String(slotSelection.hour).padStart(2, '0')}:00`}
+          description="Itens agrupados na mesma faixa horária. Clique em um item para abrir os detalhes."
+          onClose={() => setSlotSelection(undefined)}
+        >
+          <div className="space-y-3">
+            {slotSelection.items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-900"
+                onClick={() => {
+                  setSlotSelection(undefined);
+                  setSelectedItem(item);
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.colorClass}`} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950 dark:text-slate-50">{item.title}</p>
+                    <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">{item.subtitle}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {formatTimeBR(item.startsAtISO)} - {formatTimeBR(item.endsAtISO)}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
         </ModalFrame>
       ) : null}
 

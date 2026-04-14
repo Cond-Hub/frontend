@@ -22,6 +22,28 @@ export interface Condo {
   prefix?: string;
   primaryColor?: string;
   logoUrl?: string;
+  billingSettings?: CondoBillingSettings;
+}
+
+export interface CondoBillingSettings {
+  automaticGenerationEnabled: boolean;
+  generationDayEnabled: boolean;
+  generationDay?: number;
+  defaultAmountEnabled: boolean;
+  defaultAmountCents?: number;
+  dueDayEnabled: boolean;
+  dueDay?: number;
+  lateFeeEnabled: boolean;
+  lateFeePercent?: number;
+  lateInterestEnabled: boolean;
+  lateInterestMonthlyPercent?: number;
+  notifyOnGenerationEnabled: boolean;
+  reminderEnabled: boolean;
+  reminderLeadDays?: number;
+  importantDateNotificationsEnabled: boolean;
+  reservationTomorrowNotificationsEnabled: boolean;
+  occurrenceStatusNotificationsEnabled: boolean;
+  occurrenceAssignmentNotificationsEnabled: boolean;
 }
 
 export interface Building {
@@ -87,6 +109,7 @@ export interface Document {
   title: string;
   category: string;
   description?: string;
+  regimentoRowsJson?: string;
   uploadedAtISO: string;
   expiresAtISO?: string;
   fileUrl?: string;

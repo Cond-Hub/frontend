@@ -6,7 +6,7 @@ import {
   FileText,
   LayoutDashboard,
   Map,
-  Settings,
+  Menu,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -118,11 +118,11 @@ export const adminSections: AdminSection[] = [
   {
     id: 'settings',
     href: '/settings',
-    label: 'Configuracoes',
-    description: 'Marca e tema',
-    pageTitle: 'Configuracoes',
-    pageDescription: 'Personalize cores e logo do condominio ativo.',
-    icon: Settings,
+    label: 'Mais funcionalidades',
+    description: 'Regimento e ajustes',
+    pageTitle: 'Mais funcionalidades',
+    pageDescription: 'Acesse recursos extras e configuracoes do condominio ativo.',
+    icon: Menu,
   },
 ];
 

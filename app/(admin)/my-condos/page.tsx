@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { dashboardApi, useDashboardStore, type CustomerPortal } from "@/src/store/useDashboardStore";
 import { showToast } from "@/src/store/useToastStore";
-import type { User } from "@/shared/src";
+import type { Condo, User } from "@/shared/src";
 
 type SyndicFormState = {
   condoId: string;
@@ -33,6 +33,19 @@ type SyndicManagerState = {
   condoName: string;
 };
 
+type BrandingFormState = {
+  condoId: string;
+  condoName: string;
+  primaryColor: string;
+  logoUrl: string;
+  logoPreviewUrl?: string;
+  pendingLogoFile?: File;
+  logoInputKey: number;
+};
+
+const LOGO_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_LOGO_DATA_URL_LENGTH = 500_000;
+
 export default function MyCondosPage() {
   const searchParams = useSearchParams();
   const state = useDashboardStore();
@@ -48,6 +61,7 @@ export default function MyCondosPage() {
   const [createSyndicModalOpen, setCreateSyndicModalOpen] = useState(false);
   const [editSyndicModalOpen, setEditSyndicModalOpen] = useState(false);
   const [deleteSyndicConfirmOpen, setDeleteSyndicConfirmOpen] = useState(false);
+  const [brandingModalOpen, setBrandingModalOpen] = useState(false);
   const [createCondoForm, setCreateCondoForm] = useState({
     name: "",
     address: "",
@@ -59,9 +73,11 @@ export default function MyCondosPage() {
   const [loadingManagedSyndics, setLoadingManagedSyndics] = useState(false);
   const [savingEditedSyndic, setSavingEditedSyndic] = useState(false);
   const [deletingSyndic, setDeletingSyndic] = useState(false);
+  const [savingBranding, setSavingBranding] = useState(false);
   const [syndicManager, setSyndicManager] = useState<SyndicManagerState | undefined>();
   const [editingSyndic, setEditingSyndic] = useState<User | undefined>();
   const [syndicToDelete, setSyndicToDelete] = useState<User | undefined>();
+  const [brandingForm, setBrandingForm] = useState<BrandingFormState | undefined>();
 
   const onboardingMode = searchParams.get("onboarding") === "1";
 
@@ -119,6 +135,120 @@ export default function MyCondosPage() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80);
+
+  const openBrandingModal = (condo: Condo) => {
+    setBrandingForm({
+      condoId: condo.id,
+      condoName: condo.name,
+      primaryColor: condo.primaryColor ?? "",
+      logoUrl: condo.logoUrl ?? "",
+      logoPreviewUrl: undefined,
+      pendingLogoFile: undefined,
+      logoInputKey: Date.now(),
+    });
+    setBrandingModalOpen(true);
+  };
+
+  const handleBrandingFile = (file: File | undefined) => {
+    if (!file || !brandingForm) {
+      return;
+    }
+
+    if (!LOGO_FILE_TYPES.includes(file.type)) {
+      showToast({
+        tone: "error",
+        title: "Arquivo inválido",
+        description: "A logo deve ser um arquivo JPEG, PNG ou WEBP.",
+      });
+      setBrandingForm((current) => current ? { ...current, logoInputKey: current.logoInputKey + 1 } : current);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (!result || result.length > MAX_LOGO_DATA_URL_LENGTH) {
+        showToast({
+          tone: "error",
+          title: "Imagem muito grande",
+          description: "Use uma imagem menor, preferencialmente abaixo de 350 KB.",
+        });
+        setBrandingForm((current) => current ? { ...current, logoInputKey: current.logoInputKey + 1 } : current);
+        return;
+      }
+
+      setBrandingForm((current) =>
+        current
+          ? {
+              ...current,
+              logoUrl: result,
+              logoPreviewUrl: result,
+              pendingLogoFile: file,
+            }
+          : current,
+      );
+    };
+    reader.onerror = () => {
+      showToast({
+        tone: "error",
+        title: "Falha ao ler arquivo",
+        description: "Não foi possível ler a imagem enviada.",
+      });
+      setBrandingForm((current) => current ? { ...current, logoInputKey: current.logoInputKey + 1 } : current);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveBranding = async () => {
+    if (!brandingForm || savingBranding) {
+      return;
+    }
+
+    setSavingBranding(true);
+    try {
+      let nextLogo = brandingForm.logoUrl.trim() || undefined;
+      if (brandingForm.pendingLogoFile) {
+        const upload = await dashboardApi.tenant.createBrandingUploadUrl(brandingForm.condoId, {
+          fileName: brandingForm.pendingLogoFile.name,
+          contentType: brandingForm.pendingLogoFile.type || "image/png",
+        });
+
+        const response = await fetch(upload.uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": brandingForm.pendingLogoFile.type || "image/png",
+          },
+          body: brandingForm.pendingLogoFile,
+        });
+
+        if (!response.ok) {
+          throw new Error("Não foi possível enviar a imagem para o storage.");
+        }
+
+        nextLogo = upload.storageRef;
+      }
+
+      await dashboardApi.tenant.updateBranding(brandingForm.condoId, {
+        primaryColor: brandingForm.primaryColor.trim() || undefined,
+        logoUrl: nextLogo,
+      });
+      setBrandingModalOpen(false);
+      setBrandingForm(undefined);
+      showToast({
+        tone: "success",
+        title: "Personalização salva",
+        description: "As cores e a imagem do condomínio foram atualizadas.",
+      });
+    } catch (err) {
+      showToast({
+        tone: "error",
+        title: "Não foi possível salvar a personalização",
+        description: err instanceof Error ? err.message : "Tente novamente em alguns instantes.",
+      });
+    } finally {
+      setSavingBranding(false);
+    }
+  };
 
   const loadSyndics = async (condoId: string) => {
     setLoadingManagedSyndics(true);
@@ -456,9 +586,17 @@ export default function MyCondosPage() {
                         {condo.prefix}.condhub.com
                       </div>
                     </div>
-                    <div className="mt-4 flex justify-end gap-2">
-                      <OpenCondoButton prefix={condo.prefix} condoId={condo.id} accessToken={state.accessToken} />
-                      <Button variant="outline" size="sm" onClick={() => openSyndicModal(condo.id)}>
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+                      <OpenCondoButton
+                        prefix={condo.prefix}
+                        condoId={condo.id}
+                        accessToken={state.accessToken}
+                        className="col-span-2 h-10 w-full sm:col-span-1 sm:w-auto"
+                      />
+                      <Button variant="outline" size="sm" className="h-10 w-full sm:w-auto" onClick={() => openBrandingModal(condo)}>
+                        Personalizar
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-10 w-full sm:w-auto" onClick={() => openSyndicModal(condo.id)}>
                         Gerenciar Síndico(s)
                       </Button>
                     </div>
@@ -469,6 +607,86 @@ export default function MyCondosPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={brandingModalOpen}
+        title={brandingForm ? `Personalizar • ${brandingForm.condoName}` : "Personalizar condomínio"}
+        description="Ajuste a cor principal e a imagem exibidas para este condomínio."
+        confirmLabel={savingBranding ? "Salvando..." : "Salvar personalização"}
+        cancelLabel="Cancelar"
+        onCancel={() => {
+          if (!savingBranding) {
+            setBrandingModalOpen(false);
+            setBrandingForm(undefined);
+          }
+        }}
+        onConfirm={() => void handleSaveBranding()}
+      >
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="branding-primary-color">Cor principal</Label>
+            <div className="grid gap-3 sm:grid-cols-[96px_minmax(0,1fr)]">
+              <Input
+                id="branding-primary-color"
+                type="color"
+                value={brandingForm?.primaryColor || "#0f766e"}
+                onChange={(event) => setBrandingForm((current) => current ? { ...current, primaryColor: event.target.value } : current)}
+                disabled={savingBranding}
+                className="h-12"
+              />
+              <Input
+                value={brandingForm?.primaryColor ?? ""}
+                onChange={(event) => setBrandingForm((current) => current ? { ...current, primaryColor: event.target.value } : current)}
+                placeholder="#0f766e"
+                disabled={savingBranding}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="branding-logo">Imagem</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setBrandingForm((current) =>
+                    current
+                      ? {
+                          ...current,
+                          logoUrl: "",
+                          logoPreviewUrl: undefined,
+                          pendingLogoFile: undefined,
+                          logoInputKey: current.logoInputKey + 1,
+                        }
+                      : current,
+                  )
+                }
+                disabled={savingBranding}
+              >
+                Remover
+              </Button>
+            </div>
+            <Input
+              key={brandingForm?.logoInputKey ?? 0}
+              id="branding-logo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => handleBrandingFile(event.target.files?.[0])}
+              disabled={savingBranding}
+            />
+            <div className="flex h-24 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+              {brandingForm?.logoPreviewUrl || brandingForm?.logoUrl ? (
+                <img src={brandingForm.logoPreviewUrl || brandingForm.logoUrl} alt={brandingForm.condoName} className="max-h-16 max-w-full object-contain" />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                  <Building2 className="h-5 w-5" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={createCondoModalOpen}

@@ -239,6 +239,7 @@ export function OpenCondoButton({
   path = '/dashboard',
   query,
   label = 'Entrar',
+  className = '',
 }: {
   prefix?: string;
   condoId: string;
@@ -246,9 +247,11 @@ export function OpenCondoButton({
   path?: string;
   query?: Record<string, string | undefined>;
   label?: string;
+  className?: string;
 }) {
   return (
     <Button
+      className={className}
       onClick={() =>
         startCondoWorkspaceTransition(
           buildTenantUrl(prefix, path, accessToken, condoId, query, CONDO_TRANSITION_ENTER),
