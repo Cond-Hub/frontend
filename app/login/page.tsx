@@ -47,8 +47,8 @@ export default function LoginPage() {
   const state = useDashboardStore();
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
 
-  const [email, setEmail] = useState('syndic.aurora@condohome.local');
-  const [password, setPassword] = useState('Syndic@123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [tenantPrefix, setTenantPrefix] = useState<string>();
   const [apiHealth, setApiHealth] = useState<'checking' | 'online' | 'offline'>('checking');
 
@@ -213,7 +213,13 @@ export default function LoginPage() {
             <CardContent className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input id="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="seuemail@condominio.com.br" />
+                <Input
+                  id="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="seuemail@condominio.com.br"
+                  autoComplete="off"
+                />
               </div>
 
               <div className="space-y-2">
@@ -224,6 +230,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Digite sua senha"
+                  autoComplete="off"
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       void login();
