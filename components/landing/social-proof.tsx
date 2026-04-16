@@ -19,17 +19,6 @@ export function LandingSocialProof() {
             </div>
           ))}
         </div>
-
-        {/* Scope statement */}
-        <div className="mt-12 flex flex-col items-center text-center">
-          <blockquote className="max-w-2xl text-lg italic text-muted-foreground">
-            {'"'}A proposta desta pagina e mostrar somente o que o sistema ja tem hoje para uso no dia a dia do condominio.{'"'}
-          </blockquote>
-          <div className="mt-4">
-            <p className="font-medium text-foreground">Conteudo atual do sistema</p>
-            <p className="text-sm text-muted-foreground">Sem promessas fora do que ja esta implementado</p>
-          </div>
-        </div>
       </div>
     </section>
   )
