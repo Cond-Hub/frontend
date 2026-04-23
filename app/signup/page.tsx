@@ -15,9 +15,6 @@ import { showToast } from '../../src/store/useToastStore';
 
 type SignupForm = {
   companyName: string;
-  condoName: string;
-  condoAddress: string;
-  condoPrefix: string;
   adminName: string;
   adminEmail: string;
   adminPassword: string;
@@ -25,22 +22,10 @@ type SignupForm = {
 
 const initialForm: SignupForm = {
   companyName: '',
-  condoName: '',
-  condoAddress: '',
-  condoPrefix: '',
   adminName: '',
   adminEmail: '',
   adminPassword: '',
 };
-
-const formatPrefix = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
 
 export default function SignupPage() {
   return (
@@ -75,20 +60,17 @@ function SignupPageContent() {
 
     const payload = {
       companyName: form.companyName.trim(),
-      condoName: form.condoName.trim(),
-      condoAddress: form.condoAddress.trim(),
-      condoPrefix: formatPrefix(form.condoPrefix),
       adminName: form.adminName.trim(),
       adminEmail: form.adminEmail.trim(),
       adminPassword: form.adminPassword,
       planCode: selectedPlanCode,
     };
 
-    if (!payload.companyName || !payload.condoName || !payload.condoAddress || !payload.condoPrefix || !payload.adminName || !payload.adminEmail || !payload.adminPassword) {
+    if (!payload.companyName || !payload.adminName || !payload.adminEmail || !payload.adminPassword) {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha os dados da empresa, da primeira operacao e do gestor responsavel.',
+        description: 'Preencha os dados da empresa e do gestor responsavel.',
       });
       return;
     }
@@ -149,10 +131,10 @@ function SignupPageContent() {
               <div className="mt-20 max-w-xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-300">Cadastro da empresa</p>
                 <h1 className="mt-5 text-5xl font-semibold tracking-tight">
-                  Crie a conta da empresa e comece pela primeira operacao.
+                  Crie a conta da empresa e entre para montar a carteira.
                 </h1>
                 <p className="mt-6 text-base leading-8 text-slate-300">
-                  Assim que a conta for criada, voce entra na jornada inicial da empresa e segue para os proximos passos da carteira.
+                  Assim que a conta for criada, voce entra na jornada inicial da empresa e cria os condominios depois do login.
                 </p>
               </div>
             </div>
@@ -160,8 +142,8 @@ function SignupPageContent() {
             <div className="grid gap-4">
               {[
                 'Cria a conta da empresa e o gestor principal',
-                'Registra a primeira operacao da carteira',
-                'Abre a area para adicionar os proximos condominios',
+                'Abre o workspace da empresa imediatamente',
+                'Permite adicionar condominios depois do login',
               ].map((item) => (
                 <div key={item} className="flex items-start gap-3 rounded-[1.4rem] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
@@ -186,7 +168,7 @@ function SignupPageContent() {
                   </div>
                   <CardTitle>Criar conta da empresa</CardTitle>
                   <CardDescription>
-                    Plano selecionado: <span className="font-semibold text-slate-800 dark:text-slate-100">{selectedPlanLabel}</span>. Depois do cadastro, voce vai para a pagina de boas-vindas da empresa.
+                    Plano selecionado: <span className="font-semibold text-slate-800 dark:text-slate-100">{selectedPlanLabel}</span>. Depois do cadastro, voce vai para a pagina de boas-vindas da empresa e adiciona os condominios no workspace.
                   </CardDescription>
                 </div>
                 <div className="w-fit whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200">
@@ -212,40 +194,6 @@ function SignupPageContent() {
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Primeira operacao</h2>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="condoName">Nome do condominio</Label>
-                    <Input id="condoName" value={form.condoName} onChange={(event) => setForm((prev) => ({ ...prev, condoName: event.target.value }))} placeholder="Ex.: Residencial Aurora" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="condoPrefix">Prefixo / subdominio</Label>
-                    <div className="flex h-10 overflow-hidden rounded-md border border-slate-200 bg-white text-sm focus-within:ring-2 focus-within:ring-slate-400 focus-within:ring-offset-2 dark:border-slate-700 dark:bg-slate-950">
-                      <input
-                        id="condoPrefix"
-                        value={form.condoPrefix}
-                        onChange={(event) => setForm((prev) => ({ ...prev, condoPrefix: formatPrefix(event.target.value) }))}
-                        placeholder="residencial-aurora"
-                        className="flex-1 bg-transparent px-3 text-slate-950 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
-                      />
-                      <div className="w-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
-                      <div className="flex items-center px-3 text-slate-500 dark:text-slate-400">
-                        .condhub.com
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Sera usado no acesso operacional do condominio. Apenas letras, numeros e hifens.</p>
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="condoAddress">Endereco</Label>
-                    <Input id="condoAddress" value={form.condoAddress} onChange={(event) => setForm((prev) => ({ ...prev, condoAddress: event.target.value }))} placeholder="Rua, numero, bairro e cidade" />
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
                   <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Gestor principal</h2>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -277,7 +225,7 @@ function SignupPageContent() {
 
               <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
-                  Ao concluir, voce entra no workspace da empresa e ja pode adicionar mais condominios a carteira.
+                  Ao concluir, voce entra no workspace da empresa e pode criar o primeiro condominio de dentro da plataforma.
                 </p>
                 <Button className="min-w-44" onClick={() => void handleSubmit()} disabled={loading}>
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

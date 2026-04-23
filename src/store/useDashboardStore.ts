@@ -1710,9 +1710,6 @@ export const dashboardApi = {
     },
     registerCompany: async (payload: {
       companyName: string;
-      condoName: string;
-      condoAddress: string;
-      condoPrefix: string;
       adminName: string;
       adminEmail: string;
       adminPassword: string;
