@@ -1764,6 +1764,18 @@ export const dashboardApi = {
       });
       return mapSaasPlan(data);
     },
+    updateCompany: async (companyId: string, payload: { name: string }) => {
+      const data = await requestJson<BackendCompanySummary>(`/saas/companies/${companyId}`, {
+        method: 'PUT',
+        body: payload,
+      });
+      return mapSaasCompanySummary(data);
+    },
+    deleteCompany: async (companyId: string) => {
+      await requestJson<void>(`/saas/companies/${companyId}`, {
+        method: 'DELETE',
+      });
+    },
     createCompanyCondo: async (companyId: string, payload: { name: string; address: string; prefix: string }) => {
       const data = await requestJson<BackendCondo>(`/saas/companies/${companyId}/condos`, {
         method: 'POST',
@@ -1886,6 +1898,33 @@ export const dashboardApi = {
 
       useDashboardStore.setState({ activeCondoId: condoId });
       return state.condos[condoId];
+    },
+    updateMasterCondo: async (condoId: string, payload: { name: string; address: string; prefix: string }) => {
+      const data = await requestJson<BackendCondo>(`/condos/${condoId}`, {
+        method: 'PUT',
+        body: payload,
+      });
+      const condo = mapCondo(data);
+      useDashboardStore.setState((state) => ({
+        condos: {
+          ...state.condos,
+          [condo.id]: condo,
+        },
+      }));
+      return condo;
+    },
+    deleteMasterCondo: async (condoId: string) => {
+      await requestJson<void>(`/condos/${condoId}`, {
+        method: 'DELETE',
+      });
+      useDashboardStore.setState((state) => {
+        const nextCondos = { ...state.condos };
+        delete nextCondos[condoId];
+        return {
+          condos: nextCondos,
+          activeCondoId: state.activeCondoId === condoId ? undefined : state.activeCondoId,
+        };
+      });
     },
     updateBranding: async (condoId: string, payload: { primaryColor?: string; logoUrl?: string }) => {
       const data = await requestJson<BackendCondo>(`/condos/${condoId}/branding`, {

@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   Smartphone,
 } from 'lucide-react';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
@@ -30,6 +30,7 @@ function WelcomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const state = useDashboardStore();
+  const conversionSentRef = useRef(false);
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
   const activeCondo = state.activeCondoId ? state.condos[state.activeCondoId] : undefined;
   const onboardingMode = searchParams.get('onboarding') === '1';
@@ -49,6 +50,21 @@ function WelcomePageContent() {
       router.replace('/login');
     }
   }, [currentUser, router, state.bootstrapped, state.hydrationComplete]);
+
+  useEffect(() => {
+    if (!state.hydrationComplete || !state.bootstrapped || !currentUser || conversionSentRef.current) {
+      return;
+    }
+
+    conversionSentRef.current = true;
+
+    const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+    if (typeof gtag === 'function') {
+      gtag('event', 'conversion', {
+        send_to: 'AW-18107330701/K_PVCPSls6AcEI3hn7pD',
+      });
+    }
+  }, [currentUser, state.bootstrapped, state.hydrationComplete]);
 
   if (!state.hydrationComplete || !state.bootstrapped) {
     return <WelcomePageSkeleton />;
