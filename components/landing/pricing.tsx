@@ -6,6 +6,23 @@ const whatsappNumber = "5547992611819"
 
 const plans = [
   {
+    code: "INDIVIDUAL",
+    name: "Individual",
+    description: "Para operar um único condominio com todos os recursos inclusos desde o inicio.",
+    price: "59",
+    period: "/mes",
+    features: [
+      "1 condominio incluso",
+      "Ate 100 unidades",
+      "Ate 200 moradores",
+      "Todas as features inclusas",
+      "Suporte padrao",
+      "Condominio extra: R$ 59/mes",
+    ],
+    cta: "Escolher plano",
+    highlighted: false,
+  },
+  {
     code: "STARTER",
     name: "Starter",
     description: "Para empresas gestoras pequenas que querem centralizar os primeiros condominios.",
@@ -99,7 +116,7 @@ export function LandingPricing() {
         </div>
 
         {/* Pricing cards */}
-        <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan, index) => (
             <div
               key={index}

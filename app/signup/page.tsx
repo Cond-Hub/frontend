@@ -44,6 +44,9 @@ function SignupPageContent() {
   const selectedPlanCode = (searchParams.get('plan') ?? 'PRO').toUpperCase();
 
   const selectedPlanLabel = useMemo(() => {
+    if (selectedPlanCode === 'INDIVIDUAL') {
+      return 'Individual';
+    }
     if (selectedPlanCode === 'STARTER') {
       return 'Starter';
     }
