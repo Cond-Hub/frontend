@@ -102,7 +102,7 @@ export default function LoginPage() {
 
       const result = await dashboardApi.auth.loginBackoffice(email, password);
       if (result.requiresSubscriptionPayment) {
-        router.replace('/subscription/payment');
+        router.replace('/subscription?paymentRequired=1');
         return;
       }
 
@@ -114,7 +114,7 @@ export default function LoginPage() {
       router.replace('/subscription');
     } catch (error) {
       if (error instanceof ApiError && error.code === 'subscription_payment_required') {
-        router.replace('/subscription/payment');
+        router.replace('/subscription?paymentRequired=1');
         return;
       }
 

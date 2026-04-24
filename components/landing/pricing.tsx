@@ -17,7 +17,7 @@ const plans = [
       "Ate 200 moradores",
       "Todas as features inclusas",
       "Suporte padrao",
-      "Condominio extra: R$ 59/mes",
+      "Condominio extra: R$ 89,99/mes",
     ],
     cta: "Escolher plano",
     highlighted: false,

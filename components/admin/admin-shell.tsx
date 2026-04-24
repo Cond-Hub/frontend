@@ -596,8 +596,8 @@ export function AdminShell({ children }: AdminShellProps) {
         const locked = !!portal.currentSubscription && portal.currentSubscription.status !== "ACTIVE" && !isTrialActive;
 
         setSubscriptionLocked(locked);
-        if (locked && pathname !== "/subscription/payment") {
-          router.replace("/subscription/payment");
+        if (locked && pathname !== "/subscription") {
+          router.replace("/subscription?paymentRequired=1");
         }
       })
       .catch(() => {
@@ -840,7 +840,7 @@ export function AdminShell({ children }: AdminShellProps) {
   );
   }
 
-  if (subscriptionLocked && pathname !== "/subscription/payment") {
+  if (subscriptionLocked && pathname !== "/subscription") {
     return (
     <main className="h-dvh overflow-hidden bg-slate-100 dark:bg-slate-950" />
   );

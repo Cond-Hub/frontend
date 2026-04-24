@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Building2, CheckCircle2, Loader2, Moon, Sparkles, Sun } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, Loader2, Moon, ShieldCheck, Sparkles, Sun } from 'lucide-react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 
 import { CondoHomeBrandImage } from '../../components/brand/condohome-brand-image';
@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { buildTenantUrl, dashboardApi, useDashboardStore } from '../../src/store/useDashboardStore';
+import { dashboardApi, useDashboardStore } from '../../src/store/useDashboardStore';
 import { showToast } from '../../src/store/useToastStore';
 
 type SignupForm = {
@@ -66,7 +66,6 @@ function SignupPageContent() {
       adminName: form.adminName.trim(),
       adminEmail: form.adminEmail.trim(),
       adminPassword: form.adminPassword,
-      planCode: selectedPlanCode,
     };
 
     if (!payload.companyName || !payload.adminName || !payload.adminEmail || !payload.adminPassword) {
@@ -82,19 +81,12 @@ function SignupPageContent() {
     try {
       await dashboardApi.saas.registerCompany(payload);
       await dashboardApi.auth.loginBackoffice(payload.adminEmail, payload.adminPassword);
-      const authState = useDashboardStore.getState();
-      const activeCondo = authState.activeCondoId ? authState.condos[authState.activeCondoId] : undefined;
       showToast({
         tone: 'success',
         title: 'Conta criada',
-        description: 'Sua empresa foi criada. Vamos abrir a pagina de boas-vindas.',
+        description: 'Sua empresa foi criada. Agora voce escolhe a assinatura e segue para o checkout seguro.',
       });
-      if (activeCondo?.prefix) {
-        window.location.assign(buildTenantUrl(activeCondo.prefix, '/welcome', authState.accessToken, activeCondo.id));
-        return;
-      }
-
-      router.replace('/welcome?onboarding=1');
+      router.replace(`/subscription?onboarding=1&plan=${selectedPlanCode}`);
     } catch (error) {
       showToast({
         tone: 'error',
@@ -134,10 +126,10 @@ function SignupPageContent() {
               <div className="mt-20 max-w-xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-300">Cadastro da empresa</p>
                 <h1 className="mt-5 text-5xl font-semibold tracking-tight">
-                  Crie a conta da empresa e entre para montar a carteira.
+                  Crie a conta agora. A assinatura vem no passo seguinte.
                 </h1>
                 <p className="mt-6 text-base leading-8 text-slate-300">
-                  Assim que a conta for criada, voce entra na jornada inicial da empresa e cria os condominios depois do login.
+                  Primeiro criamos a empresa e o gestor principal. So depois voce escolhe o plano e vai para o checkout seguro da assinatura.
                 </p>
               </div>
             </div>
@@ -145,8 +137,8 @@ function SignupPageContent() {
             <div className="grid gap-4">
               {[
                 'Cria a conta da empresa e o gestor principal',
-                'Abre o workspace da empresa imediatamente',
-                'Permite adicionar condominios depois do login',
+                'Leva para a escolha do plano no passo seguinte',
+                'Destaca 1 mes gratis e cancelamento antes da cobranca',
               ].map((item) => (
                 <div key={item} className="flex items-start gap-3 rounded-[1.4rem] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
@@ -171,7 +163,7 @@ function SignupPageContent() {
                   </div>
                   <CardTitle>Criar conta da empresa</CardTitle>
                   <CardDescription>
-                    Plano selecionado: <span className="font-semibold text-slate-800 dark:text-slate-100">{selectedPlanLabel}</span>. Depois do cadastro, voce vai para a pagina de boas-vindas da empresa e adiciona os condominios no workspace.
+                    Plano sugerido: <span className="font-semibold text-slate-800 dark:text-slate-100">{selectedPlanLabel}</span>. Esse plano nao e gravado no cadastro. Depois de criar a conta, voce escolhe a assinatura no checkout.
                   </CardDescription>
                 </div>
                 <div className="w-fit whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200">
@@ -181,6 +173,18 @@ function SignupPageContent() {
             </CardHeader>
 
             <CardContent className="space-y-8">
+              <section className="rounded-[1.6rem] border border-emerald-200 bg-emerald-50/80 p-5 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" />
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">Sem cobranca imediata</p>
+                    <p className="text-sm leading-6 text-emerald-900/80 dark:text-emerald-200/80">
+                      Assim que a conta for criada, voce segue para escolher a assinatura. O checkout destaca o periodo gratis de 1 mes e a possibilidade de cancelar antes da primeira cobranca.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
@@ -228,11 +232,11 @@ function SignupPageContent() {
 
               <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
-                  Ao concluir, voce entra no workspace da empresa e pode criar o primeiro condominio de dentro da plataforma.
+                  Ao concluir, voce entra na jornada da assinatura para escolher o plano e seguir para o checkout seguro.
                 </p>
                 <Button className="min-w-44" onClick={() => void handleSubmit()} disabled={loading}>
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Criar conta
+                  Criar conta e continuar
                 </Button>
               </div>
             </CardContent>

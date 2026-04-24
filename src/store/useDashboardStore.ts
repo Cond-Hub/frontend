@@ -692,6 +692,44 @@ export interface RegisterCompanyResult {
   message: string;
 }
 
+export type ManagedSubscriptionStatus = 'PENDING' | 'PAID' | 'CANCELLED' | 'EXPIRED' | 'REFUNDED';
+export type ManagedSubscriptionPlanCode = 'INDIVIDUAL' | 'STARTER' | 'PRO' | 'ENTERPRISE';
+
+export interface ManagedSubscription {
+  id: string;
+  externalId?: string;
+  checkoutUrl?: string;
+  amountCents: number;
+  paidAmountCents?: number | null;
+  status: ManagedSubscriptionStatus;
+  customerId?: string;
+  planCode?: ManagedSubscriptionPlanCode;
+  productId?: string;
+  metadata: Record<string, string>;
+  createdAt?: string;
+  updatedAt?: string;
+  receiptUrl?: string;
+  completionUrl?: string;
+  returnUrl?: string;
+}
+
+export interface ManagedSubscriptionCheckoutResult {
+  id: string;
+  checkoutUrl: string;
+  amountCents: number;
+  status: ManagedSubscriptionStatus;
+  planCode: Exclude<ManagedSubscriptionPlanCode, 'ENTERPRISE'>;
+}
+
+export interface SubscriptionManagementContext {
+  companyId: string;
+  companyName: string;
+  adminName: string;
+  adminEmail: string;
+  current?: ManagedSubscription;
+  history: ManagedSubscription[];
+}
+
 interface DashboardState {
   users: Record<string, User>;
   condos: Record<string, Condo>;
@@ -1716,15 +1754,10 @@ export const dashboardApi = {
       syndicName?: string;
       syndicEmail?: string;
       syndicPassword?: string;
-      planCode?: string;
-      billingProvider?: SaasBillingProvider;
     }) => {
       const data = await requestJson<BackendRegisterCompanyResponse>('/saas/register-company', {
         method: 'POST',
-        body: {
-          ...payload,
-          billingProvider: payload.billingProvider ? mapBillingProviderToBackend(payload.billingProvider) : undefined,
-        },
+        body: payload,
       });
 
       return {
@@ -1866,6 +1899,21 @@ export const dashboardApi = {
     customerPortal: async (companyId?: string) => {
       const data = await requestJson<BackendCustomerPortal>(`/saas/customer-portal${toQueryString({ companyId })}`);
       return mapCustomerPortal(data);
+    },
+    subscriptionManagement: async () => {
+      return await requestJson<SubscriptionManagementContext>('/saas/managed-subscription');
+    },
+    createManagedSubscriptionCheckout: async (payload: { planCode: Exclude<ManagedSubscriptionPlanCode, 'ENTERPRISE'>; returnUrl?: string; completionUrl?: string }) => {
+      return await requestJson<ManagedSubscriptionCheckoutResult>('/saas/managed-subscription/checkout', {
+        method: 'POST',
+        body: payload,
+      });
+    },
+    cancelManagedSubscription: async (subscriptionId: string) => {
+      return await requestJson<ManagedSubscription>('/saas/managed-subscription/cancel', {
+        method: 'POST',
+        body: { id: subscriptionId },
+      });
     },
   },
 
