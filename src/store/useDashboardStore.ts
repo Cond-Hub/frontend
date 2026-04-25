@@ -1751,6 +1751,10 @@ export const dashboardApi = {
       adminName: string;
       adminEmail: string;
       adminPassword: string;
+      adminDocumentType: 'CPF' | 'CNPJ';
+      adminDocumentNumber: string;
+      adminPhone: string;
+      acceptTerms: boolean;
       syndicName?: string;
       syndicEmail?: string;
       syndicPassword?: string;
@@ -1903,7 +1907,7 @@ export const dashboardApi = {
     subscriptionManagement: async () => {
       return await requestJson<SubscriptionManagementContext>('/saas/managed-subscription');
     },
-    createManagedSubscriptionCheckout: async (payload: { planCode: Exclude<ManagedSubscriptionPlanCode, 'ENTERPRISE'>; returnUrl?: string; completionUrl?: string }) => {
+    createManagedSubscriptionCheckout: async (payload: { planCode: Exclude<ManagedSubscriptionPlanCode, 'ENTERPRISE'>; couponCode?: string; returnUrl?: string; completionUrl?: string }) => {
       return await requestJson<ManagedSubscriptionCheckoutResult>('/saas/managed-subscription/checkout', {
         method: 'POST',
         body: payload,

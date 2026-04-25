@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Building2, CheckCircle2, Loader2, Moon, ShieldCheck, Sparkles, Sun } from 'lucide-react';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import { CondoHomeBrandImage } from '../../components/brand/condohome-brand-image';
 import { Button } from '../../components/ui/button';
@@ -18,6 +18,10 @@ type SignupForm = {
   adminName: string;
   adminEmail: string;
   adminPassword: string;
+  adminDocumentType: 'CPF' | 'CNPJ';
+  adminDocumentNumber: string;
+  adminPhone: string;
+  acceptTerms: boolean;
 };
 
 const initialForm: SignupForm = {
@@ -25,6 +29,42 @@ const initialForm: SignupForm = {
   adminName: '',
   adminEmail: '',
   adminPassword: '',
+  adminDocumentType: 'CPF',
+  adminDocumentNumber: '',
+  adminPhone: '',
+  acceptTerms: false,
+};
+
+const onlyDigits = (value: string) => value.replace(/\D/g, '');
+
+const formatDocument = (value: string, type: 'CPF' | 'CNPJ') => {
+  const digits = onlyDigits(value).slice(0, type === 'CPF' ? 11 : 14);
+  if (type === 'CPF') {
+    return digits
+      .replace(/^(\d{3})(\d)/, '$1.$2')
+      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1-$2');
+  }
+
+  return digits
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+};
+
+const formatPhone = (value: string) => {
+  const digits = onlyDigits(value).slice(0, 11);
+  if (digits.length <= 2) {
+    return digits ? `(${digits}` : '';
+  }
+  if (digits.length <= 7) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 };
 
 export default function SignupPage() {
@@ -37,24 +77,9 @@ export default function SignupPage() {
 
 function SignupPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const state = useDashboardStore();
   const [form, setForm] = useState<SignupForm>(initialForm);
   const [loading, setLoading] = useState(false);
-  const selectedPlanCode = (searchParams.get('plan') ?? 'PRO').toUpperCase();
-
-  const selectedPlanLabel = useMemo(() => {
-    if (selectedPlanCode === 'INDIVIDUAL') {
-      return 'Individual';
-    }
-    if (selectedPlanCode === 'STARTER') {
-      return 'Starter';
-    }
-    if (selectedPlanCode === 'ENTERPRISE') {
-      return 'Enterprise';
-    }
-    return 'Pro';
-  }, [selectedPlanCode]);
 
   const handleSubmit = async () => {
     if (loading) {
@@ -66,13 +91,26 @@ function SignupPageContent() {
       adminName: form.adminName.trim(),
       adminEmail: form.adminEmail.trim(),
       adminPassword: form.adminPassword,
+      adminDocumentType: form.adminDocumentType,
+      adminDocumentNumber: form.adminDocumentNumber,
+      adminPhone: form.adminPhone,
+      acceptTerms: form.acceptTerms,
     };
 
-    if (!payload.companyName || !payload.adminName || !payload.adminEmail || !payload.adminPassword) {
+    if (!payload.companyName || !payload.adminName || !payload.adminEmail || !payload.adminPassword || !payload.adminDocumentNumber || !payload.adminPhone) {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha os dados da empresa e do gestor responsavel.',
+        description: 'Preencha os dados da empresa, documento e telefone do gestor responsavel.',
+      });
+      return;
+    }
+
+    if (!payload.acceptTerms) {
+      showToast({
+        tone: 'error',
+        title: 'Aceite os termos',
+        description: 'Voce precisa aceitar os termos do teste gratuito e da operacao para criar a conta.',
       });
       return;
     }
@@ -84,9 +122,9 @@ function SignupPageContent() {
       showToast({
         tone: 'success',
         title: 'Conta criada',
-        description: 'Sua empresa foi criada. Agora voce escolhe a assinatura e segue para o checkout seguro.',
+        description: 'Sua empresa foi criada e o teste gratuito de 1 mes ja foi iniciado.',
       });
-      router.replace(`/subscription?onboarding=1&plan=${selectedPlanCode}`);
+      router.replace('/subscription?trialStarted=1');
     } catch (error) {
       showToast({
         tone: 'error',
@@ -163,7 +201,7 @@ function SignupPageContent() {
                   </div>
                   <CardTitle>Criar conta da empresa</CardTitle>
                   <CardDescription>
-                    Plano sugerido: <span className="font-semibold text-slate-800 dark:text-slate-100">{selectedPlanLabel}</span>. Esse plano nao e gravado no cadastro. Depois de criar a conta, voce escolhe a assinatura no checkout.
+                    O cadastro cria apenas a empresa e o gestor principal. Depois disso, voce escolhe a assinatura no checkout seguro.
                   </CardDescription>
                 </div>
                 <div className="w-fit whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200">
@@ -213,6 +251,52 @@ function SignupPageContent() {
                     <Input id="adminEmail" type="email" value={form.adminEmail} onChange={(event) => setForm((prev) => ({ ...prev, adminEmail: event.target.value }))} placeholder="gestor@empresa.com.br" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="adminDocumentType">Tipo de documento</Label>
+                    <select
+                      id="adminDocumentType"
+                      value={form.adminDocumentType}
+                      onChange={(event) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          adminDocumentType: event.target.value as 'CPF' | 'CNPJ',
+                          adminDocumentNumber: formatDocument(prev.adminDocumentNumber, event.target.value as 'CPF' | 'CNPJ'),
+                        }))
+                      }
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    >
+                      <option value="CPF">CPF</option>
+                      <option value="CNPJ">CNPJ</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="adminDocumentNumber">Documento</Label>
+                    <Input
+                      id="adminDocumentNumber"
+                      value={form.adminDocumentNumber}
+                      onChange={(event) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          adminDocumentNumber: formatDocument(event.target.value, prev.adminDocumentType),
+                        }))
+                      }
+                      placeholder={form.adminDocumentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="adminPhone">Telefone</Label>
+                    <Input
+                      id="adminPhone"
+                      value={form.adminPhone}
+                      onChange={(event) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          adminPhone: formatPhone(event.target.value),
+                        }))
+                      }
+                      placeholder="(47) 99999-9999"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="adminPassword">Senha</Label>
                     <Input
                       id="adminPassword"
@@ -229,6 +313,22 @@ function SignupPageContent() {
                   </div>
                 </div>
               </section>
+
+              <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.acceptTerms}
+                  onChange={(event) => setForm((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
+                  className="mt-1 h-4 w-4 rounded border-slate-400"
+                />
+                <span>
+                  Li e aceito os{' '}
+                  <Link href="/terms" target="_blank" rel="noreferrer" className="font-semibold text-emerald-700 underline underline-offset-4 dark:text-emerald-300">
+                    termos do teste gratuito e da operacao
+                  </Link>
+                  .
+                </span>
+              </label>
 
               <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">

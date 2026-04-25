@@ -93,6 +93,27 @@ const isPlatformPage = (path?: string | null) => {
   return path.startsWith("/subscription") || path.startsWith("/my-condos") || path.startsWith("/company");
 };
 
+const subscriptionAllowsAccess = (status?: string, trialEndsAtUtc?: string) => {
+  if (!status) {
+    return false;
+  }
+
+  if (status === "ACTIVE") {
+    return true;
+  }
+
+  if (status !== "TRIALING") {
+    return false;
+  }
+
+  if (!trialEndsAtUtc) {
+    return true;
+  }
+
+  const trialEndsAt = new Date(trialEndsAtUtc).getTime();
+  return Number.isNaN(trialEndsAt) || trialEndsAt > Date.now();
+};
+
 const SIDEBAR_STATE_PARAM = "condohome_sidebar";
 
 export function AdminShell({ children }: AdminShellProps) {
@@ -554,8 +575,6 @@ export function AdminShell({ children }: AdminShellProps) {
     const isCompanyPath = pathname?.startsWith("/company");
     if (canViewSubscription) {
       allowedPaths.add("/company");
-      allowedPaths.add("/subscription");
-      allowedPaths.add("/subscription/payment");
       allowedPaths.add("/my-condos");
     }
     allowedPaths.add("/regimento-interno");
@@ -589,14 +608,13 @@ export function AdminShell({ children }: AdminShellProps) {
           return;
         }
 
-        const trialEndsAt = portal.currentSubscription?.trialEndsAtUtc ? new Date(portal.currentSubscription.trialEndsAtUtc).getTime() : undefined;
-        const isTrialActive =
-          portal.currentSubscription?.status === "TRIALING" &&
-          (!trialEndsAt || Number.isNaN(trialEndsAt) || trialEndsAt > Date.now());
-        const locked = !!portal.currentSubscription && portal.currentSubscription.status !== "ACTIVE" && !isTrialActive;
+        const locked = !subscriptionAllowsAccess(
+          portal.currentSubscription?.status,
+          portal.currentSubscription?.trialEndsAtUtc,
+        );
 
         setSubscriptionLocked(locked);
-        if (locked && pathname !== "/subscription") {
+        if (locked) {
           router.replace("/subscription?paymentRequired=1");
         }
       })

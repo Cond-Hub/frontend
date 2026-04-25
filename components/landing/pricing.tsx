@@ -9,7 +9,7 @@ const plans = [
     code: "INDIVIDUAL",
     name: "Individual",
     description: "Para operar um único condominio com todos os recursos inclusos desde o inicio.",
-    price: "59",
+    price: "79,99",
     period: "/mes",
     features: [
       "1 condominio incluso",
@@ -17,7 +17,6 @@ const plans = [
       "Ate 200 moradores",
       "Todas as features inclusas",
       "Suporte padrao",
-      "Condominio extra: R$ 89,99/mes",
     ],
     cta: "Escolher plano",
     highlighted: false,
@@ -26,7 +25,7 @@ const plans = [
     code: "STARTER",
     name: "Starter",
     description: "Para empresas gestoras pequenas que querem centralizar os primeiros condominios.",
-    price: "199",
+    price: "199,99",
     period: "/mes",
     features: [
       "Ate 3 condominios",
@@ -34,7 +33,6 @@ const plans = [
       "Ate 500 moradores",
       "Todas as features principais inclusas",
       "Suporte padrao",
-      "Condominio extra: R$ 49/mes",
     ],
     cta: "Escolher plano",
     highlighted: false,
@@ -43,7 +41,7 @@ const plans = [
     code: "PRO",
     name: "Pro",
     description: "Para empresas gestoras que ja operam multiplos condominios e precisam de escala.",
-    price: "499",
+    price: "499,99",
     period: "/mes",
     features: [
       "Ate 10 condominios",
@@ -51,7 +49,6 @@ const plans = [
       "Ate 3.000 moradores",
       "Todas as features principais inclusas",
       "Suporte prioritario",
-      "Condominio extra: R$ 39/mes",
     ],
     cta: "Escolher plano",
     highlighted: true,
@@ -70,7 +67,6 @@ const plans = [
       "Todas as features principais inclusas",
       "SLA e suporte prioritario",
       "Integracoes e condicoes comerciais sob demanda",
-      "Condominio extra: sob consulta",
     ],
     cta: "Falar com vendas",
     highlighted: false,
@@ -170,7 +166,7 @@ export function LandingPricing() {
                     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
                         `Olá, tenho interesse no plano ${plan.name} da ContHub`,
                       )}`
-                    : `/signup?plan=${plan.code}`
+                    : "/signup"
                 }
                 target={plan.code === "ENTERPRISE" ? "_blank" : undefined}
                 rel={plan.code === "ENTERPRISE" ? "noreferrer" : undefined}
