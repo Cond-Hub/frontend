@@ -693,7 +693,7 @@ export interface RegisterCompanyResult {
 }
 
 export type ManagedSubscriptionStatus = 'PENDING' | 'PAID' | 'CANCELLED' | 'EXPIRED' | 'REFUNDED';
-export type ManagedSubscriptionPlanCode = 'INDIVIDUAL' | 'STARTER' | 'PRO' | 'ENTERPRISE';
+export type ManagedSubscriptionPlanCode = 'TESTE' | 'INDIVIDUAL' | 'STARTER' | 'PRO' | 'ENTERPRISE';
 
 export interface ManagedSubscription {
   id: string;

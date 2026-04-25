@@ -27,9 +27,10 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-const selfServePlanOrder: Array<Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">> = ["INDIVIDUAL", "STARTER", "PRO"];
+const selfServePlanOrder: Array<Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">> = ["TESTE", "INDIVIDUAL", "STARTER", "PRO"];
 
 const planBadgeByCode: Record<string, string> = {
+  TESTE: "Validação interna",
   INDIVIDUAL: "1 condomínio",
   STARTER: "Até 3 condomínios",
   PRO: "Até 10 condomínios",
@@ -406,7 +407,7 @@ function SubscriptionPageContent() {
               </Card>
             ) : null}
 
-            <div className="grid gap-4 xl:grid-cols-4">
+            <div className="grid gap-4 xl:grid-cols-5">
               <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
                 <CardHeader className="space-y-4">
                   <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
@@ -416,7 +417,7 @@ function SubscriptionPageContent() {
                   <div className="space-y-3">
                     <CardTitle className="text-2xl">Contrate o plano adequado</CardTitle>
                     <CardDescription>
-                      Os três planos abaixo cobrem as faixas públicas da plataforma. Se a carteira exigir volume acima disso, fale com vendas.
+                      Os quatro planos abaixo cobrem as faixas self-serve da plataforma. Se a carteira exigir volume acima disso, fale com vendas.
                     </CardDescription>
                   </div>
                 </CardHeader>
@@ -505,8 +506,8 @@ function SubscriptionPageSkeleton() {
   return (
     <main className="min-h-screen bg-[#f3f4ec] px-6 py-8 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="grid gap-4 xl:grid-cols-4">
-          {[0, 1, 2, 3].map((item) => (
+        <div className="grid gap-4 xl:grid-cols-5">
+          {[0, 1, 2, 3, 4].map((item) => (
             <Card key={item} className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
               <CardHeader className="space-y-3">
                 <Skeleton className="h-6 w-36" />
