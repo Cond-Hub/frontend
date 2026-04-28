@@ -2075,7 +2075,7 @@ export const dashboardApi = {
       const currentUser = state.currentUserId ? state.users[state.currentUserId] : undefined;
 
       if (!currentUser || currentUser.role !== 'ADMIN_COMPANY') {
-        throw new Error('Esta area e exclusiva para administradores da empresa.');
+        throw new Error('Esta área é exclusiva para administradores da empresa.');
       }
 
       const data = await requestJson<BackendCompanyWorkspace>(`/saas/company-workspace${toQueryString({ condoId: filters.condoId })}`);

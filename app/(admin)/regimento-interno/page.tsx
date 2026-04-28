@@ -604,7 +604,7 @@ export default function RegimentoInternoPage() {
                   <div className="max-w-lg text-center">
                     <p className="text-xl font-semibold text-slate-950 dark:text-slate-50">Arraste o arquivo do regimento ou clique para selecionar</p>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                      A IA vai ler o arquivo, gerar o título e estruturar os pontos principais em linhas editáveis.
+                      A IA vai ler o arquivo, gerar o título é estruturar os pontos principais em linhas editáveis.
                     </p>
                   </div>
                   <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">

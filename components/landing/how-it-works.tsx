@@ -5,13 +5,13 @@ const steps = [
     icon: UserPlus,
     step: "01",
     title: "Acesse o painel",
-    description: "Entre no painel ou no app do morador e veja as areas que o sistema ja disponibiliza hoje.",
+    description: "Entre no painel ou no app do morador e veja as áreas que o sistema já disponibiliza hoje.",
   },
   {
     icon: Settings,
     step: "02",
-    title: "Cadastre a operacao",
-    description: "Estruture blocos, andares, unidades, moradores, espacos comuns, boletos, documentos e datas importantes.",
+    title: "Cadastre a operação",
+    description: "Estruture blocos, andares, unidades, moradores, espaços comuns, boletos, documentos e datas importantes.",
   },
   {
     icon: Rocket,
@@ -32,7 +32,7 @@ export function LandingHowItWorks() {
             Como o produto se organiza hoje
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            A ideia aqui e mostrar de forma simples como o sistema se encaixa na rotina do condominio.
+            A ideia aqui e mostrar de forma simples como o sistema se encaixa na rotina do condomínio.
           </p>
         </div>
 

@@ -42,12 +42,12 @@ const emptyForm: DocumentFormState = {
 
 const documentCategoryOptions = [
   'Luz',
-  'Agua',
-  'Gas',
+  'Água',
+  'Gás',
   'Internet',
-  'Condominio',
+  'Condomínio',
   'Seguro',
-  'Manutencao',
+  'Manutenção',
   'Contrato',
   'Laudo',
   'Assembleia',
@@ -280,7 +280,7 @@ export default function DocumentsPage() {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha unidade, titulo, categoria e data.',
+        description: 'Preencha unidade, título, categoria e data.',
       });
       return;
     }
@@ -368,7 +368,7 @@ export default function DocumentsPage() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="document-title">Titulo</Label>
+              <Label htmlFor="document-title">Título</Label>
               <Input id="document-title" value={form.title} onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))} />
             </div>
 
@@ -389,7 +389,7 @@ export default function DocumentsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="document-date">Data de referencia</Label>
+              <Label htmlFor="document-date">Data de referência</Label>
               <Input
                 id="document-date"
                 type="datetime-local"
@@ -409,7 +409,7 @@ export default function DocumentsPage() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="document-description">Descricao</Label>
+              <Label htmlFor="document-description">Descrição</Label>
               <textarea
                 id="document-description"
                 className="input min-h-28 resize-y py-3"
@@ -423,7 +423,7 @@ export default function DocumentsPage() {
                 Cancelar
               </Button>
               <Button onClick={() => void save()} disabled={saving}>
-                {saving ? 'Salvando...' : editingDocument ? 'Salvar alteracoes' : 'Criar documento'}
+                {saving ? 'Salvando...' : editingDocument ? 'Salvar alterações' : 'Criar documento'}
               </Button>
             </div>
           </div>
@@ -434,14 +434,14 @@ export default function DocumentsPage() {
         <CardHeader className="flex flex-col gap-4 border-b border-slate-200/80 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <CardTitle className="text-2xl text-slate-950 dark:text-slate-50">Documentos</CardTitle>
-            <CardDescription>Lista de documentos por unidade, com edicao e remocao.</CardDescription>
+            <CardDescription>Lista de documentos por unidade, com edição e remoção.</CardDescription>
           </div>
           <div className="flex w-full flex-col gap-3 lg:max-w-3xl lg:flex-row">
             <div className="flex-1">
               <Label htmlFor="document-search" className="sr-only">Buscar documentos</Label>
               <Input
                 id="document-search"
-                placeholder="Buscar por titulo, categoria ou unidade"
+                placeholder="Buscar por título, categoria ou unidade"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -490,8 +490,8 @@ export default function DocumentsPage() {
                   <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <p><strong>Unidade:</strong> {document.unitLabel ?? 'Sem unidade'}</p>
                     <p><strong>Categoria:</strong> {document.category}</p>
-                    <p><strong>Referencia:</strong> {document.expiresAtISO ? formatDateBR(document.expiresAtISO) : 'Sem data'}</p>
-                    <p><strong>Descricao:</strong> {document.description?.trim() || 'Sem descricao'}</p>
+                    <p><strong>Referência:</strong> {document.expiresAtISO ? formatDateBR(document.expiresAtISO) : 'Sem data'}</p>
+                    <p><strong>Descrição:</strong> {document.description?.trim() || 'Sem descrição'}</p>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => setSelectedDocument(document)}>
@@ -524,13 +524,13 @@ export default function DocumentsPage() {
             <table className="w-full min-w-[1080px]">
               <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50">
                 <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  <th className="px-6 py-4 font-medium">Titulo</th>
+                  <th className="px-6 py-4 font-medium">Título</th>
                   <th className="px-6 py-4 font-medium">Unidade</th>
                   <th className="px-6 py-4 font-medium">Categoria</th>
-                  <th className="px-6 py-4 font-medium">Referencia</th>
+                  <th className="px-6 py-4 font-medium">Referência</th>
                   <th className="px-6 py-4 font-medium">Enviado em</th>
                   <th className="px-6 py-4 font-medium">Arquivo</th>
-                  <th className="px-6 py-4 font-medium text-right">Acoes</th>
+                  <th className="px-6 py-4 font-medium text-right">Ações</th>
                 </tr>
               </thead>
               {loading ? (
@@ -549,7 +549,7 @@ export default function DocumentsPage() {
                         <td className="px-6 py-4">
                           <div>
                             <p className="font-medium text-slate-950 dark:text-slate-50">{document.title}</p>
-                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{document.description?.trim() || 'Sem descricao'}</p>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{document.description?.trim() || 'Sem descrição'}</p>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{document.unitLabel ?? 'Sem unidade'}</td>
@@ -611,7 +611,7 @@ export default function DocumentsPage() {
       {selectedDocument ? (
         <ModalFrame
           title={selectedDocument.title}
-          description="Detalhes do documento e acesso rapido ao arquivo."
+          description="Detalhes do documento e acesso rápido ao arquivo."
           onClose={() => {
             setSelectedDocument(undefined);
             if (requestedDocumentId) {
@@ -630,7 +630,7 @@ export default function DocumentsPage() {
                 <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-slate-50">{selectedDocument.category}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Referencia</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Referência</p>
                 <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-slate-50">{selectedDocument.expiresAtISO ? formatDateBR(selectedDocument.expiresAtISO) : 'Sem data'}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
@@ -640,7 +640,7 @@ export default function DocumentsPage() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
-              <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">{selectedDocument.description?.trim() || 'Sem descricao cadastrada.'}</p>
+              <p className="text-sm leading-7 text-slate-700 dark:text-slate-300">{selectedDocument.description?.trim() || 'Sem descrição cadastrada.'}</p>
             </div>
 
             <div className="flex justify-end gap-3">

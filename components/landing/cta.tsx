@@ -13,7 +13,7 @@ export function LandingCta() {
 
       <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
         <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-          Veja o que o sistema ja faz hoje
+          Veja o que o sistema já faz hoje
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
           Painel administrativo, mapa de unidades, moradores, agenda, boletos, reservas e app do morador em um mesmo produto.
@@ -32,7 +32,7 @@ export function LandingCta() {
           </Link>
         </div>
         <p className="mt-6 text-sm text-muted-foreground">
-          Sem promessas extras: somente o que ja esta no produto.
+          Sem promessas extras: somente o que já está no produto.
         </p>
       </div>
     </section>

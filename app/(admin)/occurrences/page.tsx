@@ -116,7 +116,7 @@ export default function OccurrencesPage() {
     } catch (loadError) {
       showToast({
         tone: 'error',
-        title: 'Falha ao carregar ocorrencias',
+        title: 'Falha ao carregar ocorrências',
         description: loadError instanceof Error ? loadError.message : 'Tente novamente.',
       });
     } finally {
@@ -202,14 +202,14 @@ export default function OccurrencesPage() {
       await dashboardApi.occurrences.updateStatus(occurrenceId, nextStatus);
       showToast({
         tone: 'success',
-        title: 'Ocorrencia atualizada',
+        title: 'Ocorrência atualizada',
         description: `Movida para ${OCCURRENCE_STATUS_LABELS[nextStatus].toLowerCase()}.`,
       });
     } catch (statusError) {
       setOccurrences(previousOccurrences);
       showToast({
         tone: 'error',
-        title: 'Falha ao atualizar ocorrencia',
+        title: 'Falha ao atualizar ocorrência',
         description: statusError instanceof Error ? statusError.message : 'Tente novamente.',
       });
     } finally {
@@ -238,7 +238,7 @@ export default function OccurrencesPage() {
             <CardTitle className="text-4xl text-slate-950 dark:text-slate-50">{stats.inProgress}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Chamados em tratamento pela administracao.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Chamados em tratamento pela administração.</p>
           </CardContent>
         </Card>
 
@@ -248,7 +248,7 @@ export default function OccurrencesPage() {
             <CardTitle className="text-4xl text-slate-950 dark:text-slate-50">{stats.resolved}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Itens ja encerrados tecnicamente.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Itens já encerrados tecnicamente.</p>
           </CardContent>
         </Card>
 
@@ -266,18 +266,18 @@ export default function OccurrencesPage() {
       <Card className="border-slate-200/80 dark:border-slate-800">
         <CardHeader className="flex flex-col gap-4 border-b border-slate-200/80 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Quadro de ocorrencias</CardTitle>
+            <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Quadro de ocorrências</CardTitle>
             <CardDescription>Arraste os cards entre colunas para mover o chamado no fluxo.</CardDescription>
           </div>
 
           <div className="flex w-full flex-col gap-3 lg:max-w-4xl lg:flex-row lg:items-end">
             <div className="flex-1">
               <Label htmlFor="occurrence-search" className="sr-only">
-                Buscar ocorrencias
+                Buscar ocorrências
               </Label>
               <Input
                 id="occurrence-search"
-                placeholder="Buscar por titulo, descricao, categoria ou unidade"
+                placeholder="Buscar por título, descrição, categoria ou unidade"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -356,7 +356,7 @@ export default function OccurrencesPage() {
                   <CardContent className="space-y-3">
                     {column.items.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
-                        Nenhuma ocorrencia nesta etapa.
+                        Nenhuma ocorrência nesta etapa.
                       </div>
                     ) : null}
 
@@ -391,7 +391,7 @@ export default function OccurrencesPage() {
                         <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{occurrence.description}</p>
 
                         <div className="mt-4 space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                          <p>Unidade: {occurrence.unitId ? unitLabelById.get(occurrence.unitId) ?? occurrence.unitId : 'Nao vinculada'}</p>
+                          <p>Unidade: {occurrence.unitId ? unitLabelById.get(occurrence.unitId) ?? occurrence.unitId : 'Não vinculada'}</p>
                           <p>Atualizado em {formatDateBR(occurrence.updatedAtISO)}</p>
                           <p>{occurrence.attachments.length} anexo(s)</p>
                         </div>
@@ -432,7 +432,7 @@ export default function OccurrencesPage() {
       {selectedOccurrence ? (
         <ModalFrame
           title={selectedOccurrence.title}
-          description="Detalhes completos da ocorrencia, contexto e anexos."
+          description="Detalhes completos da ocorrência, contexto e anexos."
           onClose={() => {
             setSelectedOccurrence(undefined);
             if (requestedOccurrenceId) {
@@ -457,7 +457,7 @@ export default function OccurrencesPage() {
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Unidade</p>
                 <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-slate-50">
-                  {selectedOccurrence.unitId ? unitLabelById.get(selectedOccurrence.unitId) ?? selectedOccurrence.unitId : 'Nao vinculada'}
+                  {selectedOccurrence.unitId ? unitLabelById.get(selectedOccurrence.unitId) ?? selectedOccurrence.unitId : 'Não vinculada'}
                 </p>
               </div>
             </div>
@@ -485,7 +485,7 @@ export default function OccurrencesPage() {
 
               {selectedOccurrence.attachments.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                  Esta ocorrencia nao possui anexos.
+                  Esta ocorrência não possui anexos.
                 </div>
               ) : (
                 <div className="space-y-3">

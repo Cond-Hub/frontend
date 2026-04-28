@@ -94,14 +94,14 @@ const emptyReservationForm: ReservationFormState = {
 const creationOptions = [
   {
     kind: 'reservation' as const,
-    title: 'Reserva de espaco',
-    description: 'Agende um espaco comum e vincule um morador.',
+    title: 'Reserva de espaço',
+    description: 'Agende um espaço comum e vincule um morador.',
     icon: Users,
   },
   {
     kind: 'other' as const,
     title: 'Outros',
-    description: 'Reunioes, manutencoes, assembleias ou compromissos gerais.',
+    description: 'Reunioes, manutenções, assembleias ou compromissos gerais.',
     icon: Plus,
   },
 ];
@@ -548,7 +548,7 @@ export default function AgendaPage() {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha titulo, data e tipo.',
+        description: 'Preencha título, data e tipo.',
       });
       return;
     }
@@ -591,7 +591,7 @@ export default function AgendaPage() {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha espaco, titulo, inicio e fim.',
+        description: 'Preencha espaço, título, início e fim.',
       });
       return;
     }
@@ -664,7 +664,7 @@ export default function AgendaPage() {
             Hoje
           </Button>
           <Button variant="outline" className="gap-2" onClick={() => setWeekAnchor((current) => addDays(current, 7))}>
-            Proxima semana
+            Próxima semana
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button className="gap-2" onClick={() => openCreationChooser()}>
@@ -677,7 +677,7 @@ export default function AgendaPage() {
       <Card className="border-slate-200/80 dark:border-slate-800">
         <CardHeader className="border-b border-slate-200/80 dark:border-slate-800">
           <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Agenda semanal</CardTitle>
-          <CardDescription>Calendario da semana com reservas e outros compromissos.</CardDescription>
+          <CardDescription>Calendário da semana com reservas e outros compromissos.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -825,8 +825,8 @@ export default function AgendaPage() {
 
       {creationChooserOpen && !activeCreateKind ? (
         <ModalFrame
-          title="O que voce vai criar?"
-          description="Escolha o tipo de item para abrir o formulario correto."
+          title="O que você vai criar?"
+          description="Escolha o tipo de item para abrir o formulário correto."
           onClose={closeAllModals}
         >
           <div className="grid gap-3">
@@ -857,20 +857,20 @@ export default function AgendaPage() {
 
       {activeCreateKind === 'reservation' ? (
         <ModalFrame
-          title="Reserva de espaco"
-          description="Mesmo fluxo de agendamento de espaco, agora com selecao de morador."
+          title="Reserva de espaço"
+          description="Mesmo fluxo de agendamento de espaço, agora com seleção de morador."
           onClose={closeAllModals}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="reservation-space">Espaco</Label>
+              <Label htmlFor="reservation-space">Espaço</Label>
               <select
                 id="reservation-space"
                 className="input"
                 value={reservationForm.commonSpaceId}
                 onChange={(event) => setReservationForm((prev) => ({ ...prev, commonSpaceId: event.target.value }))}
               >
-                <option value="">Selecione o espaco</option>
+                <option value="">Selecione o espaço</option>
                 {commonSpaces.map((space) => (
                   <option key={space.id} value={space.id}>
                     {space.name}
@@ -879,7 +879,7 @@ export default function AgendaPage() {
               </select>
               {selectedReservationSpace ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Janela permitida: {formatMinutesToTime(selectedReservationSpace.openMinutes)} ate {formatMinutesToTime(selectedReservationSpace.closeMinutes)}
+                  Janela permitida: {formatMinutesToTime(selectedReservationSpace.openMinutes)} até {formatMinutesToTime(selectedReservationSpace.closeMinutes)}
                 </p>
               ) : null}
             </div>
@@ -902,7 +902,7 @@ export default function AgendaPage() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="reservation-title">Titulo</Label>
+              <Label htmlFor="reservation-title">Título</Label>
               <Input
                 id="reservation-title"
                 value={reservationForm.title}
@@ -938,7 +938,7 @@ export default function AgendaPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reservation-start">Inicio</Label>
+              <Label htmlFor="reservation-start">Início</Label>
               <Input
                 id="reservation-start"
                 type="datetime-local"
@@ -960,7 +960,7 @@ export default function AgendaPage() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="reservation-notes">Observacoes</Label>
+              <Label htmlFor="reservation-notes">Observações</Label>
               <textarea
                 id="reservation-notes"
                 className="input min-h-28 resize-y py-3"
@@ -984,12 +984,12 @@ export default function AgendaPage() {
       {activeCreateKind === 'other' ? (
         <ModalFrame
           title={editingDate ? 'Editar item' : 'Novo item'}
-          description="Use esta opcao para compromissos gerais da agenda."
+          description="Use esta opção para compromissos gerais da agenda."
           onClose={closeAllModals}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="agenda-title">Titulo</Label>
+              <Label htmlFor="agenda-title">Título</Label>
               <Input id="agenda-title" value={otherForm.title} onChange={(event) => setOtherForm((prev) => ({ ...prev, title: event.target.value }))} />
             </div>
 
@@ -999,7 +999,7 @@ export default function AgendaPage() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="agenda-date">Data e horario</Label>
+              <Label htmlFor="agenda-date">Data e horário</Label>
               <Input
                 id="agenda-date"
                 type="datetime-local"
@@ -1009,7 +1009,7 @@ export default function AgendaPage() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="agenda-notes">Observacoes</Label>
+              <Label htmlFor="agenda-notes">Observações</Label>
               <textarea
                 id="agenda-notes"
                 className="input min-h-28 resize-y py-3"
@@ -1023,7 +1023,7 @@ export default function AgendaPage() {
                 Cancelar
               </Button>
               <Button onClick={() => void saveOther()} disabled={saving}>
-                {saving ? 'Salvando...' : editingDate ? 'Salvar alteracoes' : 'Criar item'}
+                {saving ? 'Salvando...' : editingDate ? 'Salvar alterações' : 'Criar item'}
               </Button>
             </div>
           </div>
@@ -1047,17 +1047,17 @@ export default function AgendaPage() {
         >
           {selectedItem.kind === 'reservation' ? (
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
-              <p><strong>Espaco:</strong> {commonSpaceNameById.get(selectedItem.source.commonSpaceId) ?? 'Nao encontrado'}</p>
-              <p><strong>Morador:</strong> {selectedItem.source.createdByUserName ?? residentNameById.get(selectedItem.source.createdByUserId) ?? 'Nao informado'}</p>
-              <p><strong>Inicio:</strong> {formatDateTimeBR(selectedItem.source.startAtISO)}</p>
+              <p><strong>Espaço:</strong> {commonSpaceNameById.get(selectedItem.source.commonSpaceId) ?? 'Não encontrado'}</p>
+              <p><strong>Morador:</strong> {selectedItem.source.createdByUserName ?? residentNameById.get(selectedItem.source.createdByUserId) ?? 'Não informado'}</p>
+              <p><strong>Início:</strong> {formatDateTimeBR(selectedItem.source.startAtISO)}</p>
               <p><strong>Fim:</strong> {formatDateTimeBR(selectedItem.source.endAtISO)}</p>
-              <p><strong>Observacoes:</strong> {selectedItem.source.notes?.trim() || 'Sem observacoes.'}</p>
+              <p><strong>Observações:</strong> {selectedItem.source.notes?.trim() || 'Sem observações.'}</p>
             </div>
           ) : (
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <p><strong>Tipo:</strong> {selectedItem.source.type}</p>
               <p><strong>Data:</strong> {formatDateTimeBR(selectedItem.source.dateISO)}</p>
-              <p><strong>Observacoes:</strong> {selectedItem.source.notes?.trim() || 'Sem observacoes.'}</p>
+              <p><strong>Observações:</strong> {selectedItem.source.notes?.trim() || 'Sem observações.'}</p>
             </div>
           )}
         </ModalFrame>

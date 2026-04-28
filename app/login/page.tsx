@@ -120,7 +120,7 @@ export default function LoginPage() {
 
       showToast({
         tone: 'error',
-        title: 'Nao foi possivel entrar',
+        title: 'Não foi possível entrar',
         description: error instanceof Error ? error.message : 'Revise seus dados e tente novamente.',
       });
     }
@@ -157,17 +157,17 @@ export default function LoginPage() {
 
               <div className="mt-20 max-w-xl">
                 <p className="text-sm font-medium text-emerald-300">
-                  {tenantPrefix ? 'Operacao do condominio' : 'Workspace da empresa'}
+                  {tenantPrefix ? 'Operação do condomínio' : 'Workspace da empresa'}
                 </p>
                 <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white">
                   {tenantPrefix
-                    ? 'Entre para acompanhar a operacao diaria do seu condominio.'
-                    : 'Entre para gerenciar a empresa, a carteira e depois entrar na operacao de cada condominio.'}
+                    ? 'Entre para acompanhar a operação diária do seu condomínio.'
+                    : 'Entre para gerenciar a empresa, a carteira e depois entrar na operação de cada condomínio.'}
                 </h1>
                 <p className="mt-6 text-base leading-8 text-slate-300">
                   {tenantPrefix
-                    ? 'Consulte moradores, boletos, ocorrencias, agenda, reservas e documentos em um unico painel.'
-                    : 'Acesse sua conta sem subdominio para acompanhar a empresa, revisar assinatura e abrir cada operacao quando precisar.'}
+                    ? 'Consulte moradores, boletos, ocorrências, agenda, reservas e documentos em um único painel.'
+                    : 'Acesse sua conta sem subdominio para acompanhar a empresa, revisar assinatura e abrir cada operação quando precisar.'}
                 </p>
               </div>
             </div>
@@ -177,13 +177,13 @@ export default function LoginPage() {
                 <div className="flex items-center gap-2 text-emerald-200">
                   <ShieldCheck className="h-4 w-4" />
                   <p className="text-sm font-medium">
-                    {tenantPrefix ? 'Acesso vinculado ao endereco do condominio' : 'Gestores podem entrar sem subdominio'}
+                    {tenantPrefix ? 'Acesso vinculado ao endereço do condomínio' : 'Gestores podem entrar sem subdominio'}
                   </p>
                 </div>
                 <p className="mt-3 text-sm leading-7 text-slate-200">
                   {tenantPrefix
-                    ? 'Use sempre o link oficial da sua operacao. Assim o sistema abre o painel, os moradores e os dados do condominio correto.'
-                    : 'Administradores entram pelo dominio principal e comecam pela visao da empresa. O sistema so leva para um condominio quando voce escolhe a operacao.'}
+                    ? 'Use sempre o link oficial da sua operação. Assim o sistema abre o painel, os moradores e os dados do condomínio correto.'
+                    : 'Administradores entram pelo dominio principal e comecam pela visão da empresa. O sistema só leva para um condomínio quando você escolhe a operação.'}
                 </p>
               </div>
             </div>
@@ -201,11 +201,11 @@ export default function LoginPage() {
                 <div className="mb-3 w-full flex items-center justify-center">
                   <CondoHomeBrandImage className="h-16 w-auto object-contain" />
                 </div>
-                <CardTitle>{tenantPrefix ? 'Entrar no painel do condominio' : 'Entrar na conta da empresa'}</CardTitle>
+                <CardTitle>{tenantPrefix ? 'Entrar no painel do condomínio' : 'Entrar na conta da empresa'}</CardTitle>
                 <CardDescription>
                   {tenantPrefix
-                    ? 'Use seu e-mail e sua senha para acessar moradores, cobranca, agenda e ocorrencias.'
-                    : 'Use seu e-mail e sua senha para acessar a visao da empresa, a assinatura e a carteira operacional.'}
+                    ? 'Use seu e-mail e sua senha para acessar moradores, cobrança, agenda e ocorrências.'
+                    : 'Use seu e-mail e sua senha para acessar a visão da empresa, a assinatura e a carteira operacional.'}
                 </CardDescription>
               </div>
             </CardHeader>
@@ -217,7 +217,7 @@ export default function LoginPage() {
                   id="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="seuemail@condominio.com.br"
+                  placeholder="seuemail@condomínio.com.br"
                   autoComplete="off"
                 />
               </div>
@@ -247,15 +247,15 @@ export default function LoginPage() {
                 }`}
               >
                 {tenantPrefix ? (
-                  <>Voce esta entrando no ambiente do condominio <span className="font-semibold">{tenantPrefix}</span>.</>
+                  <>Você está entrando no ambiente do condomínio <span className="font-semibold">{tenantPrefix}</span>.</>
                 ) : (
-                  <>Gestores da empresa entram por aqui sem subdominio. Para moradores e sindicos, continue usando o link do condominio.</>
+                  <>Gestores da empresa entram por aqui sem subdominio. Para moradores e síndicos, continue usando o link do condomínio.</>
                 )}
               </div>
 
               {apiHealth !== 'online' ? (
                 <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                  <span>O sistema nao conseguiu se conectar agora.</span>
+                  <span>O sistema não conseguiu se conectar agora.</span>
                   <Button variant="ghost" size="sm" className="text-xs" onClick={() => void checkApiHealth()}>
                     Tentar novamente
                   </Button>
@@ -263,7 +263,7 @@ export default function LoginPage() {
               ) : null}
 
               <Button className="w-full" onClick={login}>
-                {tenantPrefix ? 'Entrar no condominio' : 'Entrar na empresa'}
+                {tenantPrefix ? 'Entrar no condomínio' : 'Entrar na empresa'}
               </Button>
             </CardContent>
           </Card>

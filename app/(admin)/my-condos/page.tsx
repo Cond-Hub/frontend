@@ -500,7 +500,7 @@ export default function MyCondosPage() {
           <CardHeader>
             <CardTitle className="text-xl">Sua empresa foi criada</CardTitle>
             <CardDescription className="text-emerald-900/80">
-              Agora voce pode continuar adicionando operacoes a carteira e delegar sindicos para cada condominio.
+              Agora você pode continuar adicionando operações a carteira e delegar síndicos para cada condomínio.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -509,7 +509,7 @@ export default function MyCondosPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Meus condomínios</h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Carteira operacional da empresa, com acesso e gestao por condominio.</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Carteira operacional da empresa, com acesso e gestão por condomínio.</p>
         </div>
         <Button onClick={() => setCreateCondoModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -521,7 +521,7 @@ export default function MyCondosPage() {
         <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
           <CardHeader>
             <CardTitle>Condomínios da carteira</CardTitle>
-            <CardDescription>Liste, acompanhe e gerencie os condominios vinculados a sua empresa.</CardDescription>
+            <CardDescription>Liste, acompanhe e gerencie os condomínios vinculados a sua empresa.</CardDescription>
           </CardHeader>
           <CardContent>
             {condos.length === 0 ? (
@@ -691,7 +691,7 @@ export default function MyCondosPage() {
       <ConfirmDialog
         open={createCondoModalOpen}
         title="Adicionar condomínio"
-        description="Crie uma nova operacao para esta empresa."
+        description="Crie uma nova operação para esta empresa."
         confirmLabel={creatingCondo ? "Criando..." : "Criar condomínio"}
         cancelLabel="Cancelar"
         onCancel={() => {
@@ -860,7 +860,7 @@ export default function MyCondosPage() {
               type="email"
               value={createSyndicForm.email}
               onChange={(event) => setCreateSyndicForm((prev) => ({ ...prev, email: event.target.value }))}
-              placeholder="sindico@empresa.com"
+              placeholder="síndico@empresa.com"
               disabled={creatingSyndic}
             />
           </div>
@@ -871,7 +871,7 @@ export default function MyCondosPage() {
               type="password"
               value={createSyndicForm.password}
               onChange={(event) => setCreateSyndicForm((prev) => ({ ...prev, password: event.target.value }))}
-              placeholder="Minimo de 8 caracteres"
+              placeholder="Mínimo de 8 caracteres"
               disabled={creatingSyndic}
             />
           </div>

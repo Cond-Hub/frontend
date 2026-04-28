@@ -147,7 +147,7 @@ function SubscriptionPageContent() {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Nao foi possivel carregar a assinatura.");
+          setError(err instanceof Error ? err.message : "Não foi possível carregar a assinatura.");
         }
       })
       .finally(() => {
@@ -190,7 +190,7 @@ function SubscriptionPageContent() {
       setManagement(managementData);
       setError(undefined);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar a assinatura.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar a assinatura.");
     } finally {
       setLoading(false);
     }
@@ -216,7 +216,7 @@ function SubscriptionPageContent() {
     } catch (err) {
       showToast({
         tone: "error",
-        title: "Nao foi possivel abrir o checkout",
+        title: "Não foi possível abrir o checkout",
         description: err instanceof Error ? err.message : "Tente novamente em instantes.",
       });
     } finally {
@@ -242,7 +242,7 @@ function SubscriptionPageContent() {
     } catch (err) {
       showToast({
         tone: "error",
-        title: "Nao foi possivel cancelar",
+        title: "Não foi possível cancelar",
         description: err instanceof Error ? err.message : "Tente novamente em instantes.",
       });
     } finally {

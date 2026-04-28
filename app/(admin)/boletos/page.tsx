@@ -324,7 +324,7 @@ export default function BoletosPage() {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha unidade, valor maior ou igual a R$ 1,99, competencia e vencimento.',
+        description: 'Preencha unidade, valor maior ou igual a R$ 1,99, competência e vencimento.',
       });
       return;
     }
@@ -463,12 +463,12 @@ export default function BoletosPage() {
       await navigator.clipboard.writeText(pixCharge.brCode);
       showToast({
         tone: 'success',
-        title: 'Codigo PIX copiado',
+        title: 'Código PIX copiado',
       });
     } catch {
       showToast({
         tone: 'error',
-        title: 'Falha ao copiar codigo PIX',
+        title: 'Falha ao copiar código PIX',
       });
     }
   };
@@ -502,7 +502,7 @@ export default function BoletosPage() {
             <CardTitle className="text-4xl text-slate-950 dark:text-slate-50">{stats.overdue}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Boletos que ja passaram do vencimento.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Boletos que já passaram do vencimento.</p>
           </CardContent>
         </Card>
 
@@ -512,7 +512,7 @@ export default function BoletosPage() {
             <CardTitle className="text-4xl text-slate-950 dark:text-slate-50">{stats.paid}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Itens liquidados dentro da operacao.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Itens liquidados dentro da operação.</p>
           </CardContent>
         </Card>
       </div>
@@ -521,7 +521,7 @@ export default function BoletosPage() {
         <CardHeader className="flex flex-col gap-4 border-b border-slate-200/80 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Lista de boletos</CardTitle>
-            <CardDescription>Controle financeiro por unidade, competencia, vencimento e anexos.</CardDescription>
+            <CardDescription>Controle financeiro por unidade, competência, vencimento e anexos.</CardDescription>
           </div>
 
           <div className="flex w-full flex-col gap-3 lg:max-w-4xl lg:flex-row lg:items-end">
@@ -531,7 +531,7 @@ export default function BoletosPage() {
               </Label>
               <Input
                 id="boleto-search"
-                placeholder="Buscar por unidade, observacao ou competencia"
+                placeholder="Buscar por unidade, observação ou competência"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -597,7 +597,7 @@ export default function BoletosPage() {
                   <p className="text-base font-semibold text-slate-950 dark:text-slate-50">{boleto.unitLabel}</p>
                   <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <p><strong>Valor:</strong> {formatCurrencyBRL(boleto.amountCents)}</p>
-                    <p><strong>Competencia:</strong> {toMonthInputValue(boleto.referenceMonthISO)}</p>
+                    <p><strong>Competência:</strong> {toMonthInputValue(boleto.referenceMonthISO)}</p>
                     <p>
                       <strong>Status:</strong>{' '}
                       <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusTone[boleto.status]}`}>
@@ -634,12 +634,12 @@ export default function BoletosPage() {
                 <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   <th className="px-6 py-4 font-medium">Unidade</th>
                   <th className="px-6 py-4 font-medium">Valor</th>
-                  <th className="px-6 py-4 font-medium">Competencia</th>
+                  <th className="px-6 py-4 font-medium">Competência</th>
                   <th className="px-6 py-4 font-medium">Vencimento</th>
                   <th className="px-6 py-4 font-medium">Status</th>
                   <th className="px-6 py-4 font-medium">Arquivos</th>
-                  <th className="px-6 py-4 font-medium">Observacoes</th>
-                  <th className="px-6 py-4 font-medium text-right">Acoes</th>
+                  <th className="px-6 py-4 font-medium">Observações</th>
+                  <th className="px-6 py-4 font-medium text-right">Ações</th>
                 </tr>
               </thead>
 
@@ -701,7 +701,7 @@ export default function BoletosPage() {
                             ) : null}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{boleto.notes?.trim() || 'Sem observacoes'}</td>
+                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{boleto.notes?.trim() || 'Sem observações'}</td>
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2">
                             <Button variant="outline" size="sm" className="gap-2" onClick={() => void openPixModal(boleto)}>
@@ -751,8 +751,8 @@ export default function BoletosPage() {
           title={editingBoleto ? 'Editar boleto' : 'Novo boleto'}
           description={
             editingBoleto
-              ? 'Atualize a unidade, vencimento, competencia e os anexos deste boleto.'
-              : 'Cadastre um novo boleto com unidade, competencia, vencimento e, se quiser, anexe um ou mais PDFs.'
+              ? 'Atualize a unidade, vencimento, competência e os anexos deste boleto.'
+              : 'Cadastre um novo boleto com unidade, competência, vencimento e, se quiser, anexe um ou mais PDFs.'
           }
           onClose={closeForm}
         >
@@ -789,7 +789,7 @@ export default function BoletosPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="boleto-reference-month">Competencia</Label>
+              <Label htmlFor="boleto-reference-month">Competência</Label>
               <Input
                 id="boleto-reference-month"
                 type="month"
@@ -818,18 +818,18 @@ export default function BoletosPage() {
                 onChange={(event) => setForm((previous) => ({ ...previous, files: Array.from(event.target.files ?? []) }))}
               />
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {editingBoleto ? 'Voce pode anexar novos PDFs mantendo os arquivos atuais.' : 'Opcional. Envie um ou mais PDFs do boleto se quiser.'}
+                {editingBoleto ? 'Você pode anexar novos PDFs mantendo os arquivos atuais.' : 'Opcional. Envie um ou mais PDFs do boleto se quiser.'}
               </p>
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="boleto-notes">Observacoes</Label>
+              <Label htmlFor="boleto-notes">Observações</Label>
               <textarea
                 id="boleto-notes"
                 className="input min-h-28 resize-y py-3"
                 value={form.notes}
                 onChange={(event) => setForm((previous) => ({ ...previous, notes: event.target.value }))}
-                placeholder="Informacoes adicionais para a equipe administrativa"
+                placeholder="Informações adicionais para a equipe administrativa"
               />
             </div>
 
@@ -840,7 +840,7 @@ export default function BoletosPage() {
                   checked={form.replaceExisting}
                   onChange={(event) => setForm((previous) => ({ ...previous, replaceExisting: event.target.checked }))}
                 />
-                Substituir boleto existente da mesma unidade e competencia, se houver
+                Substituir boleto existente da mesma unidade e competência, se houver
               </label>
             ) : null}
 
@@ -871,7 +871,7 @@ export default function BoletosPage() {
               </Button>
               <Button onClick={() => void save()} disabled={saving} className="gap-2">
                 <Plus className="h-4 w-4" />
-                {saving ? 'Salvando...' : editingBoleto ? 'Salvar alteracoes' : 'Criar boleto'}
+                {saving ? 'Salvando...' : editingBoleto ? 'Salvar alterações' : 'Criar boleto'}
               </Button>
             </div>
           </div>
@@ -881,7 +881,7 @@ export default function BoletosPage() {
       {pixBoleto ? (
         <ModalFrame
           title="Pagamento com PIX"
-          description={`Gere o QR Code e o codigo copia e cola do boleto ${pixBoleto.unitLabel} • Ref. ${toMonthInputValue(pixBoleto.referenceMonthISO)}`}
+          description={`Gere o QR Code e o código copia e cola do boleto ${pixBoleto.unitLabel} • Ref. ${toMonthInputValue(pixBoleto.referenceMonthISO)}`}
           onClose={() => {
             setPixBoleto(undefined);
             setPixCharge(undefined);
@@ -920,19 +920,19 @@ export default function BoletosPage() {
                     />
                   ) : (
                     <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-                      QR Code indisponivel para esta cobranca.
+                      QR Code indisponível para esta cobrança.
                     </div>
                   )}
                 </div>
                 <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-300">
-                  Escaneie o QR Code ou use o codigo copia e cola ao lado.
+                  Escaneie o QR Code ou use o código copia e cola ao lado.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Status da cobranca PIX</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Status da cobrança PIX</p>
                     <div className="mt-2 flex items-center gap-3">
                       <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${pixStatusTone[pixCharge.status]}`}>
                         {PIX_CHARGE_STATUS_LABELS[pixCharge.status]}
@@ -953,7 +953,7 @@ export default function BoletosPage() {
                     <div>
                       <p className="text-sm font-medium text-slate-950 dark:text-slate-50">PIX copia e cola</p>
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Compartilhe este codigo ou use-o para pagar fora do app do banco.
+                        Compartilhe este código ou use-o para pagar fora do app do banco.
                       </p>
                     </div>
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => void copyPixCode()}>
@@ -990,7 +990,7 @@ export default function BoletosPage() {
             </div>
           ) : (
             <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-              Nao foi possivel carregar a cobranca PIX deste boleto.
+              Não foi possível carregar a cobrança PIX deste boleto.
             </div>
           )}
         </ModalFrame>

@@ -58,7 +58,7 @@ export default function CompanyDocumentsPage() {
         if (!cancelled) {
           showToast({
             tone: 'error',
-            title: 'Nao foi possivel carregar os documentos da carteira',
+            title: 'Não foi possível carregar os documentos da carteira',
             description: error instanceof Error ? error.message : 'Tente novamente.',
           });
         }
@@ -86,7 +86,7 @@ export default function CompanyDocumentsPage() {
     <div className="space-y-6">
       <CompanyWorkspaceFilterCard
         title="Documentos da carteira"
-        description="Monitore vencimentos, categorias e unidades vinculadas sem sair da visao da empresa."
+        description="Monitore vencimentos, categorias e unidades vinculadas sem sair da visão da empresa."
         accessibleCondos={accessibleCondos}
         selectedCondoId={filters.condoId as 'ALL' | string}
         onChange={(value) => setFilters({ condoId: value, page: '1' })}
@@ -103,12 +103,12 @@ export default function CompanyDocumentsPage() {
         <CardHeader className="space-y-4">
           <div>
             <CardTitle>Acervo consolidado</CardTitle>
-            <CardDescription>Use filtros para encontrar rapidamente documentos por condominio, unidade ou categoria.</CardDescription>
+            <CardDescription>Use filtros para encontrar rapidamente documentos por condomínio, unidade ou categoria.</CardDescription>
           </div>
           <div className="grid gap-3 lg:grid-cols-[1.6fr,0.8fr]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por titulo, categoria, unidade ou condominio" />
+              <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por título, categoria, unidade ou condomínio" />
             </div>
             <select className="input" value={filters.expiry} onChange={(event) => setFilters({ expiry: event.target.value as 'ALL' | 'EXPIRING' | 'NO_EXPIRY', page: '1' })}>
               <option value="ALL">Todos os documentos</option>
@@ -138,7 +138,7 @@ export default function CompanyDocumentsPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-950 dark:text-slate-50">{item.document.title}</p>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.document.description || 'Sem descricao cadastrada.'}</p>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.document.description || 'Sem descrição cadastrada.'}</p>
                       </div>
                       <CompanyRowMeta
                         condoName={item.condo.name}

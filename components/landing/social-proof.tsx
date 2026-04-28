@@ -1,9 +1,9 @@
 export function LandingSocialProof() {
   const stats = [
-    { value: "Painel", label: "Administracao", company: "Dashboard, moradores e chamados" },
-    { value: "Mapa", label: "Blocos e unidades", company: "Estrutura do condominio" },
+    { value: "Painel", label: "Administração", company: "Dashboard, moradores e chamados" },
+    { value: "Mapa", label: "Blocos e unidades", company: "Estrutura do condomínio" },
     { value: "Agenda", label: "Datas e reservas", company: "Compromissos do dia a dia" },
-    { value: "App", label: "Morador", company: "Boletos, documentos e ocorrencias" },
+    { value: "App", label: "Morador", company: "Boletos, documentos e ocorrências" },
   ]
 
   return (

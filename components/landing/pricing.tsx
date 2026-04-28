@@ -8,15 +8,15 @@ const plans = [
   {
     code: "INDIVIDUAL",
     name: "Individual",
-    description: "Para operar um único condominio com todos os recursos inclusos desde o inicio.",
+    description: "Para operar um único condomínio com todos os recursos inclusos desde o início.",
     price: "79,99",
-    period: "/mes",
+    period: "/mês",
     features: [
-      "1 condominio incluso",
-      "Ate 100 unidades",
-      "Ate 200 moradores",
+      "1 condomínio incluso",
+      "Até 100 unidades",
+      "Até 200 moradores",
       "Todas as features inclusas",
-      "Suporte padrao",
+      "Suporte padrão",
     ],
     cta: "Escolher plano",
     highlighted: false,
@@ -24,15 +24,15 @@ const plans = [
   {
     code: "STARTER",
     name: "Starter",
-    description: "Para empresas gestoras pequenas que querem centralizar os primeiros condominios.",
+    description: "Para empresas gestoras pequenas que querem centralizar os primeiros condomínios.",
     price: "199,99",
-    period: "/mes",
+    period: "/mês",
     features: [
-      "Ate 3 condominios",
-      "Ate 250 unidades no total",
-      "Ate 500 moradores",
+      "Até 3 condomínios",
+      "Até 250 unidades no total",
+      "Até 500 moradores",
       "Todas as features principais inclusas",
-      "Suporte padrao",
+      "Suporte padrão",
     ],
     cta: "Escolher plano",
     highlighted: false,
@@ -40,15 +40,15 @@ const plans = [
   {
     code: "PRO",
     name: "Pro",
-    description: "Para empresas gestoras que ja operam multiplos condominios e precisam de escala.",
+    description: "Para empresas gestoras que já operam multiplos condomínios e precisam de escala.",
     price: "499,99",
-    period: "/mes",
+    period: "/mês",
     features: [
-      "Ate 10 condominios",
-      "Ate 1.000 unidades no total",
-      "Ate 3.000 moradores",
+      "Até 10 condomínios",
+      "Até 1.000 unidades no total",
+      "Até 3.000 moradores",
       "Todas as features principais inclusas",
-      "Suporte prioritario",
+      "Suporte prioritário",
     ],
     cta: "Escolher plano",
     highlighted: true,
@@ -61,12 +61,12 @@ const plans = [
     price: "Sob consulta",
     period: "",
     features: [
-      "Ate 100 condominios ou volume negociado",
+      "Até 100 condomínios ou volume negociado",
       "Volume de unidades sob consulta",
-      "Ate 20.000 moradores",
+      "Até 20.000 moradores",
       "Todas as features principais inclusas",
-      "SLA e suporte prioritario",
-      "Integracoes e condicoes comerciais sob demanda",
+      "SLA e suporte prioritário",
+      "Integrações e condições comerciais sob demanda",
     ],
     cta: "Falar com vendas",
     highlighted: false,
@@ -74,13 +74,13 @@ const plans = [
 ]
 
 const includedFeatures = [
-  "Multi-condominio",
+  "Multi-condomínio",
   "Workspace da empresa",
   "Moradores e unidades",
-  "Ocorrencias e documentos",
-  "Agenda, espacos e reservas",
+  "Ocorrências e documentos",
+  "Agenda, espaços e reservas",
   "Boletos, Carteira e PIX",
-  "Branding por condominio",
+  "Branding por condomínio",
 ]
 
 export function LandingPricing() {
@@ -94,9 +94,9 @@ export function LandingPricing() {
             Escolha o plano ideal para sua empresa
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Todos os planos incluem as features principais. A diferenca esta no volume, suporte e condicoes comerciais.
+            Todos os planos incluem as features principais. A diferenca está no volume, suporte e condições comerciais.
           </p>
-          <p className="mt-3 text-sm font-semibold text-primary">Todos os planos com 1 mes gratis para comecar.</p>
+          <p className="mt-3 text-sm font-semibold text-primary">Todos os planos com 1 mês grátis para comecar.</p>
         </div>
 
         <div className="mx-auto mt-10 max-w-5xl rounded-2xl border border-border bg-card p-6">
@@ -136,7 +136,7 @@ export function LandingPricing() {
                 <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
                 <div className="mt-4 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                  1 mes gratis
+                  1 mês grátis
                 </div>
               </div>
 

@@ -258,7 +258,7 @@ export default function PaymentsPage() {
           <div>
             <CardTitle className="text-2xl text-slate-950 dark:text-slate-50">Carteira</CardTitle>
             <CardDescription className="max-w-2xl text-sm leading-6">
-              Aqui voce acompanha o que entrou via PIX em tempo real e o valor disponivel para saque, considerando R$ 1,99 por transacao recebida e saques gratis e ilimitados.
+              Aqui você acompanha o que entrou via PIX em tempo real e o valor disponível para saque, considerando R$ 1,99 por transação recebida e saques grátis e ilimitados.
             </CardDescription>
           </div>
 
@@ -304,7 +304,7 @@ export default function PaymentsPage() {
         <Card className="border-slate-200/80 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Recebimentos PIX</CardTitle>
-            <CardDescription>Boletos com cobrancas PIX geradas e seus respectivos status.</CardDescription>
+            <CardDescription>Boletos com cobranças PIX geradas e seus respectivos status.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (
@@ -320,7 +320,7 @@ export default function PaymentsPage() {
                     <div>
                       <p className="font-semibold text-slate-950 dark:text-slate-50">{payment.unitLabel}</p>
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Referencia {formatMonthYearBR(payment.referenceMonthISO)} • {formatCurrencyBRL(payment.amountCents)}
+                        Referência {formatMonthYearBR(payment.referenceMonthISO)} • {formatCurrencyBRL(payment.amountCents)}
                       </p>
                     </div>
                     <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">
@@ -347,7 +347,7 @@ export default function PaymentsPage() {
               Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-24 w-full rounded-2xl" />)
             ) : withdrawals.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                Nenhum saque solicitado ate agora.
+                Nenhum saque solicitado até agora.
               </div>
             ) : (
               withdrawals.map((withdrawal) => (

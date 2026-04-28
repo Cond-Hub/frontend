@@ -103,7 +103,7 @@ export function useCompanyWorkspaceData() {
         if (!cancelled) {
           showToast({
             tone: 'error',
-            title: 'Nao foi possivel carregar o workspace da empresa',
+            title: 'Não foi possível carregar o workspace da empresa',
             description: error instanceof Error ? error.message : 'Tente novamente.',
           });
         }
@@ -152,7 +152,7 @@ export function CompanyWorkspaceEmptyState() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Visao da empresa</CardTitle>
+        <CardTitle>Visão da empresa</CardTitle>
         <CardDescription>Este workspace e exclusivo para administradores da empresa.</CardDescription>
       </CardHeader>
     </Card>
@@ -327,10 +327,10 @@ export function CompanyPagination({
           Anterior
         </Button>
         <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          Pagina {page} de {totalPages}
+          Página {page} de {totalPages}
         </span>
         <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
-          Proxima
+          Próxima
         </Button>
       </div>
     </div>

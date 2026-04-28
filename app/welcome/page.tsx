@@ -91,12 +91,12 @@ function WelcomePageContent() {
               <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-5xl">
                 {onboardingMode
                   ? 'Bem-vindo ao novo ciclo da sua empresa no CondHub.'
-                  : 'Seu workspace ja esta pronto para voltar a operar.'}
+                  : 'Seu workspace já está pronto para voltar a operar.'}
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 dark:text-slate-300">
                 {onboardingMode
-                  ? 'A empresa foi criada, a primeira operacao ja esta ativa e o proximo passo agora e estruturar a carteira, cadastrar sindicos e acompanhar a operacao diaria.'
-                  : 'A conta esta pronta para acompanhar a empresa, revisar a carteira operacional e entrar em cada condominio quando precisar aprofundar a operacao.'}
+                  ? 'A empresa foi criada, a primeira operação já está ativa e o próximo passo agora é estruturar a carteira, cadastrar síndicos e acompanhar a operação diária.'
+                  : 'A conta está pronta para acompanhar a empresa, revisar a carteira operacional e entrar em cada condomínio quando precisar aprofundar a operação.'}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -110,7 +110,7 @@ function WelcomePageContent() {
                   <Link href="/my-condos?onboarding=1">
                     <Button variant="outline" className="gap-2">
                       <Building2 className="h-4 w-4" />
-                      Abrir meus condominios
+                      Abrir meus condomínios
                     </Button>
                   </Link>
                 ) : null}
@@ -124,8 +124,8 @@ function WelcomePageContent() {
                     <Building2 className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Operacao ativa</p>
-                    <p className="font-semibold text-slate-950 dark:text-slate-50">{activeCondo?.name ?? 'Condominio selecionado'}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Operação ativa</p>
+                    <p className="font-semibold text-slate-950 dark:text-slate-50">{activeCondo?.name ?? 'Condomínio selecionado'}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{activeCondo?.prefix ? `${activeCondo.prefix}.condhub.com` : 'Dominio principal'}</p>
                   </div>
                 </div>
@@ -154,20 +154,20 @@ function WelcomePageContent() {
                 <LayoutGrid className="h-4 w-4" />
                 <span className="text-xs font-semibold uppercase tracking-[0.22em]">Primeiros passos</span>
               </div>
-              <CardTitle className="text-2xl">Comece pela empresa e entre na operacao quando fizer sentido.</CardTitle>
+              <CardTitle className="text-2xl">Comece pela empresa e entre na operação quando fizer sentido.</CardTitle>
               <CardDescription className="text-base">
-                A jornada ficou mais simples: primeiro voce organiza a carteira, depois aprofunda no condominio certo.
+                A jornada ficou mais simples: primeiro você organiza a carteira, depois aprofunda no condomínio certo.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {[
                 currentUser.role === 'ADMIN_COMPANY'
-                  ? 'Abra a visao da empresa para acompanhar indicadores, cobranca e carteira.'
-                  : 'Entre no painel do condominio para acompanhar moradores, agenda e cobranca.',
-                `Entre na operacao ativa${activeCondo ? `: ${activeCondo.name}` : ''} quando precisar resolver o detalhe.`,
+                  ? 'Abra a visão da empresa para acompanhar indicadores, cobrança e carteira.'
+                  : 'Entre no painel do condomínio para acompanhar moradores, agenda e cobrança.',
+                `Entre na operação ativa${activeCondo ? `: ${activeCondo.name}` : ''} quando precisar resolver o detalhe.`,
                 currentUser.role === 'ADMIN_COMPANY'
-                  ? 'Adicione novos condominios e distribua sindicos por operacao.'
-                  : 'Use o app do morador como canal de comunicacao com a base residencial.',
+                  ? 'Adicione novos condomínios e distribua síndicos por operação.'
+                  : 'Use o app do morador como canal de comunicação com a base residencial.',
               ].map((item) => (
                 <div key={item} className="flex items-start gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/60">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
@@ -183,9 +183,9 @@ function WelcomePageContent() {
                 <Smartphone className="h-4 w-4" />
                 <span className="text-xs font-semibold uppercase tracking-[0.22em]">App do morador</span>
               </div>
-              <CardTitle className="text-2xl">CondHub | Morador ja esta na Play Store e na App Store.</CardTitle>
+              <CardTitle className="text-2xl">CondHub | Morador já está na Play Store e na App Store.</CardTitle>
               <CardDescription className="text-base">
-                Use a welcome para reforcar com sindicos e moradores que o app oficial ja pode ser baixado para acompanhar boletos, reservas, agenda, comunicados e ocorrencias.
+                Use a welcome para reforcar com síndicos e moradores que o app oficial já pode ser baixado para acompanhar boletos, reservas, agenda, comunicados e ocorrências.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -217,7 +217,7 @@ function WelcomePageContent() {
 
               <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/70 dark:bg-emerald-950/30">
                 <p className="text-sm leading-7 text-emerald-900 dark:text-emerald-200">
-                  O app ajuda a fechar o ciclo da operacao: a empresa organiza a carteira, o sindico toca a rotina do condominio e o morador acompanha tudo pelo celular.
+                  O app ajuda a fechar o ciclo da operação: a empresa organiza a carteira, o síndico toca a rotina do condomínio e o morador acompanha tudo pelo celular.
                 </p>
               </div>
             </CardContent>

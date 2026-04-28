@@ -252,7 +252,7 @@ export default function ResidentsPage() {
       if (editingResident) {
         const residentGroup = groupedResidents.find((item) => item.source.id === editingResident.id);
         if (!residentGroup) {
-          throw new Error('Morador agrupado nao encontrado para edicao.');
+          throw new Error('Morador agrupado não encontrado para edição.');
         }
 
         const normalizedPayload = {
@@ -382,7 +382,7 @@ export default function ResidentsPage() {
                   </label>
                 ))}
                 {selectableUnits.length === 0 ? (
-                  <p className="md:col-span-2 text-sm text-slate-500 dark:text-slate-400">Nenhuma unidade disponivel no momento.</p>
+                  <p className="md:col-span-2 text-sm text-slate-500 dark:text-slate-400">Nenhuma unidade disponível no momento.</p>
                 ) : null}
               </div>
             </div>
@@ -408,7 +408,7 @@ export default function ResidentsPage() {
                 checked={form.isOwner}
                 onChange={(event) => setForm((prev) => ({ ...prev, isOwner: event.target.checked }))}
               />
-              Proprietario(a)
+              Proprietário(a)
             </label>
 
             <div className="md:col-span-2 flex justify-end gap-3">
@@ -424,7 +424,7 @@ export default function ResidentsPage() {
                 Cancelar
               </Button>
               <Button onClick={() => void save()} disabled={saving}>
-                {saving ? 'Salvando...' : editingResident ? 'Salvar alteracoes' : 'Criar morador'}
+                {saving ? 'Salvando...' : editingResident ? 'Salvar alterações' : 'Criar morador'}
               </Button>
             </div>
           </div>
@@ -535,7 +535,7 @@ export default function ResidentsPage() {
         <CardHeader className="flex flex-col gap-4 border-b border-slate-200/80 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Lista de moradores</CardTitle>
-            <CardDescription>Visualizacao em tabela agrupada por pessoa, com unidades reunidas na mesma linha.</CardDescription>
+            <CardDescription>Visualização em tabela agrupada por pessoa, com unidades reunidas na mesma linha.</CardDescription>
           </div>
           <div className="flex w-full flex-col gap-3 lg:max-w-xl lg:flex-row">
             <div className="flex-1">
@@ -607,7 +607,7 @@ export default function ResidentsPage() {
                   <th className="px-6 py-4 font-medium">Telefone</th>
                   <th className="px-6 py-4 font-medium">Perfil</th>
                   {canManageFinance ? <th className="px-6 py-4 font-medium">Financeiro</th> : null}
-                  <th className="px-6 py-4 font-medium text-right">Acoes</th>
+                  <th className="px-6 py-4 font-medium text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -654,7 +654,7 @@ export default function ResidentsPage() {
                       <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{resident.source.phone ?? 'Sem telefone'}</td>
                       <td className="px-6 py-4">
                         <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">
-                          {resident.source.isOwner ? 'Proprietario(a)' : 'Morador(a)'}
+                          {resident.source.isOwner ? 'Proprietário(a)' : 'Morador(a)'}
                         </span>
                       </td>
                       {canManageFinance ? (

@@ -101,7 +101,7 @@ function SignupPageContent() {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha os dados da empresa, documento e telefone do gestor responsavel.',
+        description: 'Preencha os dados da empresa, documento e telefone do gestor responsável.',
       });
       return;
     }
@@ -110,7 +110,7 @@ function SignupPageContent() {
       showToast({
         tone: 'error',
         title: 'Aceite os termos',
-        description: 'Voce precisa aceitar os termos do teste gratuito e da operacao para criar a conta.',
+        description: 'Você precisa aceitar os termos do teste gratuito e da operação para criar a conta.',
       });
       return;
     }
@@ -122,13 +122,13 @@ function SignupPageContent() {
       showToast({
         tone: 'success',
         title: 'Conta criada',
-        description: 'Sua empresa foi criada e o teste gratuito de 1 mes ja foi iniciado.',
+        description: 'Sua empresa foi criada e o teste gratuito de 1 mês já foi iniciado.',
       });
       router.replace('/subscription?trialStarted=1');
     } catch (error) {
       showToast({
         tone: 'error',
-        title: 'Nao foi possivel concluir o cadastro',
+        title: 'Não foi possível concluir o cadastro',
         description: error instanceof Error ? error.message : 'Revise os dados e tente novamente.',
       });
     } finally {
@@ -167,7 +167,7 @@ function SignupPageContent() {
                   Crie a conta agora. A assinatura vem no passo seguinte.
                 </h1>
                 <p className="mt-6 text-base leading-8 text-slate-300">
-                  Primeiro criamos a empresa e o gestor principal. So depois voce escolhe o plano e vai para o checkout seguro da assinatura.
+                  Primeiro criamos a empresa e o gestor principal. Só depois você escolhe o plano e vai para o checkout seguro da assinatura.
                 </p>
               </div>
             </div>
@@ -176,7 +176,7 @@ function SignupPageContent() {
               {[
                 'Cria a conta da empresa e o gestor principal',
                 'Leva para a escolha do plano no passo seguinte',
-                'Destaca 1 mes gratis e cancelamento antes da cobranca',
+                'Destaca 1 mês grátis e cancelamento antes da cobrança',
               ].map((item) => (
                 <div key={item} className="flex items-start gap-3 rounded-[1.4rem] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
@@ -201,11 +201,11 @@ function SignupPageContent() {
                   </div>
                   <CardTitle>Criar conta da empresa</CardTitle>
                   <CardDescription>
-                    O cadastro cria apenas a empresa e o gestor principal. Depois disso, voce escolhe a assinatura no checkout seguro.
+                    O cadastro cria apenas a empresa e o gestor principal. Depois disso, você escolhe a assinatura no checkout seguro.
                   </CardDescription>
                 </div>
                 <div className="w-fit whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200">
-                  1 mes gratis
+                  1 mês grátis
                 </div>
               </div>
             </CardHeader>
@@ -215,9 +215,9 @@ function SignupPageContent() {
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" />
                   <div className="space-y-2">
-                    <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">Sem cobranca imediata</p>
+                    <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">Sem cobrança imediata</p>
                     <p className="text-sm leading-6 text-emerald-900/80 dark:text-emerald-200/80">
-                      Assim que a conta for criada, voce segue para escolher a assinatura. O checkout destaca o periodo gratis de 1 mes e a possibilidade de cancelar antes da primeira cobranca.
+                      Assim que a conta for criada, você segue para escolher a assinatura. O checkout destaca o período grátis de 1 mês e a possibilidade de cancelar antes da primeira cobrança.
                     </p>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ function SignupPageContent() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="companyName">Nome da empresa</Label>
-                    <Input id="companyName" value={form.companyName} onChange={(event) => setForm((prev) => ({ ...prev, companyName: event.target.value }))} placeholder="Ex.: Gestao Prime Condominios" />
+                    <Input id="companyName" value={form.companyName} onChange={(event) => setForm((prev) => ({ ...prev, companyName: event.target.value }))} placeholder="Ex.: Gestão Prime Condomínios" />
                   </div>
                 </div>
               </section>
@@ -303,7 +303,7 @@ function SignupPageContent() {
                       type="password"
                       value={form.adminPassword}
                       onChange={(event) => setForm((prev) => ({ ...prev, adminPassword: event.target.value }))}
-                      placeholder="Minimo de 8 caracteres"
+                      placeholder="Mínimo de 8 caracteres"
                       onKeyDown={(event) => {
                         if (event.key === 'Enter') {
                           void handleSubmit();
@@ -324,7 +324,7 @@ function SignupPageContent() {
                 <span>
                   Li e aceito os{' '}
                   <Link href="/terms" target="_blank" rel="noreferrer" className="font-semibold text-emerald-700 underline underline-offset-4 dark:text-emerald-300">
-                    termos do teste gratuito e da operacao
+                    termos do teste gratuito e da operação
                   </Link>
                   .
                 </span>
@@ -332,7 +332,7 @@ function SignupPageContent() {
 
               <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
-                  Ao concluir, voce entra na jornada da assinatura para escolher o plano e seguir para o checkout seguro.
+                  Ao concluir, você entra na jornada da assinatura para escolher o plano e seguir para o checkout seguro.
                 </p>
                 <Button className="min-w-44" onClick={() => void handleSubmit()} disabled={loading}>
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

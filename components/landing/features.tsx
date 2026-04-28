@@ -11,7 +11,7 @@ const features = [
   {
     icon: Building2,
     title: "Mapa de blocos e unidades",
-    description: "Cadastre blocos, andares e unidades e acompanhe a situacao de cada unidade em um unico lugar.",
+    description: "Cadastre blocos, andares e unidades e acompanhe a situação de cada unidade em um único lugar.",
   },
   {
     icon: CreditCard,
@@ -20,23 +20,23 @@ const features = [
   },
   {
     icon: CalendarDays,
-    title: "Agenda do condominio",
-    description: "Organize datas importantes, documentos com vencimento e reservas em uma agenda unica por semana.",
+    title: "Agenda do condomínio",
+    description: "Organize datas importantes, documentos com vencimento e reservas em uma agenda única por semana.",
   },
   {
     icon: MessageSquare,
-    title: "Ocorrencias e chamados",
-    description: "Organize os chamados por etapa, veja prioridades e encontre rapidamente o que precisa de atencao.",
+    title: "Ocorrências e chamados",
+    description: "Organize os chamados por etapa, veja prioridades e encontre rapidamente o que precisa de atenção.",
   },
   {
     icon: Users,
     title: "Moradores e unidades",
-    description: "Gerencie moradores e associe cada cadastro as unidades correspondentes dentro do condominio.",
+    description: "Gerencie moradores e associe cada cadastro as unidades correspondentes dentro do condomínio.",
   },
   {
     icon: BarChart3,
     title: "Dashboard geral",
-    description: "Tenha uma visao resumida do condominio para acompanhar o que esta acontecendo no painel.",
+    description: "Tenha uma visão resumida do condomínio para acompanhar o que está acontecendo no painel.",
   },
 ]
 
@@ -51,7 +51,7 @@ export function LandingFeatures() {
             O que o produto entrega hoje
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Cada bloco abaixo corresponde a telas e funcoes que ja existem hoje no sistema.
+            Cada bloco abaixo corresponde a telas e funções que já existem hoje no sistema.
           </p>
         </div>
 

@@ -65,7 +65,7 @@ const unitStatusTone: Record<UnitStatus, string> = {
 
 const unitStatusLabel: Record<UnitStatus, string> = {
   GREEN: "Regular",
-  YELLOW: "Atencao",
+  YELLOW: "Atenção",
   RED: "Critico",
 };
 
@@ -239,7 +239,7 @@ export default function MapPage() {
       showToast({
         tone: "error",
         title: "Campos obrigatorios",
-        description: "Selecione o bloco e informe o numero do andar.",
+        description: "Selecione o bloco e informe o número do andar.",
       });
       return;
     }
@@ -411,7 +411,7 @@ export default function MapPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Distribuicao vertical do condominio.
+              Distribuição vertical do condomínio.
             </p>
           </CardContent>
         </Card>
@@ -424,7 +424,7 @@ export default function MapPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Inventario total de portas e apartamentos.
+              Inventário total de portas e apartamentos.
             </p>
           </CardContent>
         </Card>
@@ -714,7 +714,7 @@ export default function MapPage() {
       {buildingModalOpen ? (
         <ModalFrame
           title="Novo bloco"
-          description="Cadastre um novo bloco ou torre dentro do condominio."
+          description="Cadastre um novo bloco ou torre dentro do condomínio."
           onClose={() => {
             setBuildingModalOpen(false);
             setBuildingForm(emptyBuildingForm);
@@ -750,7 +750,7 @@ export default function MapPage() {
       {floorModalOpen ? (
         <ModalFrame
           title="Novo andar"
-          description="Adicione um novo andar a um bloco ja existente."
+          description="Adicione um novo andar a um bloco já existente."
           onClose={() => {
             setFloorModalOpen(false);
             setFloorForm(emptyFloorForm);
@@ -779,7 +779,7 @@ export default function MapPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="floor-number">Numero do andar</Label>
+              <Label htmlFor="floor-number">Número do andar</Label>
               <Input
                 id="floor-number"
                 type="number"
@@ -848,7 +848,7 @@ export default function MapPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="unit-label">Identificacao da unidade</Label>
+              <Label htmlFor="unit-label">Identificação da unidade</Label>
               <Input
                 id="unit-label"
                 value={unitForm.label}

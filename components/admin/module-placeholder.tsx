@@ -17,21 +17,21 @@ export function ModulePlaceholder({ eyebrow, title, description }: ModulePlaceho
         </CardHeader>
         <CardContent>
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-sm text-slate-500">
-            Esta area vai ser refeita do zero na mesma linguagem do novo dashboard.
+            Esta área vai ser refeita do zero na mesma linguagem do novo dashboard.
           </div>
         </CardContent>
       </Card>
 
       <Card className="border-slate-200/80">
         <CardHeader>
-          <CardTitle className="text-xl">Nova direcao</CardTitle>
+          <CardTitle className="text-xl">Nova direção</CardTitle>
           <CardDescription>
             Shell novo, componentes `shadcn` e paginas separadas por rota real.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-slate-600">
-          <p>A partir daqui, cada modulo passa a ser reconstruido sem reaproveitar a composicao antiga.</p>
-          <p>O objetivo e sair do monolito e ganhar layout, navegacao e pagina por contexto.</p>
+          <p>A partir daqui, cada módulo passa a ser reconstruído sem reaproveitar a composição antiga.</p>
+          <p>O objetivo e sair do monolito e ganhar layout, navegação e página por contexto.</p>
         </CardContent>
       </Card>
     </div>

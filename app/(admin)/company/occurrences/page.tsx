@@ -62,7 +62,7 @@ export default function CompanyOccurrencesPage() {
         if (!cancelled) {
           showToast({
             tone: 'error',
-            title: 'Nao foi possivel carregar as ocorrencias da carteira',
+            title: 'Não foi possível carregar as ocorrências da carteira',
             description: error instanceof Error ? error.message : 'Tente novamente.',
           });
         }
@@ -89,8 +89,8 @@ export default function CompanyOccurrencesPage() {
   return (
     <div className="space-y-6">
       <CompanyWorkspaceFilterCard
-        title="Ocorrencias da carteira"
-        description="Veja chamados de todos os condominios, filtre por prioridade e entre no detalhe operacional quando precisar."
+        title="Ocorrências da carteira"
+        description="Veja chamados de todos os condomínios, filtre por prioridade e entre no detalhe operacional quando precisar."
         accessibleCondos={accessibleCondos}
         selectedCondoId={filters.condoId as 'ALL' | string}
         onChange={(value) => setFilters({ condoId: value, page: '1' })}
@@ -98,7 +98,7 @@ export default function CompanyOccurrencesPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <CompanyMetricCard title="Abertas" value={snapshot.openCount} description="Aguardando tratativa" icon={AlertTriangle} />
-        <CompanyMetricCard title="Em andamento" value={snapshot.inProgressCount} description="Ja em fluxo operacional" icon={Clock3} />
+        <CompanyMetricCard title="Em andamento" value={snapshot.inProgressCount} description="Já em fluxo operacional" icon={Clock3} />
         <CompanyMetricCard title="Resolvidas" value={snapshot.resolvedCount} description="Concluidas tecnicamente" icon={CheckCircle2} />
         <CompanyMetricCard title="Encerradas" value={snapshot.closedCount} description="Finalizadas na carteira" icon={CircleSlash2} />
       </div>
@@ -107,12 +107,12 @@ export default function CompanyOccurrencesPage() {
         <CardHeader className="space-y-4">
           <div>
             <CardTitle>Fila consolidada</CardTitle>
-            <CardDescription>Acompanhe o historico recente e use o drill-down para abrir o condominio certo.</CardDescription>
+            <CardDescription>Acompanhe o histórico recente e use o drill-down para abrir o condomínio certo.</CardDescription>
           </div>
           <div className="grid gap-3 lg:grid-cols-[1.6fr,0.8fr,0.8fr]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por titulo, descricao, categoria ou condominio" />
+              <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por título, descrição, categoria ou condomínio" />
             </div>
             <select className="input" value={filters.status} onChange={(event) => setFilters({ status: event.target.value as 'ALL' | OccurrenceStatus, page: '1' })}>
               <option value="ALL">Todos os status</option>
@@ -134,7 +134,7 @@ export default function CompanyOccurrencesPage() {
         </CardHeader>
         <CardContent>
           {snapshot.items.length === 0 ? (
-            <CompanyListEmpty message="Nenhuma ocorrencia encontrada com os filtros atuais." />
+            <CompanyListEmpty message="Nenhuma ocorrência encontrada com os filtros atuais." />
           ) : (
             <div className="space-y-3">
               {snapshot.items.map((item) => (

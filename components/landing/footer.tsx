@@ -65,7 +65,7 @@ export function LandingFooter() {
               <CondoHomeBrandImage className="h-10 w-auto text-foreground" />
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Sistema para organizar moradores, unidades, chamados, agenda, boletos e reservas no dia a dia do condominio.
+              Sistema para organizar moradores, unidades, chamados, agenda, boletos e reservas no dia a dia do condomínio.
             </p>
             {/* Social links */}
             <div className="mt-6 flex gap-4">

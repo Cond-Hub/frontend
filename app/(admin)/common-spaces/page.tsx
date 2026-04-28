@@ -110,7 +110,7 @@ export default function CommonSpacesPage() {
     } catch (loadError) {
       showToast({
         tone: 'error',
-        title: 'Falha ao carregar espacos',
+        title: 'Falha ao carregar espaços',
         description: loadError instanceof Error ? loadError.message : 'Tente novamente.',
       });
     } finally {
@@ -160,7 +160,7 @@ export default function CommonSpacesPage() {
       showToast({
         tone: 'error',
         title: 'Nome obrigatorio',
-        description: 'Informe o nome do espaco.',
+        description: 'Informe o nome do espaço.',
       });
       return;
     }
@@ -180,13 +180,13 @@ export default function CommonSpacesPage() {
         await dashboardApi.commonSpaces.update(editingSpace.id, payload);
         showToast({
           tone: 'success',
-          title: 'Espaco atualizado',
+          title: 'Espaço atualizado',
         });
       } else {
         await dashboardApi.commonSpaces.create(payload);
         showToast({
           tone: 'success',
-          title: 'Espaco criado',
+          title: 'Espaço criado',
         });
       }
 
@@ -197,7 +197,7 @@ export default function CommonSpacesPage() {
     } catch (saveError) {
       showToast({
         tone: 'error',
-        title: 'Falha ao salvar espaco',
+        title: 'Falha ao salvar espaço',
         description: saveError instanceof Error ? saveError.message : 'Tente novamente.',
       });
     } finally {
@@ -210,13 +210,13 @@ export default function CommonSpacesPage() {
       await dashboardApi.commonSpaces.remove(space.id);
       showToast({
         tone: 'success',
-        title: 'Espaco removido',
+        title: 'Espaço removido',
       });
       await load();
     } catch (removeError) {
       showToast({
         tone: 'error',
-        title: 'Falha ao remover espaco',
+        title: 'Falha ao remover espaço',
         description: removeError instanceof Error ? removeError.message : 'Tente novamente.',
       });
     } finally {
@@ -237,7 +237,7 @@ export default function CommonSpacesPage() {
       showToast({
         tone: 'error',
         title: 'Campos obrigatorios',
-        description: 'Preencha espaco, titulo, inicio e fim da reserva.',
+        description: 'Preencha espaço, título, início e fim da reserva.',
       });
       return;
     }
@@ -294,11 +294,11 @@ export default function CommonSpacesPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="border-slate-200/80 dark:border-slate-800">
           <CardHeader className="pb-2">
-            <CardDescription>Espacos totais</CardDescription>
+            <CardDescription>Espaços totais</CardDescription>
             <CardTitle className="text-4xl text-slate-950 dark:text-slate-50">{stats.total}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Cadastro geral de areas comuns.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Cadastro geral de áreas comuns.</p>
           </CardContent>
         </Card>
         <Card className="border-slate-200/80 dark:border-slate-800">
@@ -307,7 +307,7 @@ export default function CommonSpacesPage() {
             <CardTitle className="text-4xl text-slate-950 dark:text-slate-50">{stats.active}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Espacos disponiveis para uso.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Espaços disponíveis para uso.</p>
           </CardContent>
         </Card>
         <Card className="border-slate-200/80 dark:border-slate-800">
@@ -316,7 +316,7 @@ export default function CommonSpacesPage() {
             <CardTitle className="text-4xl text-slate-950 dark:text-slate-50">{stats.inactive}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Espacos temporariamente fora de uso.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Espaços temporariamente fora de uso.</p>
           </CardContent>
         </Card>
         <Card className="border-slate-200/80 dark:border-slate-800">
@@ -334,12 +334,12 @@ export default function CommonSpacesPage() {
         <Card className="border-slate-200/80 dark:border-slate-800">
           <CardHeader className="flex flex-col gap-4 border-b border-slate-200/80 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Espacos cadastrados</CardTitle>
-              <CardDescription>Cadastro operacional com horario de funcionamento e status.</CardDescription>
+              <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Espaços cadastrados</CardTitle>
+              <CardDescription>Cadastro operacional com horário de funcionamento e status.</CardDescription>
             </div>
             <Button onClick={openCreateSpace} className="gap-2 lg:self-end">
               <Plus className="h-4 w-4" />
-              Novo espaco
+              Novo espaço
             </Button>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
@@ -347,7 +347,7 @@ export default function CommonSpacesPage() {
               Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-40 w-full rounded-2xl" />)
             ) : spaces.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                Nenhum espaco cadastrado.
+                Nenhum espaço cadastrado.
               </div>
             ) : (
               spaces.map((space) => (
@@ -355,7 +355,7 @@ export default function CommonSpacesPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold text-slate-950 dark:text-slate-50">{space.name}</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{space.description?.trim() || 'Sem descricao cadastrada.'}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{space.description?.trim() || 'Sem descrição cadastrada.'}</p>
                     </div>
                     <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${space.isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/80 dark:bg-emerald-950/30 dark:text-emerald-300' : 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
                       {space.isActive ? 'Ativo' : 'Inativo'}
@@ -369,7 +369,7 @@ export default function CommonSpacesPage() {
                         Funcionamento
                       </div>
                       <p className="mt-2 text-sm text-slate-950 dark:text-slate-50">
-                        {minutesToTime(space.openMinutes)} ate {minutesToTime(space.closeMinutes)}
+                        {minutesToTime(space.openMinutes)} até {minutesToTime(space.closeMinutes)}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
@@ -407,7 +407,7 @@ export default function CommonSpacesPage() {
           <CardHeader className="flex flex-col gap-4 border-b border-slate-200/80 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <CardTitle className="text-xl text-slate-950 dark:text-slate-50">Agenda de reservas</CardTitle>
-              <CardDescription>Leitura direta das proximas ocupacoes dos espacos comuns.</CardDescription>
+              <CardDescription>Leitura direta das próximas ocupações dos espaços comuns.</CardDescription>
             </div>
             <Button onClick={() => openCreateReservation()} className="gap-2 lg:self-end">
               <Plus className="h-4 w-4" />
@@ -427,15 +427,15 @@ export default function CommonSpacesPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-slate-950 dark:text-slate-50">{reservation.title}</p>
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{spaceNameById.get(reservation.commonSpaceId) ?? 'Espaco nao encontrado'}</p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{spaceNameById.get(reservation.commonSpaceId) ?? 'Espaço não encontrado'}</p>
                     </div>
                     <DoorOpen className="h-4 w-4 text-slate-400" />
                   </div>
                   <div className="mt-4 space-y-1 text-sm text-slate-600 dark:text-slate-300">
-                    <p>Inicio: {formatDateBR(reservation.startAtISO)}</p>
+                    <p>Início: {formatDateBR(reservation.startAtISO)}</p>
                     <p>Fim: {formatDateBR(reservation.endAtISO)}</p>
-                    <p>Criado por: {reservation.createdByUserName ?? 'Administracao'}</p>
-                    <p>{reservation.notes?.trim() || 'Sem observacoes.'}</p>
+                    <p>Criado por: {reservation.createdByUserName ?? 'Administração'}</p>
+                    <p>{reservation.notes?.trim() || 'Sem observações.'}</p>
                   </div>
                   <div className="mt-4">
                     <Button variant="outline" size="sm" className="gap-2 border-rose-200 bg-rose-50/80 text-rose-600 hover:bg-rose-100 dark:border-rose-800 dark:bg-transparent dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={() => setReservationToRemove(reservation)}>
@@ -452,8 +452,8 @@ export default function CommonSpacesPage() {
 
       {isSpaceModalOpen ? (
         <ModalFrame
-          title={editingSpace ? 'Editar espaco' : 'Novo espaco'}
-          description="Cadastre o espaco comum com nome, horario e disponibilidade."
+          title={editingSpace ? 'Editar espaço' : 'Novo espaço'}
+          description="Cadastre o espaço comum com nome, horário e disponibilidade."
           onClose={() => {
             setIsSpaceModalOpen(false);
             setEditingSpace(undefined);
@@ -475,10 +475,10 @@ export default function CommonSpacesPage() {
             </div>
             <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300">
               <input type="checkbox" checked={spaceForm.isActive} onChange={(event) => setSpaceForm((prev) => ({ ...prev, isActive: event.target.checked }))} />
-              Espaco ativo
+              Espaço ativo
             </label>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="space-description">Descricao</Label>
+              <Label htmlFor="space-description">Descrição</Label>
               <textarea
                 id="space-description"
                 className="input min-h-28 resize-y py-3"
@@ -491,7 +491,7 @@ export default function CommonSpacesPage() {
                 Cancelar
               </Button>
               <Button onClick={() => void saveSpace()} disabled={saving}>
-                {saving ? 'Salvando...' : editingSpace ? 'Salvar alteracoes' : 'Criar espaco'}
+                {saving ? 'Salvando...' : editingSpace ? 'Salvar alterações' : 'Criar espaço'}
               </Button>
             </div>
           </div>
@@ -500,8 +500,8 @@ export default function CommonSpacesPage() {
 
       <ConfirmDialog
         open={!!spaceToRemove}
-        title="Remover espaco"
-        description={spaceToRemove ? `Deseja remover o espaco ${spaceToRemove.name}?` : ''}
+        title="Remover espaço"
+        description={spaceToRemove ? `Deseja remover o espaço ${spaceToRemove.name}?` : ''}
         confirmLabel="Remover"
         destructive
         onCancel={() => setSpaceToRemove(undefined)}
@@ -529,7 +529,7 @@ export default function CommonSpacesPage() {
       {isReservationModalOpen ? (
         <ModalFrame
           title="Nova reserva"
-          description="Registre a ocupacao de um espaco comum."
+          description="Registre a ocupação de um espaço comum."
           onClose={() => {
             setIsReservationModalOpen(false);
             setReservationForm(emptyReservationForm);
@@ -537,14 +537,14 @@ export default function CommonSpacesPage() {
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="reservation-space">Espaco</Label>
+              <Label htmlFor="reservation-space">Espaço</Label>
               <select
                 id="reservation-space"
                 className="input"
                 value={reservationForm.commonSpaceId}
                 onChange={(event) => setReservationForm((prev) => ({ ...prev, commonSpaceId: event.target.value }))}
               >
-                <option value="">Selecione o espaco</option>
+                <option value="">Selecione o espaço</option>
                 {spaces.map((space) => (
                   <option key={space.id} value={space.id}>
                     {space.name}
@@ -553,11 +553,11 @@ export default function CommonSpacesPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reservation-title">Titulo</Label>
+              <Label htmlFor="reservation-title">Título</Label>
               <Input id="reservation-title" value={reservationForm.title} onChange={(event) => setReservationForm((prev) => ({ ...prev, title: event.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reservation-start">Inicio</Label>
+              <Label htmlFor="reservation-start">Início</Label>
               <Input id="reservation-start" type="datetime-local" value={reservationForm.startAtISO} onChange={(event) => setReservationForm((prev) => ({ ...prev, startAtISO: event.target.value }))} />
             </div>
             <div className="space-y-2">
@@ -565,7 +565,7 @@ export default function CommonSpacesPage() {
               <Input id="reservation-end" type="datetime-local" value={reservationForm.endAtISO} onChange={(event) => setReservationForm((prev) => ({ ...prev, endAtISO: event.target.value }))} />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="reservation-notes">Observacoes</Label>
+              <Label htmlFor="reservation-notes">Observações</Label>
               <textarea
                 id="reservation-notes"
                 className="input min-h-28 resize-y py-3"

@@ -60,7 +60,7 @@ export default function CompanyFinancialPage() {
           setError(error instanceof Error ? error.message : 'Tente novamente.');
           showToast({
             tone: 'error',
-            title: 'Nao foi possivel carregar o financeiro da carteira',
+            title: 'Não foi possível carregar o financeiro da carteira',
             description: error instanceof Error ? error.message : 'Tente novamente.',
           });
         }
@@ -89,7 +89,7 @@ export default function CompanyFinancialPage() {
       <Card>
         <CardHeader>
           <CardTitle>Financeiro da carteira</CardTitle>
-          <CardDescription>{error ?? 'Nao foi possivel carregar os dados financeiros.'}</CardDescription>
+          <CardDescription>{error ?? 'Não foi possível carregar os dados financeiros.'}</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -98,17 +98,17 @@ export default function CompanyFinancialPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <CompanyMetricCard title="Disponivel para saque" value={formatCompanyCurrency(snapshot.availableToWithdrawCents)} description="Somatorio da carteira filtrada" icon={Wallet} />
+        <CompanyMetricCard title="Disponível para saque" value={formatCompanyCurrency(snapshot.availableToWithdrawCents)} description="Somatorio da carteira filtrada" icon={Wallet} />
         <CompanyMetricCard title="Total em atraso" value={formatCompanyCurrency(snapshot.overdueBoletoAmountCents)} description="Boletos vencidos" icon={CreditCard} />
-        <CompanyMetricCard title="Boletos vencidos" value={snapshot.overdueBoletoCount} description="Itens exigindo cobranca" icon={Landmark} />
+        <CompanyMetricCard title="Boletos vencidos" value={snapshot.overdueBoletoCount} description="Itens exigindo cobrança" icon={Landmark} />
         <CompanyMetricCard title="Em aberto" value={formatCompanyCurrency(snapshot.openBoletoAmountCents)} description="Inclui vencidos e a vencer" icon={CreditCard} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[0.9fr,1.1fr]">
         <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
           <CardHeader>
-            <CardTitle>Saldos por condominio</CardTitle>
-            <CardDescription>Consulte rapidamente quanto cada operacao tem disponivel para saque.</CardDescription>
+            <CardTitle>Saldos por condomínio</CardTitle>
+            <CardDescription>Consulte rapidamente quanto cada operação tem disponível para saque.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {snapshot.balances.length === 0 ? (
@@ -133,12 +133,12 @@ export default function CompanyFinancialPage() {
           <CardHeader className="space-y-4">
             <div>
               <CardTitle>Boletos</CardTitle>
-              <CardDescription>Priorize a cobranca por condominio e entre direto no financeiro operacional quando precisar agir.</CardDescription>
+              <CardDescription>Priorize a cobrança por condomínio e entre direto no financeiro operacional quando precisar agir.</CardDescription>
             </div>
             <div className="grid gap-3 lg:grid-cols-[1.6fr,0.8fr]">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por unidade, observacoes ou condominio" />
+                <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por unidade, observações ou condomínio" />
               </div>
               <select className="input" value={filters.status} onChange={(event) => setFilters({ status: event.target.value as 'OVERDUE' | 'OPEN' | 'PAID', page: '1' })}>
                 <option value="OVERDUE">Somente vencidos</option>
@@ -166,7 +166,7 @@ export default function CompanyFinancialPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-slate-950 dark:text-slate-50">{formatCompanyCurrency(item.boleto.amountCents)}</p>
-                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.boleto.notes || 'Sem observacoes adicionais.'}</p>
+                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.boleto.notes || 'Sem observações adicionais.'}</p>
                         </div>
                         <CompanyRowMeta
                           condoName={item.condo.name}

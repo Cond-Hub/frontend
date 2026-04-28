@@ -57,7 +57,7 @@ export default function CompanyAgendaPage() {
         if (!cancelled) {
           showToast({
             tone: 'error',
-            title: 'Nao foi possivel carregar a agenda da carteira',
+            title: 'Não foi possível carregar a agenda da carteira',
             description: error instanceof Error ? error.message : 'Tente novamente.',
           });
         }
@@ -85,7 +85,7 @@ export default function CompanyAgendaPage() {
     <div className="space-y-6">
       <CompanyWorkspaceFilterCard
         title="Agenda da carteira"
-        description="Centralize compromissos e datas importantes da empresa inteira, sem perder o acesso ao detalhe por condominio."
+        description="Centralize compromissos e datas importantes da empresa inteira, sem perder o acesso ao detalhe por condomínio."
         accessibleCondos={accessibleCondos}
         selectedCondoId={filters.condoId as 'ALL' | string}
         onChange={(value) => setFilters({ condoId: value, page: '1' })}
@@ -102,12 +102,12 @@ export default function CompanyAgendaPage() {
         <CardHeader className="space-y-4">
           <div>
             <CardTitle>Agenda consolidada</CardTitle>
-            <CardDescription>Filtre por tipo e navegue para o condominio quando precisar ajustar a agenda operacional.</CardDescription>
+            <CardDescription>Filtre por tipo e navegue para o condomínio quando precisar ajustar a agenda operacional.</CardDescription>
           </div>
           <div className="grid gap-3 lg:grid-cols-[1.6fr,0.8fr]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por titulo, tipo, notas ou condominio" />
+              <Input className="pl-10" value={filters.search} onChange={(event) => setFilters({ search: event.target.value, page: '1' })} placeholder="Buscar por título, tipo, notas ou condomínio" />
             </div>
             <select className="input" value={filters.type} onChange={(event) => setFilters({ type: event.target.value, page: '1' })}>
               <option value="ALL">Todos os tipos</option>
@@ -138,7 +138,7 @@ export default function CompanyAgendaPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-950 dark:text-slate-50">{item.date.title}</p>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.date.notes || 'Sem anotacoes adicionais.'}</p>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.date.notes || 'Sem anotações adicionais.'}</p>
                       </div>
                       <CompanyRowMeta condoName={item.condo.name} secondary={new Date(item.date.dateISO).toLocaleString('pt-BR')} />
                     </div>

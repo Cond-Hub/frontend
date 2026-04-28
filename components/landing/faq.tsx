@@ -6,27 +6,27 @@ import { ChevronDown } from "lucide-react"
 const faqs = [
   {
     question: "Quanto tempo leva para implementar o CondHub?",
-    answer: "Isso depende do volume de cadastro inicial. O produto atual ja permite montar blocos, andares, unidades, moradores, espacos, agenda e boletos diretamente no painel.",
+    answer: "Isso depende do volume de cadastro inicial. O produto atual já permite montar blocos, andares, unidades, moradores, espaços, agenda e boletos diretamente no painel.",
   },
   {
     question: "Posso migrar meus dados de outro sistema?",
-    answer: "Hoje a pagina mostra o que o sistema ja permite fazer no cadastro e na operacao do dia a dia. Ela nao promete um processo especifico de migracao.",
+    answer: "Hoje a página mostra o que o sistema já permite fazer no cadastro e na operação do dia a dia. Ela não promete um processo específico de migração.",
   },
   {
     question: "O sistema funciona em dispositivos moveis?",
-    answer: "Sim. O sistema inclui painel no computador e app do morador com login, mapa, boletos, documentos, datas importantes, notificacoes e ocorrencias.",
+    answer: "Sim. O sistema inclui painel no computador e app do morador com login, mapa, boletos, documentos, datas importantes, notificações e ocorrências.",
   },
   {
     question: "Como funciona o suporte tecnico?",
-    answer: "A landing foi ajustada para falar do conteudo do sistema. Por isso, ela nao faz promessas detalhadas sobre formatos de atendimento ou prazos de suporte.",
+    answer: "A landing foi ajustada para falar do conteúdo do sistema. Por isso, ela não faz promessas detalhadas sobre formatos de atendimento ou prazos de suporte.",
   },
   {
-    question: "Quais areas do sistema ja existem?",
-    answer: "Hoje o sistema ja cobre resumo geral, mapa de blocos e unidades, ocorrencias, agenda, boletos, espacos comuns, reservas e moradores.",
+    question: "Quais áreas do sistema já existem?",
+    answer: "Hoje o sistema já cobre resumo geral, mapa de blocos e unidades, ocorrências, agenda, boletos, espaços comuns, reservas e moradores.",
   },
   {
     question: "O CondHub atende a LGPD?",
-    answer: "Existem materiais de seguranca no projeto, mas a landing evita transformar isso em promessa juridica absoluta. Aqui o foco fica no que o sistema oferece na pratica.",
+    answer: "Existem materiais de segurança no projeto, mas a landing evita transformar isso em promessa juridica absoluta. Aqui o foco fica no que o sistema oferece na prática.",
   },
 ]
 

@@ -36,7 +36,7 @@ export function LandingNavbar() {
           </Link>
           <Link href="#pricing">
             <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Comece Gratis
+              Comece Grátis
             </Button>
           </Link>
         </div>
@@ -85,7 +85,7 @@ export function LandingNavbar() {
               </Link>
               <Link href="#pricing">
                 <Button className="w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90">
-                  Comece Gratis
+                  Comece Grátis
                 </Button>
               </Link>
             </div>
