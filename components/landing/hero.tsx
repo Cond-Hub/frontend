@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Building2, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -57,9 +58,13 @@ export function LandingHero() {
           <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
             <div className="absolute inset-x-8 bottom-0 h-24 rounded-full bg-primary/20 blur-3xl" />
             <div className="relative aspect-square">
-              <img
-                src="/phones.png"
+              <Image
+                src="/phones.webp"
                 alt="Telas dos aplicativos CondHub para moradores e administradores"
+                width={1400}
+                height={1400}
+                priority
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 className="h-full w-full object-contain drop-shadow-2xl"
               />
             </div>
