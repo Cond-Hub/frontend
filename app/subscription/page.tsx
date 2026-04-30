@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Check, ExternalLink, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 
+import { AdminShell } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -264,6 +265,37 @@ function SubscriptionPageContent() {
     );
   }
 
+  if (!trialActive && !paymentRequired && subscriptionActive) {
+    return (
+      <AdminShell>
+        <div className="mx-auto max-w-7xl space-y-6">
+          <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+            <CardHeader className="space-y-3">
+              <CardTitle className="text-2xl">Minha assinatura</CardTitle>
+              <CardDescription>
+                Gerencie forma de pagamento, notas fiscais e dados da assinatura pelo portal seguro da Stripe.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                <p>
+                  Plano atual: <strong>{portal.currentPlan?.name ?? portal.currentSubscription?.subscriptionPlanName ?? "Assinatura ativa"}</strong>
+                </p>
+                <p>
+                  Valor estimado: <strong>{formatMoney(portal.estimatedMonthlyAmount ?? portal.currentPlan?.monthlyPrice)}</strong>
+                </p>
+              </div>
+              <Button onClick={() => void openBillingPortal()} disabled={portalAction}>
+                {portalAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ExternalLink className="mr-2 h-4 w-4" />}
+                Gerenciar assinatura
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminShell>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f3f4ec] px-6 py-8 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -317,45 +349,8 @@ function SubscriptionPageContent() {
           </>
         ) : (
           <>
-            {!paymentRequired && subscriptionActive ? (
-              <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                <CardHeader className="space-y-3">
-                  <CardTitle className="text-2xl">Minha assinatura</CardTitle>
-                  <CardDescription>
-                    Gerencie forma de pagamento, notas fiscais e dados da assinatura pelo portal seguro da Stripe.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                    <p>
-                      Plano atual: <strong>{portal.currentPlan?.name ?? portal.currentSubscription?.subscriptionPlanName ?? "Assinatura ativa"}</strong>
-                    </p>
-                    <p>
-                      Valor estimado: <strong>{formatMoney(portal.estimatedMonthlyAmount ?? portal.currentPlan?.monthlyPrice)}</strong>
-                    </p>
-                  </div>
-                  <Button onClick={() => void openBillingPortal()} disabled={portalAction}>
-                    {portalAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ExternalLink className="mr-2 h-4 w-4" />}
-                    Gerenciar assinatura
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : null}
-
             {!subscriptionActive || paymentRequired ? (
               <>
-                <Card className="border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-100">
-                  <CardHeader className="space-y-3">
-                    <CardTitle className="text-2xl">
-                      {paymentRequired ? "Seu período grátis terminou" : "Escolha o plano da administradora"}
-                    </CardTitle>
-                    <CardDescription className="text-amber-900/80 dark:text-amber-200/80">
-                      O teste gratuito já foi concluído. Agora a operação precisa ser enquadrada em um plano pago compatível com a carteira ativa.
-                      Se a carteira estiver acima dos limites do plano desejado, reduza a quantidade de condomínios antes da contratação ou fale com nosso time.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-
                 <div className="grid items-stretch gap-4 lg:grid-cols-3">
                   {orderedPlans.map((plan) => {
                     const actionLoading = planAction === plan.code;
