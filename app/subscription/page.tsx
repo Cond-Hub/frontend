@@ -380,7 +380,7 @@ function SubscriptionPageContent() {
               <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
                 <CardHeader>
                   <CardTitle>Assinatura gerenciada</CardTitle>
-                  <CardDescription>Estado atual do checkout recorrente hospedado pela AbacatePay.</CardDescription>
+                  <CardDescription>Estado atual do checkout recorrente hospedado pela Stripe.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="space-y-2">
