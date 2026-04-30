@@ -721,6 +721,10 @@ export interface ManagedSubscriptionCheckoutResult {
   planCode: Exclude<ManagedSubscriptionPlanCode, 'ENTERPRISE'>;
 }
 
+export interface BillingPortalSessionResult {
+  url: string;
+}
+
 export interface SubscriptionManagementContext {
   companyId: string;
   companyName: string;
@@ -1909,6 +1913,12 @@ export const dashboardApi = {
     },
     createManagedSubscriptionCheckout: async (payload: { planCode: Exclude<ManagedSubscriptionPlanCode, 'ENTERPRISE'>; couponCode?: string; returnUrl?: string; completionUrl?: string }) => {
       return await requestJson<ManagedSubscriptionCheckoutResult>('/saas/managed-subscription/checkout', {
+        method: 'POST',
+        body: payload,
+      });
+    },
+    createBillingPortalSession: async (payload: { returnUrl: string }) => {
+      return await requestJson<BillingPortalSessionResult>('/saas/managed-subscription/billing-portal', {
         method: 'POST',
         body: payload,
       });

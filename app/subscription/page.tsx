@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Check, CheckCircle2, ExternalLink, Loader2, ShieldCheck, Sparkles, XCircle } from "lucide-react";
+import { Check, ExternalLink, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   dashboardApi,
@@ -21,7 +19,6 @@ import {
 } from "@/src/store/useDashboardStore";
 import { showToast } from "@/src/store/useToastStore";
 
-const WHATSAPP_NUMBER = "5547992611819";
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -41,14 +38,6 @@ const formatMoney = (value?: number | null) => {
   }
 
   return currency.format(value);
-};
-
-const formatMoneyFromCents = (value?: number | null) => {
-  if (value === undefined || value === null) {
-    return "Sob consulta";
-  }
-
-  return currency.format(value / 100);
 };
 
 const planFeatures = (plan: SaasPlan) => [
@@ -107,9 +96,7 @@ function SubscriptionPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [planAction, setPlanAction] = useState<string>();
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [canceling, setCanceling] = useState(false);
-  const [couponCode, setCouponCode] = useState("");
+  const [portalAction, setPortalAction] = useState(false);
 
   useEffect(() => {
     if (state.hydrationComplete && !state.bootstrapped) {
@@ -167,15 +154,8 @@ function SubscriptionPageContent() {
   }, [plans]);
 
   const trialActive = isTrialActive(portal);
+  const subscriptionActive = portal?.currentSubscription?.status === "ACTIVE";
   const currentManaged = management?.current;
-
-  const openEnterpriseSales = () => {
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Olá, tenho interesse no plano Enterprise da CondHub")}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
 
   const reload = async () => {
     setLoading(true);
@@ -203,9 +183,8 @@ function SubscriptionPageContent() {
       const currentUrl = typeof window === "undefined" ? `${origin}/subscription` : window.location.href;
       const checkout = await dashboardApi.saas.createManagedSubscriptionCheckout({
         planCode,
-        couponCode: couponCode.trim() || undefined,
         returnUrl: currentUrl,
-        completionUrl: `${origin}/my-condos`,
+        completionUrl: `${origin}/company`,
       });
       showToast({
         tone: "success",
@@ -224,29 +203,22 @@ function SubscriptionPageContent() {
     }
   };
 
-  const cancelCurrentSubscription = async () => {
-    if (!currentManaged?.id) {
-      return;
-    }
-
-    setCanceling(true);
+  const openBillingPortal = async () => {
+    setPortalAction(true);
     try {
-      await dashboardApi.saas.cancelManagedSubscription(currentManaged.id);
-      await reload();
-      setCancelOpen(false);
-      showToast({
-        tone: "success",
-        title: "Assinatura cancelada",
-        description: "As próximas cobranças recorrentes foram interrompidas.",
+      const origin = typeof window === "undefined" ? "" : window.location.origin;
+      const session = await dashboardApi.saas.createBillingPortalSession({
+        returnUrl: `${origin}/subscription`,
       });
+      window.location.assign(session.url);
     } catch (err) {
       showToast({
         tone: "error",
-        title: "Não foi possível cancelar",
+        title: "Não foi possível abrir o portal",
         description: err instanceof Error ? err.message : "Tente novamente em instantes.",
       });
     } finally {
-      setCanceling(false);
+      setPortalAction(false);
     }
   };
 
@@ -294,25 +266,6 @@ function SubscriptionPageContent() {
 
   return (
     <main className="min-h-screen bg-[#f3f4ec] px-6 py-8 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
-      <ConfirmDialog
-        open={cancelOpen}
-        title="Cancelar assinatura"
-        description="Essa ação interrompe as próximas cobranças recorrentes. Se quiser apenas trocar de plano, conclua a nova contratação antes de cancelar a atual."
-        confirmLabel={canceling ? "Cancelando..." : "Cancelar assinatura"}
-        cancelLabel="Voltar"
-        destructive
-        onCancel={() => {
-          if (!canceling) {
-            setCancelOpen(false);
-          }
-        }}
-        onConfirm={() => {
-          if (!canceling) {
-            void cancelCurrentSubscription();
-          }
-        }}
-      />
-
       <div className="mx-auto max-w-7xl space-y-6">
         {trialActive ? (
           <>
@@ -364,136 +317,119 @@ function SubscriptionPageContent() {
           </>
         ) : (
           <>
-            <Card className="border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-100">
-              <CardHeader className="space-y-3">
-                <CardTitle className="text-2xl">
-                  {paymentRequired ? "Seu período grátis terminou" : "Escolha o plano da administradora"}
-                </CardTitle>
-                <CardDescription className="text-amber-900/80 dark:text-amber-200/80">
-                  O teste gratuito já foi concluído. Agora a operação precisa ser enquadrada em um plano pago compatível com a carteira ativa.
-                  Se a carteira estiver acima dos limites do plano desejado, reduza a quantidade de condomínios antes da contratação ou fale com nosso time.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {currentManaged ? (
+            {!paymentRequired && subscriptionActive ? (
               <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                <CardHeader>
-                  <CardTitle>Assinatura gerenciada</CardTitle>
-                  <CardDescription>Estado atual do checkout recorrente hospedado pela Stripe.</CardDescription>
+                <CardHeader className="space-y-3">
+                  <CardTitle className="text-2xl">Minha assinatura</CardTitle>
+                  <CardDescription>
+                    Gerencie forma de pagamento, notas fiscais e dados da assinatura pelo portal seguro da Stripe.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      Plano vinculado: <strong>{currentManaged.planCode ?? "—"}</strong>
+                <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                    <p>
+                      Plano atual: <strong>{portal.currentPlan?.name ?? portal.currentSubscription?.subscriptionPlanName ?? "Assinatura ativa"}</strong>
                     </p>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      Valor atual do checkout: <strong>{formatMoneyFromCents(currentManaged.amountCents)}</strong>
+                    <p>
+                      Valor estimado: <strong>{formatMoney(portal.estimatedMonthlyAmount ?? portal.currentPlan?.monthlyPrice)}</strong>
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    {currentManaged.checkoutUrl ? (
-                      <Button variant="outline" onClick={() => window.location.assign(currentManaged.checkoutUrl ?? "/subscription")}>
-                        Continuar checkout
-                      </Button>
-                    ) : null}
-                    <Button variant="outline" onClick={() => setCancelOpen(true)}>
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Cancelar assinatura
-                    </Button>
-                  </div>
+                  <Button onClick={() => void openBillingPortal()} disabled={portalAction}>
+                    {portalAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ExternalLink className="mr-2 h-4 w-4" />}
+                    Gerenciar assinatura
+                  </Button>
                 </CardContent>
               </Card>
             ) : null}
 
-            <div className="grid gap-4 xl:grid-cols-4">
-              <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                <CardHeader className="space-y-4">
-                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    Escolha do plano
-                  </div>
-                  <div className="space-y-3">
-                    <CardTitle className="text-2xl">Contrate o plano adequado</CardTitle>
-                    <CardDescription>
-                      Os três planos abaixo cobrem as faixas self-serve da plataforma. Se a carteira exigir volume acima disso, fale com vendas.
+            {!subscriptionActive || paymentRequired ? (
+              <>
+                <Card className="border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-100">
+                  <CardHeader className="space-y-3">
+                    <CardTitle className="text-2xl">
+                      {paymentRequired ? "Seu período grátis terminou" : "Escolha o plano da administradora"}
+                    </CardTitle>
+                    <CardDescription className="text-amber-900/80 dark:text-amber-200/80">
+                      O teste gratuito já foi concluído. Agora a operação precisa ser enquadrada em um plano pago compatível com a carteira ativa.
+                      Se a carteira estiver acima dos limites do plano desejado, reduza a quantidade de condomínios antes da contratação ou fale com nosso time.
                     </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                    Taxa operacional: <strong>R$ 1,99 por transação recebida</strong>.
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                    Se você mantiver 10 condomínios na carteira, o enquadramento esperado é o <strong>Pro</strong>.
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="couponCode" className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                      Cupom
-                    </label>
-                    <Input
-                      id="couponCode"
-                      value={couponCode}
-                      onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
-                      placeholder="Digite seu cupom"
-                    />
-                  </div>
-                  <Button className="w-full" variant="outline" onClick={openEnterpriseSales}>
-                    Falar com vendas
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                </Card>
 
-              {orderedPlans.map((plan) => {
-                const actionLoading = planAction === plan.code;
-                const hasPendingCheckout = currentManaged?.status === "PENDING" && currentManaged.planCode === plan.code && currentManaged.checkoutUrl;
+                <div className="grid items-stretch gap-4 lg:grid-cols-3">
+                  {orderedPlans.map((plan) => {
+                    const actionLoading = planAction === plan.code;
+                    const hasPendingCheckout = currentManaged?.status === "PENDING" && currentManaged.planCode === plan.code && currentManaged.checkoutUrl;
 
-                return (
-                  <Card key={plan.code} className="flex flex-col border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                    <CardHeader className="space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <CardTitle>{plan.name}</CardTitle>
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                    return (
+                      <Card key={plan.code} className="flex h-full min-h-[460px] flex-col border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+                        <CardHeader className="space-y-4">
+                          <div className="space-y-3">
+                            <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                               {planBadgeByCode[plan.code] ?? "Plano"}
                             </span>
+                            <CardTitle>{plan.name}</CardTitle>
+                            <CardDescription className="min-h-[44px]">{plan.description}</CardDescription>
                           </div>
-                          <CardDescription className="mt-2">{plan.description}</CardDescription>
-                        </div>
+                          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Preço recorrente</p>
+                            <p className="mt-2 text-3xl font-semibold text-slate-950 dark:text-slate-50">{`${formatMoney(plan.monthlyPrice)}/mês`}</p>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="flex flex-1 flex-col space-y-5">
+                          <div className="grid gap-3">
+                            {planFeatures(plan).map((item) => (
+                              <div key={item} className="flex min-h-[48px] items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                                <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                                <span>{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-auto pt-2">
+                            {hasPendingCheckout ? (
+                              <Button className="w-full" onClick={() => window.location.assign(currentManaged?.checkoutUrl ?? "/subscription")}>
+                                Continuar checkout
+                              </Button>
+                            ) : (
+                              <Button className="w-full" disabled={actionLoading} onClick={() => void startCheckout(plan.code as Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">)}>
+                                {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Escolher {plan.name}
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  <Card className="border-slate-200 bg-white lg:col-span-3 dark:border-slate-800 dark:bg-slate-950">
+                    <CardHeader className="space-y-4">
+                      <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        Contratação
                       </div>
-                      <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Preço recorrente</p>
-                        <p className="mt-2 text-3xl font-semibold text-slate-950 dark:text-slate-50">{`${formatMoney(plan.monthlyPrice)}/mês`}</p>
+                      <div className="space-y-3">
+                        <CardTitle className="text-2xl">Contrate o plano adequado</CardTitle>
+                        <CardDescription>
+                          Escolha o plano compatível com a quantidade de condomínios que sua administradora opera hoje. A cobrança será aberta em BRL no checkout seguro da Stripe.
+                        </CardDescription>
                       </div>
                     </CardHeader>
-                    <CardContent className="flex flex-1 flex-col space-y-5">
-                      <div className="grid gap-3">
-                        {planFeatures(plan).map((item) => (
-                          <div key={item} className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
+                    <CardContent className="grid gap-3 text-sm text-slate-600 md:grid-cols-3 dark:text-slate-300">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                        Individual para uma operação enxuta com 1 condomínio ativo.
                       </div>
-                      <div className="mt-auto pt-2">
-                        {hasPendingCheckout ? (
-                          <Button className="w-full" onClick={() => window.location.assign(currentManaged?.checkoutUrl ?? "/subscription")}>
-                            Continuar checkout
-                          </Button>
-                        ) : (
-                          <Button className="w-full" disabled={actionLoading} onClick={() => void startCheckout(plan.code as Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">)}>
-                            {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Escolher {plan.name}
-                          </Button>
-                        )}
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                        Starter para administradoras em crescimento com até 3 condomínios.
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                        Pro para carteiras maiores com até 10 condomínios e todos os recursos liberados.
                       </div>
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
+                </div>
+              </>
+            ) : null}
           </>
         )}
       </div>
@@ -505,8 +441,8 @@ function SubscriptionPageSkeleton() {
   return (
     <main className="min-h-screen bg-[#f3f4ec] px-6 py-8 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="grid gap-4 xl:grid-cols-4">
-          {[0, 1, 2, 3].map((item) => (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[0, 1, 2].map((item) => (
             <Card key={item} className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
               <CardHeader className="space-y-3">
                 <Skeleton className="h-6 w-36" />
