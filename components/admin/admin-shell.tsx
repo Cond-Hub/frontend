@@ -576,6 +576,7 @@ export function AdminShell({ children }: AdminShellProps) {
     if (canViewSubscription) {
       allowedPaths.add("/company");
       allowedPaths.add("/my-condos");
+      allowedPaths.add("/subscription");
     }
     allowedPaths.add("/regimento-interno");
 
