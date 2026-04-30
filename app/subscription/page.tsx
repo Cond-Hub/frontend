@@ -232,37 +232,6 @@ function SubscriptionPageContent() {
     }
   };
 
-  const changePlan = async (plan: SaasPlan) => {
-    if (portal && portal.condoCount > plan.maxCondos) {
-      showToast({
-        tone: "error",
-        title: "Plano incompatível",
-        description: `Reduza sua carteira para no máximo ${plan.maxCondos} condomínio(s) antes de contratar o plano ${plan.name}.`,
-      });
-      return;
-    }
-
-    const planCode = plan.code as Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">;
-    setPlanAction(planCode);
-    try {
-      await dashboardApi.saas.changeManagedSubscriptionPlan({ planCode });
-      await reload();
-      showToast({
-        tone: "success",
-        title: "Plano atualizado",
-        description: `Sua assinatura foi alterada para o plano ${plan.name}.`,
-      });
-    } catch (err) {
-      showToast({
-        tone: "error",
-        title: "Não foi possível trocar o plano",
-        description: err instanceof Error ? err.message : "Tente novamente em instantes.",
-      });
-    } finally {
-      setPlanAction(undefined);
-    }
-  };
-
   const renderPlanSelection = (showCurrentPlanState: boolean) => {
     const currentPlanCode = portal?.currentPlan?.code ?? portal?.currentSubscription?.subscriptionPlanCode;
 
@@ -312,10 +281,14 @@ function SubscriptionPageContent() {
                     <Button className="w-full" variant="outline" disabled>
                       Plano atual
                     </Button>
+                  ) : showCurrentPlanState ? (
+                    <Button className="w-full" variant={isCurrentPlan ? "outline" : "secondary"} disabled>
+                      {isCurrentPlan ? "Plano atual" : "Troca indisponível"}
+                    </Button>
                   ) : (
-                    <Button className="w-full" disabled={actionLoading || exceedsCondoLimit} onClick={() => void (showCurrentPlanState ? changePlan(plan) : startCheckout(plan))}>
+                    <Button className="w-full" disabled={actionLoading || exceedsCondoLimit} onClick={() => void startCheckout(plan)}>
                       {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      {showCurrentPlanState ? `Trocar para ${plan.name}` : `Escolher ${plan.name}`}
+                      Escolher {plan.name}
                     </Button>
                   )}
                 </div>
@@ -421,7 +394,6 @@ function SubscriptionPageContent() {
               </Button>
             </CardContent>
           </Card>
-          {renderPlanSelection(true)}
         </div>
       </AdminShell>
     );
