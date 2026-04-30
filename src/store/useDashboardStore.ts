@@ -1923,6 +1923,12 @@ export const dashboardApi = {
         body: payload,
       });
     },
+    changeManagedSubscriptionPlan: async (payload: { planCode: Exclude<ManagedSubscriptionPlanCode, 'ENTERPRISE'> }) => {
+      return await requestJson<ManagedSubscription>('/saas/managed-subscription/change-plan', {
+        method: 'POST',
+        body: payload,
+      });
+    },
     cancelManagedSubscription: async (subscriptionId: string) => {
       return await requestJson<ManagedSubscription>('/saas/managed-subscription/cancel', {
         method: 'POST',

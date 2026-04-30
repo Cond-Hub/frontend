@@ -13,7 +13,6 @@ import {
   dashboardApi,
   useDashboardStore,
   type CustomerPortal,
-  type ManagedSubscription,
   type ManagedSubscriptionPlanCode,
   type SaasPlan,
   type SubscriptionManagementContext,
@@ -177,7 +176,17 @@ function SubscriptionPageContent() {
     }
   };
 
-  const startCheckout = async (planCode: Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">) => {
+  const startCheckout = async (plan: SaasPlan) => {
+    if (portal && portal.condoCount > plan.maxCondos) {
+      showToast({
+        tone: "error",
+        title: "Plano incompatível",
+        description: `Reduza sua carteira para no máximo ${plan.maxCondos} condomínio(s) antes de contratar o plano ${plan.name}.`,
+      });
+      return;
+    }
+
+    const planCode = plan.code as Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">;
     setPlanAction(planCode);
     try {
       const origin = typeof window === "undefined" ? "" : window.location.origin;
@@ -221,6 +230,127 @@ function SubscriptionPageContent() {
     } finally {
       setPortalAction(false);
     }
+  };
+
+  const changePlan = async (plan: SaasPlan) => {
+    if (portal && portal.condoCount > plan.maxCondos) {
+      showToast({
+        tone: "error",
+        title: "Plano incompatível",
+        description: `Reduza sua carteira para no máximo ${plan.maxCondos} condomínio(s) antes de contratar o plano ${plan.name}.`,
+      });
+      return;
+    }
+
+    const planCode = plan.code as Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">;
+    setPlanAction(planCode);
+    try {
+      await dashboardApi.saas.changeManagedSubscriptionPlan({ planCode });
+      await reload();
+      showToast({
+        tone: "success",
+        title: "Plano atualizado",
+        description: `Sua assinatura foi alterada para o plano ${plan.name}.`,
+      });
+    } catch (err) {
+      showToast({
+        tone: "error",
+        title: "Não foi possível trocar o plano",
+        description: err instanceof Error ? err.message : "Tente novamente em instantes.",
+      });
+    } finally {
+      setPlanAction(undefined);
+    }
+  };
+
+  const renderPlanSelection = (showCurrentPlanState: boolean) => {
+    const currentPlanCode = portal?.currentPlan?.code ?? portal?.currentSubscription?.subscriptionPlanCode;
+
+    return (
+      <div className="grid items-stretch gap-4 lg:grid-cols-3">
+        {orderedPlans.map((plan) => {
+          const actionLoading = planAction === plan.code;
+          const hasPendingCheckout = currentManaged?.status === "PENDING" && currentManaged.planCode === plan.code && currentManaged.checkoutUrl;
+          const isCurrentPlan = showCurrentPlanState && currentPlanCode === plan.code;
+          const exceedsCondoLimit = Boolean(portal && portal.condoCount > plan.maxCondos);
+
+          return (
+            <Card key={plan.code} className="flex h-full min-h-[460px] flex-col border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+              <CardHeader className="space-y-4">
+                <div className="space-y-3">
+                  <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                    {planBadgeByCode[plan.code] ?? "Plano"}
+                  </span>
+                  <CardTitle>{plan.name}</CardTitle>
+                  <CardDescription className="min-h-[44px]">{plan.description}</CardDescription>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Preço recorrente</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-950 dark:text-slate-50">{`${formatMoney(plan.monthlyPrice)}/mês`}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col space-y-5">
+                <div className="grid gap-3">
+                  {planFeatures(plan).map((item) => (
+                    <div key={item} className="flex min-h-[48px] items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-auto space-y-2 pt-2">
+                  {exceedsCondoLimit ? (
+                    <p className="text-xs leading-5 text-amber-700 dark:text-amber-300">
+                      Sua carteira tem {portal?.condoCount} condomínio(s). Adeque para até {plan.maxCondos} antes de trocar.
+                    </p>
+                  ) : null}
+                  {hasPendingCheckout ? (
+                    <Button className="w-full" onClick={() => window.location.assign(currentManaged?.checkoutUrl ?? "/subscription")}>
+                      Continuar checkout
+                    </Button>
+                  ) : isCurrentPlan ? (
+                    <Button className="w-full" variant="outline" disabled>
+                      Plano atual
+                    </Button>
+                  ) : (
+                    <Button className="w-full" disabled={actionLoading || exceedsCondoLimit} onClick={() => void (showCurrentPlanState ? changePlan(plan) : startCheckout(plan))}>
+                      {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {showCurrentPlanState ? `Trocar para ${plan.name}` : `Escolher ${plan.name}`}
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        <Card className="border-slate-200 bg-white lg:col-span-3 dark:border-slate-800 dark:bg-slate-950">
+          <CardHeader className="space-y-4">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Contratação
+            </div>
+            <div className="space-y-3">
+              <CardTitle className="text-2xl">Contrate o plano adequado</CardTitle>
+              <CardDescription>
+                Escolha o plano compatível com a quantidade de condomínios que sua administradora opera hoje. A cobrança será aberta em BRL no checkout seguro da Stripe.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm text-slate-600 md:grid-cols-3 dark:text-slate-300">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+              Individual para uma operação enxuta com 1 condomínio ativo.
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+              Starter para administradoras em crescimento com até 3 condomínios.
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+              Pro para carteiras maiores com até 10 condomínios e todos os recursos liberados.
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   };
 
   if (!state.hydrationComplete || !state.bootstrapped || loading) {
@@ -291,6 +421,7 @@ function SubscriptionPageContent() {
               </Button>
             </CardContent>
           </Card>
+          {renderPlanSelection(true)}
         </div>
       </AdminShell>
     );
@@ -351,78 +482,7 @@ function SubscriptionPageContent() {
           <>
             {!subscriptionActive || paymentRequired ? (
               <>
-                <div className="grid items-stretch gap-4 lg:grid-cols-3">
-                  {orderedPlans.map((plan) => {
-                    const actionLoading = planAction === plan.code;
-                    const hasPendingCheckout = currentManaged?.status === "PENDING" && currentManaged.planCode === plan.code && currentManaged.checkoutUrl;
-
-                    return (
-                      <Card key={plan.code} className="flex h-full min-h-[460px] flex-col border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                        <CardHeader className="space-y-4">
-                          <div className="space-y-3">
-                            <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                              {planBadgeByCode[plan.code] ?? "Plano"}
-                            </span>
-                            <CardTitle>{plan.name}</CardTitle>
-                            <CardDescription className="min-h-[44px]">{plan.description}</CardDescription>
-                          </div>
-                          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Preço recorrente</p>
-                            <p className="mt-2 text-3xl font-semibold text-slate-950 dark:text-slate-50">{`${formatMoney(plan.monthlyPrice)}/mês`}</p>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="flex flex-1 flex-col space-y-5">
-                          <div className="grid gap-3">
-                            {planFeatures(plan).map((item) => (
-                              <div key={item} className="flex min-h-[48px] items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                                <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
-                                <span>{item}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-auto pt-2">
-                            {hasPendingCheckout ? (
-                              <Button className="w-full" onClick={() => window.location.assign(currentManaged?.checkoutUrl ?? "/subscription")}>
-                                Continuar checkout
-                              </Button>
-                            ) : (
-                              <Button className="w-full" disabled={actionLoading} onClick={() => void startCheckout(plan.code as Exclude<ManagedSubscriptionPlanCode, "ENTERPRISE">)}>
-                                {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Escolher {plan.name}
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-
-                  <Card className="border-slate-200 bg-white lg:col-span-3 dark:border-slate-800 dark:bg-slate-950">
-                    <CardHeader className="space-y-4">
-                      <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                        <ShieldCheck className="h-3.5 w-3.5" />
-                        Contratação
-                      </div>
-                      <div className="space-y-3">
-                        <CardTitle className="text-2xl">Contrate o plano adequado</CardTitle>
-                        <CardDescription>
-                          Escolha o plano compatível com a quantidade de condomínios que sua administradora opera hoje. A cobrança será aberta em BRL no checkout seguro da Stripe.
-                        </CardDescription>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="grid gap-3 text-sm text-slate-600 md:grid-cols-3 dark:text-slate-300">
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                        Individual para uma operação enxuta com 1 condomínio ativo.
-                      </div>
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                        Starter para administradoras em crescimento com até 3 condomínios.
-                      </div>
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-                        Pro para carteiras maiores com até 10 condomínios e todos os recursos liberados.
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                {renderPlanSelection(false)}
               </>
             ) : null}
           </>
