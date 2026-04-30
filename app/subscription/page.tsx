@@ -387,6 +387,9 @@ function SubscriptionPageContent() {
                 <p>
                   Valor estimado: <strong>{formatMoney(portal.estimatedMonthlyAmount ?? portal.currentPlan?.monthlyPrice)}</strong>
                 </p>
+                <p>
+                  Próxima cobrança: <strong>{formatDateTime(portal.currentSubscription?.currentPeriodEndsAtUtc)}</strong>
+                </p>
               </div>
               <Button onClick={() => void openBillingPortal()} disabled={portalAction}>
                 {portalAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ExternalLink className="mr-2 h-4 w-4" />}
