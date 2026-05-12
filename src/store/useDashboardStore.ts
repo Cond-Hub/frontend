@@ -1752,6 +1752,7 @@ export const dashboardApi = {
     },
     registerCompany: async (payload: {
       companyName: string;
+      companyDocumentNumber: string;
       adminName: string;
       adminEmail: string;
       adminPassword: string;
@@ -1775,6 +1776,28 @@ export const dashboardApi = {
         portal: mapCustomerPortal(data.portal),
         message: data.message,
       } satisfies RegisterCompanyResult;
+    },
+    updateSignupProgress: async (payload: {
+      clientId: string;
+      currentStep: string;
+      completedStepCount: number;
+      totalSteps: number;
+      companyName?: string;
+      companyDocumentNumber?: string;
+      adminName?: string;
+      adminEmail?: string;
+      adminDocumentType?: 'CPF' | 'CNPJ';
+      adminDocumentNumber?: string;
+      adminPhone?: string;
+      hasPassword: boolean;
+      acceptTerms: boolean;
+      completed: boolean;
+    }) => {
+      await requestJson('/saas/signup-progress', {
+        method: 'POST',
+        body: payload,
+        token: '',
+      });
     },
     overview: async (userQuery?: string) => {
       const data = await requestJson<BackendSaasOverview>(`/saas/overview${toQueryString({ userQuery })}`);

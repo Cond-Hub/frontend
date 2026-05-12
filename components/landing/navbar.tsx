@@ -34,7 +34,7 @@ export function LandingNavbar() {
               Entrar
             </Button>
           </Link>
-          <Link href="#pricing">
+          <Link href="/signup">
             <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
               Comece Grátis
             </Button>
@@ -83,7 +83,7 @@ export function LandingNavbar() {
                   Entrar
                 </Button>
               </Link>
-              <Link href="#pricing">
+              <Link href="/signup">
                 <Button className="w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90">
                   Comece Grátis
                 </Button>
