@@ -4,23 +4,17 @@ import { CondoHomeBrandImage } from "@/components/brand/condohome-brand-image"
 const footerLinks = {
   produto: [
     { label: "Funcionalidades", href: "#features" },
+    { label: "Como funciona", href: "#como-funciona" },
     { label: "Planos", href: "#pricing" },
-    { label: "Perguntas frequentes", href: "#faq" },
-    { label: "Entrar", href: "/login" },
+    { label: "FAQ", href: "#faq" },
   ],
   empresa: [
-    { label: "Painel", href: "/login" },
-  ],
-  recursos: [
-    { label: "Mapa", href: "#features" },
-    { label: "Boletos", href: "#features" },
-    { label: "Agenda", href: "#features" },
-    { label: "Moradores", href: "#features" },
+    { label: "Entrar", href: "/login" },
+    { label: "Criar conta", href: "/signup" },
   ],
   legal: [
     { label: "Privacidade", href: "/privacy-policy" },
-    { label: "Termos", href: "#" },
-    { label: "LGPD", href: "#" },
+    { label: "Termos de uso", href: "/terms" },
   ],
 }
 
@@ -43,29 +37,20 @@ const socialLinks = [
       </svg>
     ),
   },
-  {
-    label: "Twitter",
-    href: "#",
-    icon: (
-      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-      </svg>
-    ),
-  },
 ]
 
 export function LandingFooter() {
   return (
-    <footer className="bg-background py-12 lg:py-16">
+    <footer className="border-t border-border/50 bg-card/30 py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-6">
+        <div className="grid gap-12 lg:grid-cols-12">
           {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center">
-              <CondoHomeBrandImage className="h-10 w-auto text-foreground" />
+          <div className="lg:col-span-5">
+            <Link href="/" className="inline-flex items-center">
+              <CondoHomeBrandImage className="h-9 w-auto" />
             </Link>
-            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Sistema para organizar moradores, unidades, chamados, agenda, boletos e reservas no dia a dia do condomínio.
+            <p className="mt-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              A plataforma completa para gestao de condominios. Simplifique a rotina de sindicos, gestores e moradores.
             </p>
             {/* Social links */}
             <div className="mt-6 flex gap-4">
@@ -73,7 +58,7 @@ export function LandingFooter() {
                 <a
                   key={social.label}
                   href={social.href}
-                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
                   aria-label={social.label}
                 >
                   {social.icon}
@@ -83,63 +68,64 @@ export function LandingFooter() {
           </div>
 
           {/* Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Produto</h3>
-            <ul className="mt-4 space-y-3">
-              {footerLinks.produto.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <div className="grid grid-cols-3 gap-8 lg:col-span-7">
+            <div>
+              <h3 className="text-sm font-medium text-foreground">Produto</h3>
+              <ul className="mt-4 space-y-3">
+                {footerLinks.produto.map((link) => (
+                  <li key={link.label}>
+                    <Link 
+                      href={link.href} 
+                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Empresa</h3>
-            <ul className="mt-4 space-y-3">
-              {footerLinks.empresa.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <div>
+              <h3 className="text-sm font-medium text-foreground">Conta</h3>
+              <ul className="mt-4 space-y-3">
+                {footerLinks.empresa.map((link) => (
+                  <li key={link.label}>
+                    <Link 
+                      href={link.href} 
+                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Recursos</h3>
-            <ul className="mt-4 space-y-3">
-              {footerLinks.recursos.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Legal</h3>
-            <ul className="mt-4 space-y-3">
-              {footerLinks.legal.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div>
+              <h3 className="text-sm font-medium text-foreground">Legal</h3>
+              <ul className="mt-4 space-y-3">
+                {footerLinks.legal.map((link) => (
+                  <li key={link.label}>
+                    <Link 
+                      href={link.href} 
+                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Bottom */}
-        <div className="mt-12 border-t border-border pt-8">
-          <p className="text-center text-sm text-muted-foreground">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 sm:flex-row">
+          <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} CondHub. Todos os direitos reservados.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Feito com cuidado no Brasil
           </p>
         </div>
       </div>

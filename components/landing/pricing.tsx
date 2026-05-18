@@ -1,6 +1,5 @@
 import Link from "next/link"
-import { Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Check, ArrowRight } from "lucide-react"
 
 const whatsappNumber = "5547992611819"
 
@@ -8,141 +7,125 @@ const plans = [
   {
     code: "INDIVIDUAL",
     name: "Individual",
-    description: "Para operar um único condomínio com todos os recursos inclusos desde o início.",
+    description: "Para um unico condominio",
     price: "79,99",
-    period: "/mês",
+    period: "/mes",
     features: [
-      "1 condomínio incluso",
-      "Até 100 unidades",
-      "Até 200 moradores",
-      "Todas as features inclusas",
-      "Suporte padrão",
+      "1 condominio",
+      "Ate 100 unidades",
+      "Ate 200 moradores",
+      "Todas as funcionalidades",
+      "Suporte por email",
     ],
-    cta: "Escolher plano",
+    cta: "Comecar agora",
     highlighted: false,
   },
   {
     code: "STARTER",
     name: "Starter",
-    description: "Para empresas gestoras pequenas que querem centralizar os primeiros condomínios.",
+    description: "Para pequenas gestoras",
     price: "199,99",
-    period: "/mês",
+    period: "/mes",
     features: [
-      "Até 3 condomínios",
-      "Até 250 unidades no total",
-      "Até 500 moradores",
-      "Todas as features principais inclusas",
-      "Suporte padrão",
+      "Ate 3 condominios",
+      "Ate 250 unidades no total",
+      "Ate 500 moradores",
+      "Todas as funcionalidades",
+      "Suporte prioritario",
     ],
-    cta: "Escolher plano",
+    cta: "Comecar agora",
     highlighted: false,
   },
   {
     code: "PRO",
     name: "Pro",
-    description: "Para empresas gestoras que já operam multiplos condomínios e precisam de escala.",
+    description: "Para gestoras em crescimento",
     price: "499,99",
-    period: "/mês",
+    period: "/mes",
     features: [
-      "Até 10 condomínios",
-      "Até 1.000 unidades no total",
-      "Até 3.000 moradores",
-      "Todas as features principais inclusas",
-      "Suporte prioritário",
+      "Ate 10 condominios",
+      "Ate 1.000 unidades no total",
+      "Ate 3.000 moradores",
+      "Todas as funcionalidades",
+      "Suporte prioritario",
+      "Onboarding dedicado",
     ],
-    cta: "Escolher plano",
+    cta: "Comecar agora",
     highlighted: true,
-    badge: "Mais escolhido",
+    badge: "Mais popular",
   },
   {
     code: "ENTERPRISE",
     name: "Enterprise",
-    description: "Para empresas gestoras com alto volume e necessidades avancadas.",
+    description: "Para grandes operacoes",
     price: "Sob consulta",
     period: "",
     features: [
-      "Até 100 condomínios ou volume negociado",
-      "Volume de unidades sob consulta",
-      "Até 20.000 moradores",
-      "Todas as features principais inclusas",
-      "SLA e suporte prioritário",
-      "Integrações e condições comerciais sob demanda",
+      "Condominios ilimitados",
+      "Volume sob consulta",
+      "Ate 20.000 moradores",
+      "SLA garantido",
+      "Suporte dedicado",
+      "Integracoes customizadas",
     ],
     cta: "Falar com vendas",
     highlighted: false,
   },
 ]
 
-const includedFeatures = [
-  "Multi-condomínio",
-  "Workspace da empresa",
-  "Moradores e unidades",
-  "Ocorrências e documentos",
-  "Agenda, espaços e reservas",
-  "Boletos, Carteira e PIX",
-  "Branding por condomínio",
-]
-
 export function LandingPricing() {
   return (
-    <section id="pricing" className="border-y border-border bg-muted/30 py-20 lg:py-32">
+    <section id="pricing" className="relative py-24 lg:py-32 bg-card/50">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Planos</p>
-          <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Escolha o plano ideal para sua empresa
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Todos os planos incluem as features principais. A diferenca está no volume, suporte e condições comerciais.
+          <p className="text-sm font-medium uppercase tracking-widest text-primary">
+            Planos
           </p>
-          <p className="mt-3 text-sm font-semibold text-primary">Todos os planos com 1 mês grátis para comecar.</p>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-5xl rounded-2xl border border-border bg-card p-6">
-          <p className="text-sm font-semibold text-foreground">Incluso em todos os planos</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {includedFeatures.map((feature) => (
-              <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Check className="h-4 w-4 shrink-0 text-primary" />
-                <span>{feature}</span>
-              </div>
-            ))}
+          <h2 className="mt-4 text-balance text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Precos simples e transparentes
+          </h2>
+          <p className="mt-6 text-lg text-muted-foreground">
+            Escolha o plano ideal para o tamanho da sua operacao
+          </p>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+            1 mes gratis em todos os planos
           </div>
         </div>
 
         {/* Pricing cards */}
-        <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="mx-auto mt-16 grid max-w-6xl gap-6 lg:grid-cols-4">
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative flex flex-col rounded-2xl border p-8 ${
+              className={`relative flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${
                 plan.highlighted
-                  ? "border-primary bg-card shadow-xl shadow-primary/10"
-                  : "border-border bg-card"
+                  ? "border-primary bg-card shadow-xl"
+                  : "border-border/50 bg-card hover:border-border"
               }`}
             >
               {/* Badge */}
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
+                  <span className="whitespace-nowrap rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground">
                     {plan.badge}
                   </span>
                 </div>
               )}
 
-              {/* Plan header */}
+              {/* Header */}
               <div className="mb-6">
-                <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
+                <h3 className="text-lg font-medium text-foreground">{plan.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
-                <div className="mt-4 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                  1 mês grátis
-                </div>
               </div>
 
               {/* Price */}
               <div className="mb-6">
-                <span className="text-4xl font-bold text-foreground">
+                <span className="text-3xl font-semibold tracking-tight text-foreground">
                   {plan.price === "Sob consulta" ? "" : "R$ "}
                   {plan.price}
                 </span>
@@ -152,8 +135,8 @@ export function LandingPricing() {
               {/* Features */}
               <ul className="mb-8 flex-1 space-y-3">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm">
-                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                  <li key={i} className="flex items-start gap-3 text-sm">
+                    <Check className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                     <span className="text-muted-foreground">{feature}</span>
                   </li>
                 ))}
@@ -164,23 +147,20 @@ export function LandingPricing() {
                 href={
                   plan.code === "ENTERPRISE"
                     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                        `Olá, tenho interesse no plano ${plan.name} da ContHub`,
+                        `Ola, tenho interesse no plano ${plan.name} do CondHub`,
                       )}`
                     : "/signup"
                 }
                 target={plan.code === "ENTERPRISE" ? "_blank" : undefined}
                 rel={plan.code === "ENTERPRISE" ? "noreferrer" : undefined}
+                className={`group flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-medium transition-all ${
+                  plan.highlighted
+                    ? "bg-foreground text-background hover:opacity-90"
+                    : "border border-border bg-transparent text-foreground hover:bg-secondary"
+                }`}
               >
-                <Button
-                  className={`w-full ${
-                    plan.highlighted
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "border-border bg-background text-foreground hover:bg-accent"
-                  }`}
-                  variant={plan.highlighted ? "default" : "outline"}
-                >
-                  {plan.cta}
-                </Button>
+                {plan.cta}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
           ))}

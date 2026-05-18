@@ -1,64 +1,68 @@
-import { UserPlus, Settings, Rocket } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 const steps = [
   {
-    icon: UserPlus,
-    step: "01",
-    title: "Acesse o painel",
-    description: "Entre no painel ou no app do morador e veja as áreas que o sistema já disponibiliza hoje.",
+    number: "01",
+    title: "Crie sua conta",
+    description: "Cadastre sua empresa gestora ou condominio em poucos minutos. Sem burocracia.",
   },
   {
-    icon: Settings,
-    step: "02",
-    title: "Cadastre a operação",
-    description: "Estruture blocos, andares, unidades, moradores, espaços comuns, boletos, documentos e datas importantes.",
+    number: "02",
+    title: "Configure a estrutura",
+    description: "Monte blocos, andares, unidades e cadastre moradores no sistema de forma intuitiva.",
   },
   {
-    icon: Rocket,
-    step: "03",
-    title: "Use no dia a dia",
-    description: "Acompanhe chamados, reservas, agenda, boletos e consultas do morador em uma rotina mais organizada.",
+    number: "03",
+    title: "Opere no dia a dia",
+    description: "Gerencie ocorrencias, boletos, reservas e mantenha tudo organizado em um so lugar.",
   },
 ]
 
 export function LandingHowItWorks() {
   return (
-    <section className="border-y border-border bg-muted/30 py-20 lg:py-32">
+    <section id="como-funciona" className="relative py-24 lg:py-32 bg-card/50">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Como Funciona</p>
-          <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Como o produto se organiza hoje
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium uppercase tracking-widest text-primary">
+            Como funciona
+          </p>
+          <h2 className="mt-4 text-balance text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Comece a usar em minutos
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            A ideia aqui e mostrar de forma simples como o sistema se encaixa na rotina do condomínio.
+          <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+            Processo simples e direto para voce comecar a organizar seu condominio.
           </p>
         </div>
 
         {/* Steps */}
         <div className="mt-16 grid gap-8 lg:grid-cols-3">
           {steps.map((step, index) => (
-            <div key={index} className="relative">
-              {/* Connector line */}
+            <div 
+              key={index} 
+              className="group relative"
+            >
+              {/* Connector line for desktop */}
               {index < steps.length - 1 && (
-                <div className="absolute left-1/2 top-16 hidden h-0.5 w-full bg-border lg:block" />
+                <div className="absolute left-full top-12 hidden w-full items-center lg:flex">
+                  <div className="h-px flex-1 bg-border" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
+                </div>
               )}
 
-              <div className="relative flex flex-col items-center text-center">
-                {/* Step number & icon */}
-                <div className="relative">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-card shadow-lg">
-                    <step.icon className="h-7 w-7 text-primary" />
-                  </div>
-                  <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                    {step.step}
+              <div className="relative rounded-2xl border border-border/50 bg-card p-8 transition-all duration-300 hover:border-border hover:shadow-lg">
+                {/* Step number */}
+                <div className="mb-6 flex items-center gap-4">
+                  <span className="text-5xl font-light tracking-tighter text-primary/20">
+                    {step.number}
                   </span>
                 </div>
 
                 {/* Content */}
-                <h3 className="mt-6 text-xl font-semibold text-foreground">{step.title}</h3>
-                <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                <h3 className="text-xl font-medium text-foreground">
+                  {step.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {step.description}
                 </p>
               </div>

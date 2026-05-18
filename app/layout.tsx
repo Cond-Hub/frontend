@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0a1220',
+  themeColor: '#f5f3ef',
   width: 'device-width',
   initialScale: 1,
 };
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     'https://wa.me/5547992611819?text=' + encodeURIComponent('Olá, vim procurar suporte para o CondHub!');
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="bg-background">
       <head>
         {/* Google Ads / gtag.js - carregado uma vez para todo o frontend */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18107330701" />

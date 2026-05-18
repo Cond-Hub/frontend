@@ -1,114 +1,117 @@
-import { Check, Bell, FileText, Users } from "lucide-react"
+import { Check, Smartphone, Monitor, Bell } from "lucide-react"
+
+const capabilities = [
+  "Gestao de boletos por unidade",
+  "Agenda com reservas de espacos",
+  "Mapa de blocos e andares",
+  "Ocorrencias e chamados",
+  "Documentos e comunicados",
+  "Notificacoes em tempo real",
+]
 
 export function LandingShowcase() {
   return (
-    <section className="py-20 lg:py-32">
+    <section className="relative py-24 lg:py-32 overflow-hidden">
+      {/* Background */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute right-0 top-1/3 h-96 w-96 rounded-full bg-primary/3 blur-3xl" />
+      </div>
+
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Produto</p>
-          <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Módulos que já estao implementados
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            A página mostra somente o que já está disponível no sistema hoje.
-          </p>
-        </div>
+        <div className="grid items-center gap-16 lg:grid-cols-2">
+          {/* Left - Content */}
+          <div>
+            <p className="text-sm font-medium uppercase tracking-widest text-primary">
+              Plataforma completa
+            </p>
+            <h2 className="mt-4 text-balance text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+              App para moradores, painel para gestores
+            </h2>
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+              O morador acessa boletos, documentos e abre ocorrencias pelo celular. O gestor opera tudo pelo painel administrativo.
+            </p>
 
-        {/* Product showcase grid */}
-        <div className="mt-16 grid gap-6 lg:grid-cols-2">
-          {/* Main feature */}
-          <div className="row-span-2 overflow-hidden rounded-2xl border border-border bg-card p-6 lg:p-8">
-            <div className="mb-6">
-              <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
-                <FileText className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-xl font-semibold text-foreground">Boletos com cadastro, status e anexos</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Cadastre boletos por unidade, adicione arquivos e acompanhe se cada boleto está aberto, pago ou em atraso.
-              </p>
-            </div>
+            {/* Capability list */}
+            <ul className="mt-10 grid gap-3 sm:grid-cols-2">
+              {capabilities.map((item, index) => (
+                <li key={index} className="flex items-center gap-3">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Right - Visual cards */}
+          <div className="relative">
+            {/* Decorative blur */}
+            <div className="absolute -bottom-8 -right-8 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
             
-            {/* Mock financial dashboard */}
-            <div className="rounded-xl border border-border bg-background p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Painel de boletos por unidade</span>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">Operando hoje</span>
+            <div className="relative grid gap-4">
+              {/* App card */}
+              <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-lg">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                    <Smartphone className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">App do Morador</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Disponivel na Play Store. Acesse boletos, documentos e abra ocorrencias.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["Boletos", "Documentos", "Ocorrencias", "Reservas"].map((tag) => (
+                    <span 
+                      key={tag}
+                      className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Unidade</span>
-                  <span className="font-medium text-foreground">Bloco A • 302</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className="h-full w-[85%] rounded-full bg-primary" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Competência</span>
-                  <span className="font-medium text-foreground">03/2026</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className="h-full w-[65%] rounded-full bg-primary" />
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                  <span className="text-sm font-medium text-foreground">Status</span>
-                  <span className="font-bold text-primary">Aberto, pago ou em atraso</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Secondary features */}
-          <div className="overflow-hidden rounded-2xl border border-border bg-card p-6">
-            <div className="flex items-start gap-4">
-              <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                <Bell className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Agenda com datas, reservas e documentos</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  A agenda reúne compromissos, reservas de espaços comuns e documentos com vencimento.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 space-y-2">
-              {[
-                { title: "Assembleia cadastrada", time: "Agenda semanal" },
-                { title: "Reserva do salão", time: "Com morador vinculado" },
-                { title: "Documento com vencimento", time: "Na mesma visão" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between rounded-lg bg-background px-3 py-2 text-sm">
-                  <span className="text-foreground">{item.title}</span>
-                  <span className="text-xs text-muted-foreground">{item.time}</span>
+              {/* Admin card */}
+              <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-lg">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/10">
+                    <Monitor className="h-6 w-6 text-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">Painel Administrativo</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Dashboard completo para sindicos e gestores gerenciarem tudo.
+                    </p>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["Dashboard", "Moradores", "Financeiro", "Relatorios"].map((tag) => (
+                    <span 
+                      key={tag}
+                      className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card p-6">
-            <div className="flex items-start gap-4">
-              <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                <Users className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">App do morador e autoatendimento</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  O app do morador permite entrar, consultar boletos, ver documentos, acompanhar datas e abrir ocorrências.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {[
-                "Consultar boletos",
-                "Ver mapa da unidade",
-                "Abrir ocorrência",
-                "Acompanhar documentos",
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-lg bg-background px-3 py-2 text-sm">
-                  <Check className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-muted-foreground">{item}</span>
+              {/* Notification card */}
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+                    <Bell className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Notificacoes em tempo real</p>
+                    <p className="text-xs text-muted-foreground">Moradores e gestores sempre atualizados</p>
+                  </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
