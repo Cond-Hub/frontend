@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Menu, X, ArrowRight } from "lucide-react"
+import { Menu, X, ArrowRight, Sparkles } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { CondoHomeBrandImage } from "@/components/brand/condohome-brand-image"
 
 export function LandingNavbar() {
@@ -17,128 +18,148 @@ export function LandingNavbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const navLinks = [
+    { href: "#features", label: "Funcionalidades" },
+    { href: "#como-funciona", label: "Como funciona" },
+    { href: "#pricing", label: "Planos" },
+    { href: "#faq", label: "FAQ" },
+  ]
+
   return (
     <header 
-      className={`fixed top-0 z-50 w-full transition-all duration-300 ${
+      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
         scrolled 
-          ? "bg-background/90 backdrop-blur-xl border-b border-border/50" 
+          ? "glass-strong shadow-2xl shadow-black/20" 
           : "bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-        <div className="flex items-center gap-x-16">
-          <Link href="/" className="flex items-center">
-            <CondoHomeBrandImage className="h-9 w-auto" />
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+        <div className="flex items-center gap-x-12">
+          <Link href="/" className="flex items-center group">
+            <CondoHomeBrandImage className="h-10 w-auto transition-transform duration-300 group-hover:scale-105" />
           </Link>
-          <div className="hidden lg:flex lg:gap-x-10">
-            <Link 
-              href="#features" 
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Funcionalidades
-            </Link>
-            <Link 
-              href="#como-funciona" 
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Como funciona
-            </Link>
-            <Link 
-              href="#pricing" 
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Planos
-            </Link>
-            <Link 
-              href="#faq" 
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              FAQ
-            </Link>
+          <div className="hidden lg:flex lg:gap-x-8">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.href}
+                href={link.href} 
+                className="relative text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground group"
+              >
+                {link.label}
+                <span className="absolute -bottom-1 left-0 h-px w-0 bg-gradient-to-r from-primary to-cyan-400 transition-all duration-300 group-hover:w-full" />
+              </Link>
+            ))}
           </div>
         </div>
-        <div className="hidden lg:flex lg:items-center lg:gap-x-5">
+        <div className="hidden lg:flex lg:items-center lg:gap-x-4">
           <Link 
             href="/login"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="px-4 py-2 text-sm text-muted-foreground transition-all duration-300 hover:text-foreground"
           >
             Entrar
           </Link>
           <Link href="/signup">
-            <button className="group flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-all hover:gap-3">
-              Comece agora
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </button>
+            <motion.button 
+              className="btn-premium group flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Começar grátis
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+            </motion.button>
           </Link>
         </div>
         <button
           type="button"
-          className="lg:hidden p-2 -mr-2"
+          className="lg:hidden p-2 -mr-2 text-foreground"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
         >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6 text-foreground" />
-          ) : (
-            <Menu className="h-6 w-6 text-foreground" />
-          )}
+          <AnimatePresence mode="wait">
+            {mobileMenuOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="h-6 w-6" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="menu"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Menu className="h-6 w-6" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </button>
       </nav>
 
       {/* Mobile menu */}
-      <div 
-        className={`lg:hidden overflow-hidden transition-all duration-300 ${
-          mobileMenuOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="bg-background/95 backdrop-blur-xl border-t border-border/50 px-6 py-6">
-          <div className="flex flex-col gap-4">
-            <Link
-              href="#features"
-              className="py-2 text-lg text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Funcionalidades
-            </Link>
-            <Link
-              href="#como-funciona"
-              className="py-2 text-lg text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Como funciona
-            </Link>
-            <Link
-              href="#pricing"
-              className="py-2 text-lg text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Planos
-            </Link>
-            <Link
-              href="#faq"
-              className="py-2 text-lg text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              FAQ
-            </Link>
-            <div className="flex flex-col gap-3 pt-4 border-t border-border/50">
-              <Link 
-                href="/login"
-                className="py-2 text-center text-lg text-muted-foreground transition-colors hover:text-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Entrar
-              </Link>
-              <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                <button className="w-full flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background">
-                  Comece agora
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </Link>
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            className="lg:hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="glass-strong border-t border-border/30 px-6 py-8">
+              <div className="flex flex-col gap-2">
+                {navLinks.map((link, i) => (
+                  <motion.div
+                    key={link.href}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Link
+                      href={link.href}
+                      className="block py-3 text-lg text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ))}
+                <motion.div 
+                  className="flex flex-col gap-3 pt-6 mt-4 border-t border-border/30"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <Link 
+                    href="/login"
+                    className="py-3 text-center text-lg text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Entrar
+                  </Link>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                    <button className="btn-premium w-full flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold">
+                      <span className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Começar grátis
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
+                    </button>
+                  </Link>
+                </motion.div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   )
 }

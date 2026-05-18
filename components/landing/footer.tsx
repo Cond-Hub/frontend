@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { CondoHomeBrandImage } from "@/components/brand/condohome-brand-image"
 
 const footerLinks = {
@@ -41,93 +44,127 @@ const socialLinks = [
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-border/50 bg-card/30 py-16 lg:py-20">
+    <footer className="relative border-t border-border/30 bg-card/20 pt-20 pb-10 overflow-hidden">
+      {/* Background */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute bottom-0 left-1/4 w-[500px] h-[300px] rounded-full bg-primary/3 blur-[150px]" />
+      </div>
+
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Brand */}
-          <div className="lg:col-span-5">
+          <motion.div 
+            className="lg:col-span-5"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <Link href="/" className="inline-flex items-center">
-              <CondoHomeBrandImage className="h-9 w-auto" />
+              <CondoHomeBrandImage className="h-10 w-auto" />
             </Link>
-            <p className="mt-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              A plataforma completa para gestao de condominios. Simplifique a rotina de sindicos, gestores e moradores.
+            <p className="mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">
+              A nova geracao da gestao condominial. Simplifique a rotina de sindicos, 
+              gestores e moradores com tecnologia de ponta.
             </p>
             {/* Social links */}
-            <div className="mt-6 flex gap-4">
+            <div className="mt-8 flex gap-3">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-card/50 text-muted-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                   aria-label={social.label}
                 >
                   {social.icon}
                 </a>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Links */}
           <div className="grid grid-cols-3 gap-8 lg:col-span-7">
-            <div>
-              <h3 className="text-sm font-medium text-foreground">Produto</h3>
-              <ul className="mt-4 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Produto</h3>
+              <ul className="mt-6 space-y-4">
                 {footerLinks.produto.map((link) => (
                   <li key={link.label}>
                     <Link 
                       href={link.href} 
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
                     >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
-            <div>
-              <h3 className="text-sm font-medium text-foreground">Conta</h3>
-              <ul className="mt-4 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Conta</h3>
+              <ul className="mt-6 space-y-4">
                 {footerLinks.empresa.map((link) => (
                   <li key={link.label}>
                     <Link 
                       href={link.href} 
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
                     >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
 
-            <div>
-              <h3 className="text-sm font-medium text-foreground">Legal</h3>
-              <ul className="mt-4 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Legal</h3>
+              <ul className="mt-6 space-y-4">
                 {footerLinks.legal.map((link) => (
                   <li key={link.label}>
                     <Link 
                       href={link.href} 
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
                     >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           </div>
         </div>
 
         {/* Bottom */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 sm:flex-row">
+        <motion.div 
+          className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border/30 pt-8 sm:flex-row"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} CondHub. Todos os direitos reservados.
           </p>
-          <p className="text-sm text-muted-foreground">
-            Feito com cuidado no Brasil
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            Feito com tecnologia de ponta no Brasil
           </p>
-        </div>
+        </motion.div>
       </div>
     </footer>
   )
