@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Building2, Home } from "lucide-react"
+import { ArrowUpRight, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const residentAppUrl = "https://play.google.com/store/apps/details?id=com.condhub.CondHub"
@@ -8,66 +8,72 @@ const adminAppUrl = "https://play.google.com/store/apps/details?id=com.condhub.A
 
 export function LandingHero() {
   return (
-    <section className="relative overflow-hidden pt-28 pb-16 lg:pt-32 lg:pb-24">
-      {/* Background gradient */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute right-0 top-1/3 h-[400px] w-[400px] rounded-full bg-accent/20 blur-[100px]" />
-      </div>
-
+    <section className="relative min-h-screen overflow-hidden pt-24 lg:pt-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
-          <div>
-            {/* Badge */}
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-              </span>
-              Baixe os apps CondHub
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              CondHub na mao de quem{" "}
-              <span className="text-primary">administra e de quem mora</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-muted-foreground lg:text-xl">
-              Acesse o app do morador para acompanhar a rotina do condomínio ou o app de gestão para operar condomínios, moradores, ocorrências, agenda, boletos e reservas.
-            </p>
-
-            {/* CTAs */}
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:max-w-xl">
-              <Link href={residentAppUrl} target="_blank" rel="noopener noreferrer">
-                <Button size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Home className="mr-2 h-4 w-4" />
-                  App Morador
-                </Button>
-              </Link>
-              <Link href={adminAppUrl} target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="w-full border-border text-foreground hover:bg-accent">
-                  <Building2 className="mr-2 h-4 w-4" />
-                  App Gestão
-                </Button>
-              </Link>
-            </div>
+        {/* Main content */}
+        <div className="relative z-10 flex flex-col items-center text-center">
+          {/* Badge */}
+          <div className="landing-fade mb-8 inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-card px-4 py-2 text-sm text-muted-foreground">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+            </span>
+            Nova plataforma para gestao condominial
           </div>
 
-          <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
-            <div className="absolute inset-x-8 bottom-0 h-24 rounded-full bg-primary/20 blur-3xl" />
-            <div className="relative aspect-square">
-              <Image
-                src="/phones.webp"
-                alt="Telas dos aplicativos CondHub para moradores e administradores"
-                width={1400}
-                height={1400}
-                priority
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="h-full w-full object-contain drop-shadow-2xl"
-              />
-            </div>
+          {/* Headline */}
+          <h1 className="landing-fade-delay-1 max-w-4xl text-balance text-5xl font-semibold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+            Gestao condominial{" "}
+            <span className="italic">simplificada</span>
+          </h1>
+
+          {/* Subheadline */}
+          <p className="landing-fade-delay-2 mt-8 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground lg:text-xl">
+            Plataforma completa para sindicos e administradoras. Controle moradores, financeiro, ocorrencias e reservas em um unico lugar.
+          </p>
+
+          {/* CTAs */}
+          <div className="landing-fade-delay-3 mt-12 flex flex-col gap-4 sm:flex-row">
+            <Link href="/signup">
+              <Button size="lg" className="group h-12 rounded-full bg-foreground px-8 text-base text-background hover:bg-foreground/90">
+                Comece agora
+                <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Button>
+            </Link>
+            <Link href="#features">
+              <Button size="lg" variant="outline" className="h-12 rounded-full border-foreground/20 px-8 text-base text-foreground hover:bg-foreground/5">
+                Conheca a plataforma
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+
+          {/* App links */}
+          <div className="landing-fade-delay-3 mt-8 flex items-center gap-6 text-sm text-muted-foreground">
+            <Link href={residentAppUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+              App Morador
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+            <span className="h-4 w-px bg-foreground/20" />
+            <Link href={adminAppUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+              App Gestao
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Product showcase */}
+        <div className="landing-scale relative mx-auto mt-16 max-w-5xl lg:mt-20">
+          <div className="relative overflow-hidden rounded-2xl border border-foreground/10 bg-card shadow-2xl shadow-foreground/5">
+            <Image
+              src="/phones.webp"
+              alt="Telas dos aplicativos CondHub para moradores e administradores"
+              width={1400}
+              height={900}
+              priority
+              sizes="(min-width: 1024px) 80vw, 100vw"
+              className="h-auto w-full object-contain"
+            />
           </div>
         </div>
       </div>

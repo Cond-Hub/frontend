@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Check } from "lucide-react"
+import { Check, ArrowUpRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const whatsappNumber = "5547992611819"
@@ -8,15 +8,15 @@ const plans = [
   {
     code: "INDIVIDUAL",
     name: "Individual",
-    description: "Para operar um único condomínio com todos os recursos inclusos desde o início.",
+    description: "Para operar um unico condominio",
     price: "79,99",
-    period: "/mês",
+    period: "/mes",
     features: [
-      "1 condomínio incluso",
-      "Até 100 unidades",
-      "Até 200 moradores",
-      "Todas as features inclusas",
-      "Suporte padrão",
+      "1 condominio incluso",
+      "Ate 100 unidades",
+      "Ate 200 moradores",
+      "Todas as features",
+      "Suporte padrao",
     ],
     cta: "Escolher plano",
     highlighted: false,
@@ -24,15 +24,15 @@ const plans = [
   {
     code: "STARTER",
     name: "Starter",
-    description: "Para empresas gestoras pequenas que querem centralizar os primeiros condomínios.",
+    description: "Para administradoras iniciantes",
     price: "199,99",
-    period: "/mês",
+    period: "/mes",
     features: [
-      "Até 3 condomínios",
-      "Até 250 unidades no total",
-      "Até 500 moradores",
-      "Todas as features principais inclusas",
-      "Suporte padrão",
+      "Ate 3 condominios",
+      "Ate 250 unidades no total",
+      "Ate 500 moradores",
+      "Todas as features",
+      "Suporte padrao",
     ],
     cta: "Escolher plano",
     highlighted: false,
@@ -40,92 +40,68 @@ const plans = [
   {
     code: "PRO",
     name: "Pro",
-    description: "Para empresas gestoras que já operam multiplos condomínios e precisam de escala.",
+    description: "Para administradoras em crescimento",
     price: "499,99",
-    period: "/mês",
+    period: "/mes",
     features: [
-      "Até 10 condomínios",
-      "Até 1.000 unidades no total",
-      "Até 3.000 moradores",
-      "Todas as features principais inclusas",
-      "Suporte prioritário",
+      "Ate 10 condominios",
+      "Ate 1.000 unidades",
+      "Ate 3.000 moradores",
+      "Todas as features",
+      "Suporte prioritario",
     ],
     cta: "Escolher plano",
     highlighted: true,
-    badge: "Mais escolhido",
+    badge: "Mais popular",
   },
   {
     code: "ENTERPRISE",
     name: "Enterprise",
-    description: "Para empresas gestoras com alto volume e necessidades avancadas.",
-    price: "Sob consulta",
+    description: "Para grandes operacoes",
+    price: "Personalizado",
     period: "",
     features: [
-      "Até 100 condomínios ou volume negociado",
-      "Volume de unidades sob consulta",
-      "Até 20.000 moradores",
-      "Todas as features principais inclusas",
-      "SLA e suporte prioritário",
-      "Integrações e condições comerciais sob demanda",
+      "Ate 100 condominios",
+      "Volume sob consulta",
+      "Ate 20.000 moradores",
+      "SLA dedicado",
+      "Integracoes customizadas",
     ],
     cta: "Falar com vendas",
     highlighted: false,
   },
 ]
 
-const includedFeatures = [
-  "Multi-condomínio",
-  "Workspace da empresa",
-  "Moradores e unidades",
-  "Ocorrências e documentos",
-  "Agenda, espaços e reservas",
-  "Boletos, Carteira e PIX",
-  "Branding por condomínio",
-]
-
 export function LandingPricing() {
   return (
-    <section id="pricing" className="border-y border-border bg-muted/30 py-20 lg:py-32">
+    <section id="pricing" className="border-y border-foreground/10 bg-secondary/30 py-20 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Planos</p>
-          <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Escolha o plano ideal para sua empresa
+          <p className="text-sm font-medium uppercase tracking-widest text-accent">Planos</p>
+          <h2 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Escolha o plano ideal
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Todos os planos incluem as features principais. A diferenca está no volume, suporte e condições comerciais.
+          <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+            Todos os planos incluem 1 mes gratis para voce experimentar a plataforma.
           </p>
-          <p className="mt-3 text-sm font-semibold text-primary">Todos os planos com 1 mês grátis para comecar.</p>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-5xl rounded-2xl border border-border bg-card p-6">
-          <p className="text-sm font-semibold text-foreground">Incluso em todos os planos</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {includedFeatures.map((feature) => (
-              <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Check className="h-4 w-4 shrink-0 text-primary" />
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Pricing cards */}
-        <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="mx-auto mt-16 grid max-w-6xl gap-6 lg:grid-cols-4">
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative flex flex-col rounded-2xl border p-8 ${
+              className={`relative flex flex-col rounded-2xl border p-6 transition-all duration-300 ${
                 plan.highlighted
-                  ? "border-primary bg-card shadow-xl shadow-primary/10"
-                  : "border-border bg-card"
+                  ? "border-foreground bg-foreground text-background shadow-xl"
+                  : "border-foreground/10 bg-card hover:border-foreground/20"
               }`}
             >
               {/* Badge */}
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
+                  <span className="rounded-full bg-accent px-4 py-1 text-xs font-semibold text-accent-foreground">
                     {plan.badge}
                   </span>
                 </div>
@@ -133,28 +109,29 @@ export function LandingPricing() {
 
               {/* Plan header */}
               <div className="mb-6">
-                <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
-                <div className="mt-4 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                  1 mês grátis
-                </div>
+                <h3 className={`text-lg font-semibold ${plan.highlighted ? "text-background" : "text-foreground"}`}>
+                  {plan.name}
+                </h3>
+                <p className={`mt-1 text-sm ${plan.highlighted ? "text-background/70" : "text-muted-foreground"}`}>
+                  {plan.description}
+                </p>
               </div>
 
               {/* Price */}
               <div className="mb-6">
-                <span className="text-4xl font-bold text-foreground">
-                  {plan.price === "Sob consulta" ? "" : "R$ "}
+                <span className={`text-4xl font-semibold tracking-tight ${plan.highlighted ? "text-background" : "text-foreground"}`}>
+                  {plan.price === "Personalizado" ? "" : "R$ "}
                   {plan.price}
                 </span>
-                <span className="text-muted-foreground">{plan.period}</span>
+                <span className={plan.highlighted ? "text-background/70" : "text-muted-foreground"}>{plan.period}</span>
               </div>
 
               {/* Features */}
               <ul className="mb-8 flex-1 space-y-3">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm">
-                    <Check className="h-4 w-4 shrink-0 text-primary" />
-                    <span className="text-muted-foreground">{feature}</span>
+                    <Check className={`h-4 w-4 shrink-0 ${plan.highlighted ? "text-accent" : "text-accent"}`} />
+                    <span className={plan.highlighted ? "text-background/80" : "text-muted-foreground"}>{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -164,7 +141,7 @@ export function LandingPricing() {
                 href={
                   plan.code === "ENTERPRISE"
                     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                        `Olá, tenho interesse no plano ${plan.name} da ContHub`,
+                        `Ola, tenho interesse no plano ${plan.name} do CondHub`,
                       )}`
                     : "/signup"
                 }
@@ -174,12 +151,12 @@ export function LandingPricing() {
                 <Button
                   className={`w-full ${
                     plan.highlighted
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "border-border bg-background text-foreground hover:bg-accent"
+                      ? "bg-background text-foreground hover:bg-background/90"
+                      : "bg-foreground text-background hover:bg-foreground/90"
                   }`}
-                  variant={plan.highlighted ? "default" : "outline"}
                 >
                   {plan.cta}
+                  <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>

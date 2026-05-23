@@ -1,116 +1,78 @@
-import { Check, Bell, FileText, Users } from "lucide-react"
+import { Check, ArrowUpRight } from "lucide-react"
+
+const capabilities = [
+  {
+    title: "Gestao financeira completa",
+    description: "Boletos por unidade com status, anexos e acompanhamento de vencimento. Tudo integrado.",
+    features: ["Cadastro de boletos", "Status em tempo real", "Anexos e documentos", "Filtros avancados"],
+    highlight: true,
+  },
+  {
+    title: "Agenda e reservas",
+    description: "Organize assembleias, reservas de espacos comuns e documentos com vencimento em uma visao unificada.",
+    features: ["Agenda semanal", "Reservas de espacos", "Documentos com vencimento", "Notificacoes"],
+    highlight: false,
+  },
+  {
+    title: "App do morador",
+    description: "Moradores consultam boletos, documentos, abrem chamados e acompanham datas importantes pelo celular.",
+    features: ["Login seguro", "Boletos e documentos", "Abertura de chamados", "Notificacoes push"],
+    highlight: false,
+  },
+]
 
 export function LandingShowcase() {
   return (
     <section className="py-20 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Produto</p>
-          <h2 className="mt-2 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Módulos que já estao implementados
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium uppercase tracking-widest text-accent">Plataforma</p>
+          <h2 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Modulos prontos para uso
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            A página mostra somente o que já está disponível no sistema hoje.
+          <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+            Tudo o que voce ve aqui ja esta funcionando e pronto para transformar a gestao do seu condominio.
           </p>
         </div>
 
         {/* Product showcase grid */}
-        <div className="mt-16 grid gap-6 lg:grid-cols-2">
-          {/* Main feature */}
-          <div className="row-span-2 overflow-hidden rounded-2xl border border-border bg-card p-6 lg:p-8">
-            <div className="mb-6">
-              <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
-                <FileText className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-xl font-semibold text-foreground">Boletos com cadastro, status e anexos</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Cadastre boletos por unidade, adicione arquivos e acompanhe se cada boleto está aberto, pago ou em atraso.
-              </p>
-            </div>
-            
-            {/* Mock financial dashboard */}
-            <div className="rounded-xl border border-border bg-background p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Painel de boletos por unidade</span>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">Operando hoje</span>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Unidade</span>
-                  <span className="font-medium text-foreground">Bloco A • 302</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className="h-full w-[85%] rounded-full bg-primary" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Competência</span>
-                  <span className="font-medium text-foreground">03/2026</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className="h-full w-[65%] rounded-full bg-primary" />
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                  <span className="text-sm font-medium text-foreground">Status</span>
-                  <span className="font-bold text-primary">Aberto, pago ou em atraso</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Secondary features */}
-          <div className="overflow-hidden rounded-2xl border border-border bg-card p-6">
-            <div className="flex items-start gap-4">
-              <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                <Bell className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Agenda com datas, reservas e documentos</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  A agenda reúne compromissos, reservas de espaços comuns e documentos com vencimento.
+        <div className="mt-16 grid gap-6 lg:grid-cols-3">
+          {capabilities.map((capability, index) => (
+            <div
+              key={index}
+              className={`group relative flex flex-col overflow-hidden rounded-2xl border p-8 transition-all duration-300 ${
+                capability.highlight 
+                  ? "border-foreground/20 bg-foreground text-background" 
+                  : "border-foreground/10 bg-card hover:border-foreground/20"
+              }`}
+            >
+              {/* Header */}
+              <div className="mb-6">
+                <h3 className={`text-xl font-semibold ${capability.highlight ? "text-background" : "text-foreground"}`}>
+                  {capability.title}
+                </h3>
+                <p className={`mt-3 text-sm leading-relaxed ${capability.highlight ? "text-background/70" : "text-muted-foreground"}`}>
+                  {capability.description}
                 </p>
               </div>
-            </div>
-            <div className="mt-4 space-y-2">
-              {[
-                { title: "Assembleia cadastrada", time: "Agenda semanal" },
-                { title: "Reserva do salão", time: "Com morador vinculado" },
-                { title: "Documento com vencimento", time: "Na mesma visão" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between rounded-lg bg-background px-3 py-2 text-sm">
-                  <span className="text-foreground">{item.title}</span>
-                  <span className="text-xs text-muted-foreground">{item.time}</span>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card p-6">
-            <div className="flex items-start gap-4">
-              <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                <Users className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">App do morador e autoatendimento</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  O app do morador permite entrar, consultar boletos, ver documentos, acompanhar datas e abrir ocorrências.
-                </p>
+              {/* Features */}
+              <ul className="mt-auto space-y-3">
+                {capability.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm">
+                    <Check className={`h-4 w-4 shrink-0 ${capability.highlight ? "text-accent" : "text-accent"}`} />
+                    <span className={capability.highlight ? "text-background/80" : "text-muted-foreground"}>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Hover arrow */}
+              <div className={`absolute right-6 top-6 transition-opacity duration-300 ${capability.highlight ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+                <ArrowUpRight className={`h-5 w-5 ${capability.highlight ? "text-background/40" : "text-foreground/40"}`} />
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {[
-                "Consultar boletos",
-                "Ver mapa da unidade",
-                "Abrir ocorrência",
-                "Acompanhar documentos",
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-lg bg-background px-3 py-2 text-sm">
-                  <Check className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-muted-foreground">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
